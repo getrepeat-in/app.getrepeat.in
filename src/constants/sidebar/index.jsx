@@ -1,4 +1,4 @@
-import { LayoutDashboard, Settings, Users, User, TableProperties, ClipboardList, Globe } from "lucide-react";
+import { LayoutDashboard, Settings, Users, User, TableProperties, ClipboardList, Globe, Tags } from "lucide-react";
 
 export const APP_SIDEBAR_CONFIG = {
   navUserItems: [
@@ -10,6 +10,11 @@ export const APP_SIDEBAR_CONFIG = {
         title: "Menu",
         url: "/restaurant/menu",
         icon: <LayoutDashboard />,
+      },
+      {
+        title: "Promotions",
+        url: "/restaurant/promotions",
+        icon: <Tags />,
       },
       {
         title: "Website",

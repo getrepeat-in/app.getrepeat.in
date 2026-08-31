@@ -3,8 +3,7 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 const isPublicRoute = createRouteMatcher([
   "/sign-in(.*)",
   "/sign-up(.*)",
-  "/api/:slug(.*)",      
-  "/((?!restaurant|api|sign-in|sign-up|_next).*)"
+  "/api(.*)"
 ]);
 
 const proxyHandler = clerkMiddleware(async (auth, req) => {

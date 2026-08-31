@@ -192,12 +192,18 @@ export const GET = async (req, { params }) => {
         await invalidateCategoryCache(id);
         await invalidateItemCache(id);
 
-        return JsonResponse.success({
-            stats: {
-                categoriesImported,
-                itemsImported
+        return JsonResponse.success(
+            null,
+            "Menu imported successfully",
+            200,
+            {
+                total_items: itemsImported,
+                stats: {
+                    categoriesImported,
+                    itemsImported
+                }
             }
-        }, "Menu imported successfully");
+        );
     } catch (error) {
         console.error("Zomato Menu Import Error:", error?.response?.data || error);
         return JsonResponse.error(

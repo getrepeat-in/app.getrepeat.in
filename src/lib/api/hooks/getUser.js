@@ -4,12 +4,12 @@ export async function getUser() {
   const { userId } = await auth();
 
   if (!userId) {
-    throw new Error('Please log in to continue!');
+    return null;
   }
 
   const clerkUser = await currentUser();
   if (!clerkUser) {
-    throw new Error('User details could not be found.');
+    return null;
   }
 
   return {

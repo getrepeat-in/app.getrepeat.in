@@ -99,7 +99,7 @@ export function DataTable({
                                     key={`${row._id || rowIndex}-${col.key || colIndex}`} 
                                     className={`px-6 py-4 ${col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'}`}
                                 >
-                                    {col.render ? col.render(row) : row[col.key]}
+                                    {col.render ? col.render(row, rowIndex) : row[col.key]}
                                 </td>
                             ))}
                         </tr>

@@ -58,4 +58,11 @@ export const API_ENDPOINTS = {
         UPDATE: (resId, orderId) => `/api/restaurant/${resId}/orders/${orderId}`,
         DELETE: (resId, orderId) => `/api/restaurant/${resId}/orders/${orderId}`,
     },
+    PROMOTION: {
+        CREATE: (resId) => `/api/restaurant/${resId}/promotions`,
+        GET_ALL: (resId) => `/api/restaurant/${resId}/promotions`,
+        GET_ONE: (resId, promotionId) => `/api/restaurant/${resId}/promotions/${promotionId}`,
+        UPDATE: (resId, promotionId) => `/api/restaurant/${resId}/promotions/${promotionId}`,
+        DELETE: (resId, promotionId) => `/api/restaurant/${resId}/promotions/${promotionId}`,
+    }
 }

@@ -1,8 +1,10 @@
+import "@/models/Promotion";
 import "@/models/AddonGroup";
 import mongoose from "mongoose";
 import MenuItem from "@/models/Item";
 import ImageAsset from "@/models/Image";
 import Category from "@/models/Category";
+import { applyPromotionsToItems } from "./promotion.helper";
 
 export const MenuService = {
   getAllCategories: async (resId) => {
@@ -39,7 +41,18 @@ export const MenuService = {
       .populate("image")
       .lean();
 
-    const groupedItems = items.reduce((acc, item) => {
+    const activePromotions = await mongoose.models.Promotion.find({
+      restaurant: resId,
+      status: "ACTIVE",
+      application_type: "AUTO_APPLY",
+      type: { $in: ["FLAT_DISCOUNT", "PERCENTAGE_DISCOUNT"] }
+    })
+    .sort({ priority: -1 })
+    .lean();
+    
+    const processedItems = applyPromotionsToItems(items, activePromotions);
+
+    const groupedItems = processedItems.reduce((acc, item) => {
       const subCatName = item.subCategory?.name || "Others";
       if (!acc[subCatName]) {
         acc[subCatName] = [];
