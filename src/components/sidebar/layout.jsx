@@ -14,8 +14,8 @@ export function SidebarLayout({ children }) {
 
   if (shouldHideSidebar) {
     return (
-      <div className="min-h-screen w-full bg-gray-50/30 dark:bg-zinc-950 flex flex-col">
-        <main className="flex-1 overflow-auto">
+      <div className="min-h-screen w-full bg-gray-50/30 dark:bg-zinc-950 flex flex-col min-w-0">
+        <main className="flex-1 overflow-auto min-w-0">
           {children}
         </main>
       </div>
@@ -24,22 +24,22 @@ export function SidebarLayout({ children }) {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-gray-50/30 dark:bg-zinc-950">
-        <AppSidebar />
-        <SidebarInset className="flex-1 flex flex-col overflow-hidden">
-          <header className="flex h-16 shrink-0 items-center justify-between border-b border-border/40 px-6 bg-white dark:bg-zinc-900 transition-[width,height] ease-linear">
-            <div className="flex items-center gap-2 w-full">
-              <SidebarTrigger className="-ml-2" />
-              <div className="h-4 w-px bg-border/60 mx-2" />
+      <AppSidebar />
+      <SidebarInset className="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50/30 dark:bg-zinc-950">
+        <header className="flex h-16 shrink-0 items-center justify-between border-b border-border/40 px-4 sm:px-6 bg-white dark:bg-zinc-900 transition-[width,height] ease-linear min-w-0">
+          <div className="flex items-center gap-2 w-full min-w-0">
+            <SidebarTrigger className="-ml-1 sm:-ml-2 shrink-0" />
+            <div className="h-4 w-px bg-border/60 mx-1 sm:mx-2 shrink-0" />
+            <div className="min-w-0 truncate">
               <Breadcrumbs />
             </div>
-          </header>
-          
-          <main className="flex-1 overflow-auto">
-            {children}
-          </main>
-        </SidebarInset>
-      </div>
+          </div>
+        </header>
+        
+        <div className="flex-1 overflow-auto min-w-0">
+          {children}
+        </div>
+      </SidebarInset>
     </SidebarProvider>
   );
 }

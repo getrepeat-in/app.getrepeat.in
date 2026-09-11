@@ -1,18 +1,34 @@
 "use client";
-import { useState } from "react";
-import { Plus } from "lucide-react";
-import Loader from "@/components/global/loader";
+import { useState, useMemo } from "react";
+import { Plus, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { PromotionFormSheet } from "./fragments";
+import DataTable from "@/components/global/table";
 import { usePromotions } from "./hooks/usePromotions";
-import PromotionsTable from "./fragments/PromotionsTable";
 import useNotification from "@/store/hooks/useNotification";
-import PromotionFormSheet from "./fragments/promotion-form-sheet";
+import { ConfirmDeleteAlert } from "@/components/ui/confirm-delete-alert";
+import { PROMOTION_STATUS_FILTERS, DEFAULT_PAGE_SIZE, PromotionNameCell, PromotionTypeBadge, PromotionTargetCell, PromotionDiscountCell, PromotionDateCell, PromotionStatusBadge, PromotionActionsCell } from "./helpers";
 
 export default function Promotions() {
-    const { promotions, isLoading, createPromotion, updatePromotion, deletePromotion, isCreating, isUpdating, isDeleting } = usePromotions();
+    const {
+        promotions,
+        isLoading,
+        error,
+        createPromotion,
+        updatePromotion,
+        deletePromotion,
+        isCreating,
+        isUpdating,
+        isDeleting,
+        refetch,
+    } = usePromotions();
+
     const notification = useNotification();
-    
+    const [statusFilter, setStatusFilter] = useState("all");
+    const [searchQuery, setSearchQuery] = useState("");
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [editingPromotion, setEditingPromotion] = useState(null);
+    const [promotionToDelete, setPromotionToDelete] = useState(null);
 
     const handleCreate = () => {
         setEditingPromotion(null);
@@ -24,13 +40,16 @@ export default function Promotions() {
         setIsSheetOpen(true);
     };
 
-    const handleDelete = async (promotionId) => {
+    const handleDelete = async () => {
+        if (!promotionToDelete) return;
         try {
-            await deletePromotion(promotionId);
+            await deletePromotion(promotionToDelete._id);
             notification.success("Promotion deleted successfully");
+            setPromotionToDelete(null);
         } catch (err) {
             console.error("Failed to delete", err);
             notification.error(err.message || "Failed to delete promotion");
+            setPromotionToDelete(null);
         }
     };
 
@@ -44,62 +63,158 @@ export default function Promotions() {
                 notification.success("Promotion created successfully");
             }
             setIsSheetOpen(false);
-        } catch (error) {
-            console.error("Operation failed:", error);
-            notification.error(error.message || "Operation failed");
+            setEditingPromotion(null);
+        } catch (err) {
+            console.error("Operation failed:", err);
+            notification.error(err.message || "Operation failed");
         }
     };
 
+    const filterTabs = useMemo(() =>
+        PROMOTION_STATUS_FILTERS.map((t) => ({
+            label: t.label,
+            value: t.value,
+        })), []
+    );
+
+    const filteredPromotions = useMemo(() => {
+        if (!promotions) return [];
+        let data = promotions;
+        if (statusFilter && statusFilter !== "all") {
+            data = data.filter((p) => p.status === statusFilter);
+        }
+        if (searchQuery.trim()) {
+            const q = searchQuery.toLowerCase();
+            data = data.filter((p) =>
+                p.name?.toLowerCase().includes(q) ||
+                p.code?.toLowerCase().includes(q) ||
+                p.discount_type?.toLowerCase().includes(q)
+            );
+        }
+        return data;
+    }, [promotions, statusFilter, searchQuery]);
+
+    const columns = useMemo(() => [
+        {
+            header: "Promotion",
+            key: "name",
+            sortable: true,
+            render: (row) => <PromotionNameCell promotion={row} />,
+        },
+        {
+            header: "Type",
+            key: "type",
+            sortable: true,
+            render: (row) => <PromotionTypeBadge promotion={row} />,
+        },
+        {
+            header: "Applies To",
+            key: "items",
+            render: (row) => <PromotionTargetCell promotion={row} />,
+        },
+        {
+            header: "Discount",
+            key: "discount_value",
+            sortable: true,
+            render: (row) => <PromotionDiscountCell promotion={row} />,
+        },
+        {
+            header: "Active Dates",
+            key: "dates",
+            render: (row) => <PromotionDateCell promotion={row} />,
+        },
+        {
+            header: "Status",
+            key: "status",
+            align: "center",
+            render: (row) => <PromotionStatusBadge status={row.status} />,
+        },
+        {
+            header: "Actions",
+            key: "actions",
+            align: "right",
+            width: "100px",
+            render: (row) => (
+                <PromotionActionsCell
+                    promotion={row}
+                    onEdit={handleEdit}
+                    onDelete={setPromotionToDelete}
+                />
+            ),
+        },
+    ], []);
+
     return (
-        <div className="flex flex-col h-[calc(100vh-60px)] w-full bg-[#f8fafc] dark:bg-zinc-950 overflow-y-auto">
-            <div className="mx-auto w-full p-2 md:p-4 space-y-6">
-                <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 overflow-hidden">
-                    
-                    <div className="p-4 md:p-6 border-b border-gray-100 dark:border-zinc-800">
-                        <div className="flex flex-col md:flex-row justify-between md:items-end gap-4">
-                            <div className="hidden md:block">
-                                <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Promotions Management</h2>
-                                <p className="text-sm text-gray-500 mt-1">Create and manage discount codes, automatic offers, and flash sales.</p>
-                            </div>
-                            <div className="flex items-center gap-3 w-full md:w-auto">
-                                <button
-                                    onClick={handleCreate}
-                                    className="flex items-center justify-center gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2.5 md:py-2 rounded-md font-semibold shadow-sm transition-all active:scale-95 text-sm w-full md:w-auto"
-                                >
-                                    <Plus size={18} strokeWidth={2.5} className="md:w-4 md:h-4" />
-                                    Create Promotion
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+        <div className="flex flex-col bg-white dark:bg-zinc-900 m-2 sm:m-4 p-3 sm:p-4 md:p-5 space-y-4 sm:space-y-6 rounded-md border border-border/40 shadow-xs min-w-0">
+            <DataTable
+                title="Promotions Management"
+                subtitle="Create and manage discount codes, automatic offers, and flash sales"
+                columns={columns}
+                data={filteredPromotions}
+                isLoading={isLoading}
+                error={error}
 
-                    <div className="p-4 md:p-6">
-                        <div className="md:border border-gray-200 dark:border-zinc-800 rounded-md overflow-hidden bg-transparent md:bg-white md:dark:bg-zinc-900">
-                            {isLoading ? (
-                                <div className="flex items-center justify-center min-h-[300px] w-full">
-                                    <Loader />
-                                </div>
-                            ) : (
-                                <PromotionsTable 
-                                    promotions={promotions}
-                                    isLoading={isLoading}
-                                    onEdit={handleEdit}
-                                    onDelete={handleDelete}
-                                    isDeleting={isDeleting}
-                                />
-                            )}
-                        </div>
-                    </div>
+                searchable
+                searchPlaceholder="Search promotions by name or code..."
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
 
-                </div>
-            </div>
-            
-            <PromotionFormSheet 
+                filterTabs={filterTabs}
+                activeFilterTab={statusFilter}
+                onFilterTabChange={setStatusFilter}
+
+                actions={
+                    <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto">
+                        <Button
+                            onClick={handleCreate}
+                            size="sm"
+                            className="h-8.5 rounded-md bg-orange-600 hover:bg-orange-700 text-white shadow-2xs gap-1.5 font-semibold text-xs shrink-0"
+                        >
+                            <Plus size={14} strokeWidth={2.5} />
+                            <span>Create Promotion</span>
+                        </Button>
+
+                        {refetch && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => refetch()}
+                                className="h-8.5 rounded-md border-gray-200 dark:border-zinc-800 shadow-2xs gap-1.5 shrink-0"
+                                title="Refresh promotions list"
+                            >
+                                <RefreshCw className="h-3.5 w-3.5" />
+                                <span className="hidden sm:inline text-xs">Refresh</span>
+                            </Button>
+                        )}
+                    </div>
+                }
+
+                pagination
+                pageSize={DEFAULT_PAGE_SIZE}
+                emptyState={{
+                    title: "No Promotions Found",
+                    description: "You haven't created any promotions yet. Create your first promotion to get started.",
+                }}
+            />
+
+            <PromotionFormSheet
                 isOpen={isSheetOpen}
-                onClose={() => setIsSheetOpen(false)}
+                onClose={() => {
+                    setIsSheetOpen(false);
+                    setEditingPromotion(null);
+                }}
                 promotion={editingPromotion}
                 onSubmit={handleSubmit}
                 isSubmitting={isCreating || isUpdating}
+            />
+
+            <ConfirmDeleteAlert
+                isOpen={!!promotionToDelete}
+                onClose={() => setPromotionToDelete(null)}
+                onConfirm={handleDelete}
+                isDeleting={isDeleting}
+                title="Delete Promotion?"
+                description={`Are you sure you want to delete "${promotionToDelete?.name || "this promotion"}"? This action cannot be undone.`}
             />
         </div>
     );

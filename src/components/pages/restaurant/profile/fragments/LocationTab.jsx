@@ -40,19 +40,14 @@ const LocationTab = ({ locationData }) => {
 
   return (
     <form onSubmit={formik.handleSubmit} className="flex flex-col">
-      <div className="mb-8">
-        <h3 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Location Details</h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage your restaurant&apos;s physical address and precise map coordinates.</p>
-      </div>
-      
-      <div className="space-y-6">
+      <div className="space-y-7">
         <div className="relative group">
-          <div className="absolute -top-2.5 left-3 px-1.5 bg-white dark:bg-zinc-950 z-10">
+          <div className="absolute -top-2.5 left-3.5 px-1.5 bg-white dark:bg-zinc-900 z-10">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-orange-600 transition-colors">Street Address</span>
           </div>
-          <div className="relative flex items-center border border-gray-300 dark:border-gray-700 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all bg-white dark:bg-zinc-900/50">
+          <div className="relative flex items-center border border-gray-200 dark:border-zinc-800 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all bg-white dark:bg-zinc-900 shadow-2xs">
             <div className="pl-3.5 flex items-center pointer-events-none">
-              <MapPin className="h-5 w-5 text-orange-500" />
+              <MapPin className="h-4.5 w-4.5 text-orange-500 shrink-0" />
             </div>
             <Input 
               id="street" 
@@ -61,19 +56,19 @@ const LocationTab = ({ locationData }) => {
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               placeholder="123 Main Street, Phase 1" 
-              className="border-0 focus-visible:ring-0 shadow-none h-12 bg-transparent text-base px-3 w-full" 
+              className="border-0 focus-visible:ring-0 shadow-none h-11.5 sm:h-12 bg-transparent text-sm sm:text-base px-3.5 w-full" 
             />
           </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-1">
           <div className="relative group">
-            <div className="absolute -top-2.5 left-3 px-1.5 bg-white dark:bg-zinc-950 z-10">
+            <div className="absolute -top-2.5 left-3.5 px-1.5 bg-white dark:bg-zinc-900 z-10">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-orange-600 transition-colors">City</span>
             </div>
-            <div className="relative flex items-center border border-gray-300 dark:border-gray-700 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all bg-white dark:bg-zinc-900/50">
+            <div className="relative flex items-center border border-gray-200 dark:border-zinc-800 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all bg-white dark:bg-zinc-900 shadow-2xs">
               <div className="pl-3.5 flex items-center pointer-events-none">
-                <Building className="h-5 w-5 text-orange-500" />
+                <Building className="h-4.5 w-4.5 text-orange-500 shrink-0" />
               </div>
               <Input 
                 id="city" 
@@ -82,18 +77,18 @@ const LocationTab = ({ locationData }) => {
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 placeholder="Mumbai" 
-                className="border-0 focus-visible:ring-0 shadow-none h-12 bg-transparent text-base px-3 w-full" 
+                className="border-0 focus-visible:ring-0 shadow-none h-11.5 sm:h-12 bg-transparent text-sm sm:text-base px-3.5 w-full" 
               />
             </div>
           </div>
 
           <div className="relative group">
-            <div className="absolute -top-2.5 left-3 px-1.5 bg-white dark:bg-zinc-950 z-10">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-orange-600 transition-colors">State</span>
+            <div className="absolute -top-2.5 left-3.5 px-1.5 bg-white dark:bg-zinc-900 z-10">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-orange-600 transition-colors">State / Province</span>
             </div>
-            <div className="relative flex items-center border border-gray-300 dark:border-gray-700 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all bg-white dark:bg-zinc-900/50">
+            <div className="relative flex items-center border border-gray-200 dark:border-zinc-800 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all bg-white dark:bg-zinc-900 shadow-2xs">
               <div className="pl-3.5 flex items-center pointer-events-none">
-                <Map className="h-5 w-5 text-orange-500" />
+                <Map className="h-4.5 w-4.5 text-orange-500 shrink-0" />
               </div>
               <Input 
                 id="state" 
@@ -102,20 +97,20 @@ const LocationTab = ({ locationData }) => {
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 placeholder="Maharashtra" 
-                className="border-0 focus-visible:ring-0 shadow-none h-12 bg-transparent text-base px-3 w-full" 
+                className="border-0 focus-visible:ring-0 shadow-none h-11.5 sm:h-12 bg-transparent text-sm sm:text-base px-3.5 w-full" 
               />
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-1">
           <div className="relative group">
-            <div className="absolute -top-2.5 left-3 px-1.5 bg-white dark:bg-zinc-950 z-10">
+            <div className="absolute -top-2.5 left-3.5 px-1.5 bg-white dark:bg-zinc-900 z-10">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-orange-600 transition-colors">Postal Code</span>
             </div>
-            <div className="relative flex items-center border border-gray-300 dark:border-gray-700 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all bg-white dark:bg-zinc-900/50">
+            <div className="relative flex items-center border border-gray-200 dark:border-zinc-800 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all bg-white dark:bg-zinc-900 shadow-2xs">
               <div className="pl-3.5 flex items-center pointer-events-none">
-                <Hash className="h-5 w-5 text-orange-500" />
+                <Hash className="h-4.5 w-4.5 text-orange-500 shrink-0" />
               </div>
               <Input 
                 id="postalCode" 
@@ -124,18 +119,18 @@ const LocationTab = ({ locationData }) => {
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 placeholder="400001" 
-                className="border-0 focus-visible:ring-0 shadow-none h-12 bg-transparent text-base px-3 w-full" 
+                className="border-0 focus-visible:ring-0 shadow-none h-11.5 sm:h-12 bg-transparent text-sm sm:text-base px-3.5 w-full" 
               />
             </div>
           </div>
 
           <div className="relative group">
-            <div className="absolute -top-2.5 left-3 px-1.5 bg-white dark:bg-zinc-950 z-10">
+            <div className="absolute -top-2.5 left-3.5 px-1.5 bg-white dark:bg-zinc-900 z-10">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-orange-600 transition-colors">Country</span>
             </div>
-            <div className="relative flex items-center border border-gray-300 dark:border-gray-700 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all bg-white dark:bg-zinc-900/50">
+            <div className="relative flex items-center border border-gray-200 dark:border-zinc-800 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all bg-white dark:bg-zinc-900 shadow-2xs">
               <div className="pl-3.5 flex items-center pointer-events-none">
-                <Globe className="h-5 w-5 text-orange-500" />
+                <Globe className="h-4.5 w-4.5 text-orange-500 shrink-0" />
               </div>
               <Input 
                 id="country" 
@@ -144,27 +139,20 @@ const LocationTab = ({ locationData }) => {
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 placeholder="IN" 
-                className="border-0 focus-visible:ring-0 shadow-none h-12 bg-transparent text-base px-3 w-full" 
+                className="border-0 focus-visible:ring-0 shadow-none h-11.5 sm:h-12 bg-transparent text-sm sm:text-base px-3.5 w-full" 
               />
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="mt-8 space-y-6">
-        <h4 className="text-lg font-semibold tracking-tight text-gray-800 dark:text-gray-100 flex items-center gap-2">
-          <MapPin className="w-5 h-5 text-orange-500" />
-          Map Coordinates
-        </h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-          {/* Latitude */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-1">
           <div className="relative group">
-            <div className="absolute -top-2.5 left-3 px-1.5 bg-white dark:bg-zinc-950 z-10">
+            <div className="absolute -top-2.5 left-3.5 px-1.5 bg-white dark:bg-zinc-900 z-10">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-orange-600 transition-colors">Latitude</span>
             </div>
-            <div className="relative flex items-center border border-gray-300 dark:border-gray-700 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all bg-white dark:bg-zinc-900/50">
+            <div className="relative flex items-center border border-gray-200 dark:border-zinc-800 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all bg-white dark:bg-zinc-900 shadow-2xs">
               <div className="pl-3.5 flex items-center pointer-events-none">
-                <Compass className="h-5 w-5 text-orange-500" />
+                <Compass className="h-4.5 w-4.5 text-orange-500 shrink-0" />
               </div>
               <Input 
                 id="lat" 
@@ -173,19 +161,18 @@ const LocationTab = ({ locationData }) => {
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 placeholder="19.0760" 
-                className="border-0 focus-visible:ring-0 shadow-none h-12 bg-transparent text-base px-3 w-full" 
+                className="border-0 focus-visible:ring-0 shadow-none h-11.5 sm:h-12 bg-transparent text-sm sm:text-base px-3.5 w-full" 
               />
             </div>
-            <p className="text-[11px] text-muted-foreground mt-1.5 pl-1">Used for map pins and distance calculations.</p>
           </div>
 
           <div className="relative group">
-            <div className="absolute -top-2.5 left-3 px-1.5 bg-white dark:bg-zinc-950 z-10">
+            <div className="absolute -top-2.5 left-3.5 px-1.5 bg-white dark:bg-zinc-900 z-10">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-orange-600 transition-colors">Longitude</span>
             </div>
-            <div className="relative flex items-center border border-gray-300 dark:border-gray-700 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all bg-white dark:bg-zinc-900/50">
+            <div className="relative flex items-center border border-gray-200 dark:border-zinc-800 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all bg-white dark:bg-zinc-900 shadow-2xs">
               <div className="pl-3.5 flex items-center pointer-events-none">
-                <Compass className="h-5 w-5 text-orange-500" />
+                <Compass className="h-4.5 w-4.5 text-orange-500 shrink-0" />
               </div>
               <Input 
                 id="long" 
@@ -194,20 +181,20 @@ const LocationTab = ({ locationData }) => {
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 placeholder="72.8777" 
-                className="border-0 focus-visible:ring-0 shadow-none h-12 bg-transparent text-base px-3 w-full" 
+                className="border-0 focus-visible:ring-0 shadow-none h-11.5 sm:h-12 bg-transparent text-sm sm:text-base px-3.5 w-full" 
               />
             </div>
           </div>
         </div>
       </div>
 
-      <div className="mt-10 pt-6 flex justify-end">
+      <div className="mt-8 pt-5 border-t border-gray-100 dark:border-zinc-800 flex justify-end">
         <Button 
           type="submit" 
           disabled={isPending || !formik.dirty} 
-          className="h-11 px-8 rounded-md font-medium shadow-md hover:shadow-lg transition-all active:scale-[0.98] bg-orange-600 hover:bg-orange-700 text-white"
+          className="h-9 px-5 rounded-md font-semibold text-xs sm:text-sm shadow-2xs transition-all active:scale-[0.98] bg-orange-600 hover:bg-orange-700 text-white gap-2"
         >
-          {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+          {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           {isPending ? "Saving changes..." : "Save Location"}
         </Button>
       </div>

@@ -7,28 +7,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 const SettingsTab = () => {
   return (
     <div className="flex flex-col">
-      <div className="mb-8">
-        <h3 className="text-xl font-bold tracking-tight text-gray-900 dark:text-white">System Settings</h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage your business identification and system status.</p>
-      </div>
-      
-      <div className="space-y-8">
+      <div className="space-y-7">
         <div className="space-y-2">
-          <Label htmlFor="gstNumber" className="font-semibold text-gray-700 dark:text-gray-200">GST Number</Label>
+          <Label htmlFor="gstNumber" className="font-semibold text-xs text-gray-700 dark:text-gray-200 uppercase tracking-wider">GST Number</Label>
           <div className="relative">
-            <FileText className="absolute left-3.5 top-3 h-4 w-4 text-gray-400 z-10" />
-            <Input id="gstNumber" placeholder="22AAAAA0000A1Z5" className="pl-10 h-11 uppercase" />
+            <FileText className="absolute left-3.5 top-3.5 h-4.5 w-4.5 text-orange-500 z-10" />
+            <Input id="gstNumber" placeholder="22AAAAA0000A1Z5" className="pl-11 h-11.5 sm:h-12 uppercase text-sm sm:text-base border-gray-200 dark:border-zinc-800 focus-visible:ring-orange-500 rounded-md shadow-2xs bg-white dark:bg-zinc-900" />
           </div>
-          <p className="text-xs text-muted-foreground">Must be a valid 15-character GSTIN.</p>
+          <p className="text-[11px] sm:text-xs text-muted-foreground mt-1.5">Must be a valid 15-character GSTIN.</p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <Label htmlFor="currency" className="font-semibold text-gray-700 dark:text-gray-200">Currency</Label>
+            <Label htmlFor="currency" className="font-semibold text-xs text-gray-700 dark:text-gray-200 uppercase tracking-wider">Currency</Label>
             <div className="relative">
-              <Coins className="absolute left-3.5 top-3 h-4 w-4 text-gray-400 z-10" />
+              <Coins className="absolute left-3.5 top-3.5 h-4.5 w-4.5 text-orange-500 z-10" />
               <Select defaultValue="INR">
-                <SelectTrigger id="currency" className="pl-10 h-11">
+                <SelectTrigger id="currency" className="pl-11 h-11.5 sm:h-12 text-sm sm:text-base border-gray-200 dark:border-zinc-800 focus-visible:ring-orange-500 rounded-md shadow-2xs bg-white dark:bg-zinc-900 w-full">
                   <SelectValue placeholder="Select currency" />
                 </SelectTrigger>
                 <SelectContent>
@@ -36,15 +31,15 @@ const SettingsTab = () => {
                 </SelectContent>
               </Select>
             </div>
-            <p className="text-xs text-muted-foreground">Currently only INR is supported.</p>
+            <p className="text-[11px] sm:text-xs text-muted-foreground mt-1.5">Currently only INR is supported.</p>
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="status" className="font-semibold text-gray-700 dark:text-gray-200">Account Status</Label>
+            <Label htmlFor="status" className="font-semibold text-xs text-gray-700 dark:text-gray-200 uppercase tracking-wider">Account Status</Label>
             <div className="relative">
-              <Activity className="absolute left-3.5 top-3 h-4 w-4 text-gray-400 z-10" />
+              <Activity className="absolute left-3.5 top-3.5 h-4.5 w-4.5 text-orange-500 z-10" />
               <Select defaultValue="active">
-                <SelectTrigger id="status" className="pl-10 h-11">
+                <SelectTrigger id="status" className="pl-11 h-11.5 sm:h-12 text-sm sm:text-base border-gray-200 dark:border-zinc-800 focus-visible:ring-orange-500 rounded-md shadow-2xs bg-white dark:bg-zinc-900 w-full">
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -58,10 +53,10 @@ const SettingsTab = () => {
         </div>
       </div>
       
-      <div className="mt-10 pt-6 border-t border-border/40 flex justify-end">
-        <Button className="h-11 px-8 rounded-md font-medium shadow-sm transition-all hover:shadow-md">
-          <Save className="mr-2 h-4 w-4" />
-          Save Changes
+      <div className="mt-8 pt-5 border-t border-gray-100 dark:border-zinc-800 flex justify-end">
+        <Button className="h-9 px-5 rounded-md font-semibold text-xs sm:text-sm shadow-2xs transition-all active:scale-[0.98] bg-orange-600 hover:bg-orange-700 text-white gap-2">
+          <Save className="h-4 w-4" />
+          Save Settings
         </Button>
       </div>
     </div>

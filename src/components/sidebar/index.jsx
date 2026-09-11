@@ -18,21 +18,19 @@ export function AppSidebar(props) {
   };
 
   return (
-    <Sidebar collapsible="icon" {...props} className="bg-sidebar">
-      <SidebarHeader>
-        <div>
-          <RestaurantSwitcher />
-        </div>
+    <Sidebar collapsible="icon" {...props} className="bg-sidebar border-r border-border/40">
+      <SidebarHeader className="p-3 pb-1.5 group-data-[collapsible=icon]:p-1.5 group-data-[collapsible=icon]:items-center">
+        <RestaurantSwitcher />
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="px-1.5 py-1 group-data-[collapsible=icon]:px-0">
         <NavMain
           title={APP_SIDEBAR_CONFIG?.navMain?.title}
           items={APP_SIDEBAR_CONFIG?.navMain?.items}
         />
       </SidebarContent>
-      <SidebarSeparator className="mx-2 bg-gray-200 dark:bg-gray-800" />
+      <SidebarSeparator className="mx-3 my-1.5 bg-border/40 group-data-[collapsible=icon]:mx-1" />
       {isLoaded && (
-        <SidebarFooter>
+        <SidebarFooter className="p-3 pt-1.5 group-data-[collapsible=icon]:p-1.5 group-data-[collapsible=icon]:items-center">
           <NavUser
             user={sidebarConfig?.user}
             menuItems={APP_SIDEBAR_CONFIG?.navUserItems}

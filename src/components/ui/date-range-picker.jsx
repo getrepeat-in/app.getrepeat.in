@@ -11,11 +11,12 @@ export function DatePickerWithRange({ className, date, setDate }) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [tempDate, setTempDate] = React.useState(date);
 
-  React.useEffect(() => {
-    if (isOpen) {
+  const handleOpenChange = (open) => {
+    setIsOpen(open);
+    if (open) {
       setTempDate(date);
     }
-  }, [isOpen, date]);
+  };
 
   const PRESETS = [
     { label: "Today", getRange: () => ({ from: startOfDay(new Date()), to: endOfDay(new Date()) }) },
@@ -54,35 +55,35 @@ export function DatePickerWithRange({ className, date, setDate }) {
   };
 
   return (
-    <div className={cn("grid gap-2", className)}>
-      <Popover open={isOpen} onOpenChange={setIsOpen}>
+    <div className={cn("inline-flex shrink-0", className)}>
+      <Popover open={isOpen} onOpenChange={handleOpenChange}>
         <PopoverTrigger asChild>
           <Button
             id="date"
             variant={"outline"}
             className={cn(
-              "w-[260px] justify-start text-left font-normal bg-white dark:bg-zinc-950 border-gray-200 dark:border-zinc-800",
+              "h-8.5 w-auto shrink-0 px-2.5 gap-1.5 justify-start text-left font-normal bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800 rounded-md shadow-2xs hover:bg-gray-50 dark:hover:bg-zinc-800/60",
               !date && "text-muted-foreground"
             )}
           >
-            <CalendarIcon className="mr-2 h-4 w-4 text-gray-500" />
+            <CalendarIcon className="h-3.5 w-3.5 text-gray-500 shrink-0" />
             {date?.from ? (
               date.to ? (
-                <span className="text-[13px] font-medium text-gray-700 dark:text-gray-200">
+                <span className="text-xs font-medium text-gray-700 dark:text-gray-200 truncate">
                   {format(date.from, "MMM d, yyyy")} - {format(date.to, "MMM d, yyyy")}
                 </span>
               ) : (
-                <span className="text-[13px] font-medium text-gray-700 dark:text-gray-200">
+                <span className="text-xs font-medium text-gray-700 dark:text-gray-200 truncate">
                   {format(date.from, "MMM d, yyyy")}
                 </span>
               )
             ) : (
-              <span className="text-[13px] font-medium text-gray-700 dark:text-gray-200">All time</span>
+              <span className="text-xs font-medium text-gray-700 dark:text-gray-200">All time</span>
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto max-w-[100vw] p-0 flex flex-row shadow-xl border border-gray-100 dark:border-zinc-800 rounded-xl overflow-hidden" align="end" sideOffset={4}>
-          <div className="w-28 sm:w-36 border-r border-gray-100 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-900/50 flex flex-col p-1.5 sm:p-2 gap-1 overflow-y-auto no-scrollbar shrink-0 max-h-[360px]">
+        <PopoverContent className="w-auto max-w-[95vw] p-0 flex flex-col sm:flex-row shadow-xl border border-gray-100 dark:border-zinc-800 rounded-md overflow-hidden" align="end" sideOffset={4}>
+          <div className="w-full sm:w-32 md:w-36 border-b sm:border-b-0 sm:border-r border-gray-100 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-900/50 flex flex-row sm:flex-col p-1.5 sm:p-2 gap-1 overflow-x-auto sm:overflow-y-auto no-scrollbar shrink-0 max-h-[360px]">
             {PRESETS.map((preset) => {
               const presetRange = preset.getRange();
               const active = isPresetActive(presetRange);
@@ -91,7 +92,7 @@ export function DatePickerWithRange({ className, date, setDate }) {
                   key={preset.label}
                   onClick={() => setTempDate(presetRange)}
                   className={cn(
-                    "text-left px-2 sm:px-3 py-2 rounded-md text-xs sm:text-sm transition-colors font-medium truncate",
+                    "text-left px-2 sm:px-3 py-1.5 rounded-md text-xs transition-colors font-medium whitespace-nowrap sm:whitespace-normal truncate",
                     active 
                       ? "bg-primary/10 text-primary dark:bg-primary/20" 
                       : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800"
@@ -117,10 +118,10 @@ export function DatePickerWithRange({ className, date, setDate }) {
             </div>
           
             <div className="flex items-center justify-end gap-2 p-2 sm:p-3 border-t border-gray-100 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-900/50 shrink-0">
-              <Button variant="outline" size="sm" onClick={handleCancel} className="px-4 text-xs font-semibold h-8 rounded-md">
+              <Button variant="outline" size="sm" onClick={handleCancel} className="px-3 sm:px-4 text-xs font-semibold h-7.5 rounded-md">
                 Cancel
               </Button>
-              <Button size="sm" onClick={handleApply} className="px-4 text-xs font-semibold h-8 rounded-md">
+              <Button size="sm" onClick={handleApply} className="px-3 sm:px-4 text-xs font-semibold h-7.5 rounded-md">
                 Apply
               </Button>
             </div>

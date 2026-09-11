@@ -1,7 +1,9 @@
-import Dashboard from "@/components/pages/restaurant/dashboard";
-
 const Page = () => {
-  return <Dashboard />
+  return (
+    <div>
+      <h1>Page</h1>
+    </div>
+  )
 }
 
 export default Page

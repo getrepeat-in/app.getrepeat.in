@@ -1,13 +1,13 @@
 import { useMemo } from "react";
-import { StaffService } from "@/services/frontend/staff";
 import useNotification from "./useNotification";
+import { StaffService } from "@/services/frontend/staff";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export const useStaff = (resId) => {
     const queryClient = useQueryClient();
     const notification = useNotification();
 
-    const { data: staffData, isLoading, error } = useQuery({
+    const { data: staffData, isLoading, error, refetch } = useQuery({
         queryKey: ["staff", resId],
         queryFn: () => StaffService.getAll(resId),
         enabled: !!resId,
@@ -52,6 +52,7 @@ export const useStaff = (resId) => {
         staffList: rawStaff,
         isLoading,
         error,
+        refetch,
         addStaff: createMutation.mutate,
         isAdding: createMutation.isPending,
         updateStaff: updateMutation.mutate,

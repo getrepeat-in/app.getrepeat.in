@@ -6,7 +6,7 @@ export const useUsers = (resId) => {
     const queryClient = useQueryClient();
     const notification = useNotification();
 
-    const { data: usersData, isLoading, error } = useQuery({
+    const { data: usersData, isLoading, error, refetch } = useQuery({
         queryKey: ["users", resId],
         queryFn: () => UserService.getAll(resId),
         enabled: !!resId,
@@ -51,6 +51,7 @@ export const useUsers = (resId) => {
         userList: rawUsers,
         isLoading,
         error,
+        refetch,
         addUser: createMutation.mutate,
         isAdding: createMutation.isPending,
         updateUser: updateMutation.mutate,

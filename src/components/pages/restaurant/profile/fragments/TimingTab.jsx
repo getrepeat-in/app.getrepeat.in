@@ -3,9 +3,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { RestaurantService } from "@/services/frontend/restaurant";
 import { useRestaurant } from "@/store/hooks/useRestaurant";
 import { useFormMutation } from "@/store/hooks/useFormMutation";
+import { RestaurantService } from "@/services/frontend/restaurant";
 import { Save, Power, Loader2, Sunrise, Sunset, CalendarDays } from "lucide-react";
 
 const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
@@ -48,12 +48,7 @@ const TimingTab = ({ timingsData }) => {
   });
 
   return (
-    <form onSubmit={formik.handleSubmit} className="flex flex-col">
-      <div className="mb-8">
-        <h3 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Operating Hours</h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Configure your daily timings and manage your store&apos;s live status.</p>
-      </div>
-      
+    <form onSubmit={formik.handleSubmit} className="flex flex-col">     
       <div className="space-y-8"> 
         <div className={`relative overflow-hidden flex flex-row items-center justify-between rounded-md border p-6 shadow-sm transition-all duration-300 ${formik.values.currentlyOpen ? 'border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-900/20 dark:border-green-900/50' : 'border-border/40 bg-muted/20'}`}>
           <div className="flex items-center gap-5 z-10">
@@ -144,13 +139,13 @@ const TimingTab = ({ timingsData }) => {
         </div>
       </div>
       
-      <div className="mt-10 pt-6 border-t border-border/40 flex justify-end">
+      <div className="mt-8 pt-5 border-t border-gray-100 dark:border-zinc-800 flex justify-end">
         <Button 
           type="submit" 
           disabled={isPending || !formik.dirty}
-          className="h-11 px-8 rounded-md font-medium shadow-md hover:shadow-lg transition-all active:scale-[0.98] bg-orange-600 hover:bg-orange-700 text-white"
+          className="h-9 px-5 rounded-md font-semibold text-xs sm:text-sm shadow-2xs transition-all active:scale-[0.98] bg-orange-600 hover:bg-orange-700 text-white gap-2"
         >
-          {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+          {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           {isPending ? "Saving changes..." : "Save Operating Hours"}
         </Button>
       </div>

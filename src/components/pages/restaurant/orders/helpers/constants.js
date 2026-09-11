@@ -1,3 +1,5 @@
+import { UtensilsCrossed, ShoppingBag, Globe } from "lucide-react";
+
 export const ORDER_STATUS_CONFIG = {
     PENDING_PAYMENT: { label: "Pending Payment", badge: "bg-gray-100 text-gray-700 border-gray-200 dark:bg-zinc-800 dark:text-gray-300", dot: "bg-gray-500" },
     PLACED: { label: "Placed", badge: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-400", dot: "bg-blue-500" },
@@ -24,3 +26,36 @@ export const PAYMENT_STATUS_CONFIG = {
     failed: { label: "Failed", badge: "bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-400" },
     refunded: { label: "Refunded", badge: "bg-gray-100 text-gray-700 border-gray-200 dark:bg-zinc-800 dark:text-gray-300" }
 };
+
+export const ORDER_TYPE_CONFIG = {
+    "dine-in": {
+        label: "Dine-in",
+        icon: UtensilsCrossed,
+        emoji: "🍽️",
+        badge: "bg-blue-50 text-blue-700 border-blue-200/80 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-800/40",
+        dot: "bg-blue-500",
+    },
+    "takeaway": {
+        label: "Takeaway",
+        icon: ShoppingBag,
+        emoji: "🛍️",
+        badge: "bg-purple-50 text-purple-700 border-purple-200/80 dark:bg-purple-950/40 dark:text-purple-400 dark:border-purple-800/40",
+        dot: "bg-purple-500",
+    },
+    "online": {
+        label: "Online",
+        icon: Globe,
+        emoji: "🌐",
+        badge: "bg-emerald-50 text-emerald-700 border-emerald-200/80 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/40",
+        dot: "bg-emerald-500",
+    },
+};
+
+export const ORDER_TYPE_OPTIONS = [
+    { value: "all", label: "All Types", iconEmoji: "" },
+    { value: "dine-in", label: "Dine-in", iconEmoji: "🍽️" },
+    { value: "takeaway", label: "Takeaway", iconEmoji: "🛍️" },
+    { value: "online", label: "Online", iconEmoji: "🌐" },
+];
+
+export const DEFAULT_PAGE_SIZE = 10;

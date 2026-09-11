@@ -1,83 +1,17 @@
+"use client";
 import { format } from "date-fns";
-import { StatusBadge, PaymentBadge } from "./order-table";
-import { ORDER_STATUS_CONFIG } from "../helpers/constants";
+import { OrderTimeline } from "./order-timeline";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { X, Printer, Receipt as ReceiptIcon, CheckCircle2, XCircle, Clock, User, Phone, Mail } from "lucide-react";
+import { StatusBadge, PaymentBadge } from "../helpers/badges";
+import { Printer, Receipt as ReceiptIcon, User, Phone, Mail } from "lucide-react";
 
-const OrderTimeline = ({ statusHistory = [], createdAt, currentStatus }) => {
-    if (!statusHistory || statusHistory.length === 0) {
-        return (
-            <div className="flex items-center justify-between relative px-2 mt-4">
-                <div className="flex flex-col items-center gap-2 bg-white dark:bg-zinc-900 px-2">
-                    <CheckCircle2 size={24} className="text-green-500 bg-white dark:bg-zinc-900 rounded-full" />
-                    <div className="text-center">
-                        <div className="text-[11px] font-medium text-gray-500">Placed</div>
-                        <div className="text-[11px] font-semibold text-gray-900 dark:text-gray-100">{format(new Date(createdAt), "hh:mm a")}</div>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    const sortedHistory = [...statusHistory].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-
-    return (
-        <div className="flex relative mt-4 overflow-x-auto no-scrollbar pb-2">
-            {sortedHistory.map((historyItem, index) => {
-                const isLast = index === sortedHistory.length - 1;
-                const isRejected = historyItem.status === 'REJECTED' || historyItem.status === 'CANCELLED';
-                const isCompleted = historyItem.status === 'DELIVERED' || historyItem.status === 'PICKED_UP';
-                const isCurrent = isLast;
-                
-                let Icon = Clock;
-                let iconColor = "text-gray-400 bg-white dark:bg-zinc-900";
-                let lineColor = "bg-green-500";
-                
-                if (isRejected) {
-                    Icon = XCircle;
-                    iconColor = "text-red-500 bg-white dark:bg-zinc-900";
-                    lineColor = "bg-red-500";
-                } else if (isCompleted || !isLast) {
-                    Icon = CheckCircle2;
-                    iconColor = "text-green-500 bg-white dark:bg-zinc-900";
-                } else {
-                    Icon = Clock;
-                    iconColor = "text-blue-500 bg-white dark:bg-zinc-900";
-                }
-                
-                const label = ORDER_STATUS_CONFIG[historyItem.status]?.label || historyItem.status;
-
-                return (
-                    <div key={index} className="flex flex-col items-center relative flex-1 min-w-[72px] shrink-0">
-                        {/* Connecting Line */}
-                        {!isLast && (
-                            <div className={`absolute top-3 left-1/2 w-full h-[2px] z-0 ${lineColor}`} />
-                        )}
-                        
-                        <div className="bg-white dark:bg-zinc-900 px-1 relative z-10">
-                            <Icon size={24} className={`rounded-full ${iconColor}`} />
-                        </div>
-                        
-                        <div className="text-center mt-2 px-1">
-                            <div className="text-[11px] font-medium text-gray-500 leading-tight">{label}</div>
-                            <div className="text-[10px] font-semibold text-gray-900 dark:text-gray-100 mt-0.5">
-                                {format(new Date(historyItem.timestamp), "hh:mm a")}
-                            </div>
-                        </div>
-                    </div>
-                );
-            })}
-        </div>
-    );
-};
-
-const OrderDetailsDrawer = ({ isOpen, onClose, order }) => {
+export const OrderDetailsDrawer = ({ isOpen, onClose, order }) => {
     if (!order) return null;
 
     return (
         <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <SheetContent side="right" className="w-full sm:max-w-md p-3 flex flex-col bg-gray-100 dark:bg-zinc-950/50 border-l border-gray-200 dark:border-zinc-800 shadow-md">
-                <div className="flex justify-between rounded-md items-center bg-white dark:bg-zinc-900 px-6 py-5 border-b border-gray-200 shrink-0">
+                <div className="flex justify-between rounded-md items-center bg-white dark:bg-zinc-900 px-6 py-5 border-b border-gray-200 dark:border-zinc-800 shrink-0">
                     <span className="font-bold text-lg text-gray-900 dark:text-gray-100">Order Details</span>
                 </div>
 
@@ -88,7 +22,7 @@ const OrderDetailsDrawer = ({ isOpen, onClose, order }) => {
                                 ID: {order.orderNumber}
                             </div>
                             <div className="text-[13px] text-gray-500 font-medium">
-                                {format(new Date(order.createdAt), "hh:mm a | dd MMMM")}
+                                {order.createdAt ? format(new Date(order.createdAt), "hh:mm a | dd MMMM") : "-"}
                             </div>
                         </div>
                         
@@ -178,7 +112,7 @@ const OrderDetailsDrawer = ({ isOpen, onClose, order }) => {
                             </div>
                             <div className="flex justify-between items-center border-b border-gray-100 dark:border-zinc-800 pb-4">
                                 <span className="border-b border-dashed border-gray-300 dark:border-zinc-600">Taxes & Fees</span>
-                                <span>₹{(order.totalAmount - order.subtotal)?.toFixed(2)}</span>
+                                <span>₹{((order.totalAmount || 0) - (order.subtotal || 0))?.toFixed(2)}</span>
                             </div>
                             
                             <div className="flex justify-between items-center pt-2">

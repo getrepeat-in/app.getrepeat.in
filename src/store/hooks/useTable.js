@@ -6,7 +6,7 @@ export const useTable = (resId) => {
     const queryClient = useQueryClient();
     const notification = useNotification();
 
-    const { data: tableData, isLoading, error } = useQuery({
+    const { data: tableData, isLoading, error, refetch } = useQuery({
         queryKey: ["tables", resId],
         queryFn: () => TableService.getAll(resId),
         enabled: !!resId,
@@ -51,6 +51,7 @@ export const useTable = (resId) => {
         tables,
         isLoading,
         error,
+        refetch,
         addTable: createMutation.mutate,
         isAdding: createMutation.isPending,
         updateTable: updateMutation.mutate,

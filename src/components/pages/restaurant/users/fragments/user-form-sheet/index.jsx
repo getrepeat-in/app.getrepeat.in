@@ -8,8 +8,8 @@ import { UploadService } from "@/services/frontend/upload";
 import { useRestaurant } from "@/store/hooks/useRestaurant";
 import useNotification from "@/store/hooks/useNotification";
 import { User, Loader2, Eye, EyeOff, Key, Phone, Lock } from "lucide-react";
+import { AvatarUpload } from "@/components/pages/restaurant/staff/fragments";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { AvatarUpload } from "@/components/pages/restaurant/staff/framents/staff-form/fragments/AvatarUpload"
 
 const getValidationSchema = (isEditMode, isResettingPassword) => Yup.object({
     name: Yup.string().required("Name is required"),
