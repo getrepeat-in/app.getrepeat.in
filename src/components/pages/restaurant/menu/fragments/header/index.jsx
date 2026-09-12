@@ -70,8 +70,8 @@ export default function MenuHeader() {
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
                     Media: {isLoading ? <Loader2 className="h-3 w-3 animate-spin inline ml-1" /> : media}
                 </div>
-                <div className="flex items-center gap-1.5 bg-orange-50/50 border border-orange-100/50 px-3 py-1.5 rounded-md text-[13px] font-semibold text-orange-700 shadow-sm">
-                    <div className="w-1.5 h-1.5 rounded-full bg-orange-500"></div>
+                <div className="flex items-center gap-1.5 bg-primary/10/50 border border-orange-100/50 px-3 py-1.5 rounded-md text-[13px] font-semibold text-primary shadow-sm">
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary/90"></div>
                     No Media: {isLoading ? <Loader2 className="h-3 w-3 animate-spin inline ml-1" /> : noMedia}
                 </div>
             </div>

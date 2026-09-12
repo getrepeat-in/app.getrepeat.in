@@ -69,11 +69,11 @@ export default function OnboardingPage() {
                 <div className="grid gap-6">
                   <div className="relative group">
                     <div className="absolute -top-2.5 left-3 px-1.5 bg-white dark:bg-background z-10">
-                      <span className={`text-[11px] font-semibold uppercase tracking-wider transition-colors ${formik.touched.name && formik.errors.name ? 'text-destructive' : 'text-slate-500 group-focus-within:text-orange-600'}`}>Restaurant Name</span>
+                      <span className={`text-[11px] font-semibold uppercase tracking-wider transition-colors ${formik.touched.name && formik.errors.name ? 'text-destructive' : 'text-slate-500 group-focus-within:text-primary'}`}>Restaurant Name</span>
                     </div>
-                    <div className={`relative flex items-center border rounded-md transition-all bg-white dark:bg-zinc-900/50 ${formik.touched.name && formik.errors.name ? 'border-destructive focus-within:ring-1 focus-within:ring-destructive' : 'border-gray-300 dark:border-gray-700 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500'}`}>
+                    <div className={`relative flex items-center border rounded-md transition-all bg-white dark:bg-zinc-900/50 ${formik.touched.name && formik.errors.name ? 'border-destructive focus-within:ring-1 focus-within:ring-destructive' : 'border-gray-300 dark:border-gray-700 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-primary'}`}>
                       <div className="pl-3.5 flex items-center pointer-events-none">
-                        <Store className={`h-5 w-5 ${formik.touched.name && formik.errors.name ? 'text-destructive' : 'text-orange-500'}`} />
+                        <Store className={`h-5 w-5 ${formik.touched.name && formik.errors.name ? 'text-destructive' : 'text-primary/90'}`} />
                       </div>
                       <Input 
                         id="name" 
@@ -96,11 +96,11 @@ export default function OnboardingPage() {
 
                   <div className="relative group">
                     <div className="absolute -top-2.5 left-3 px-1.5 bg-white dark:bg-background z-10">
-                      <span className={`text-[11px] font-semibold uppercase tracking-wider transition-colors ${formik.touched.slug && formik.errors.slug ? 'text-destructive' : 'text-slate-500 group-focus-within:text-orange-600'}`}>Unique URL Slug</span>
+                      <span className={`text-[11px] font-semibold uppercase tracking-wider transition-colors ${formik.touched.slug && formik.errors.slug ? 'text-destructive' : 'text-slate-500 group-focus-within:text-primary'}`}>Unique URL Slug</span>
                     </div>
-                    <div className={`relative flex items-center border rounded-md transition-all bg-white dark:bg-zinc-900/50 ${formik.touched.slug && formik.errors.slug ? 'border-destructive focus-within:ring-1 focus-within:ring-destructive' : 'border-gray-300 dark:border-gray-700 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500'}`}>
+                    <div className={`relative flex items-center border rounded-md transition-all bg-white dark:bg-zinc-900/50 ${formik.touched.slug && formik.errors.slug ? 'border-destructive focus-within:ring-1 focus-within:ring-destructive' : 'border-gray-300 dark:border-gray-700 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-primary'}`}>
                       <div className="pl-3.5 flex items-center pointer-events-none">
-                        <Link2 className={`h-5 w-5 ${formik.touched.slug && formik.errors.slug ? 'text-destructive' : 'text-orange-500'}`} />
+                        <Link2 className={`h-5 w-5 ${formik.touched.slug && formik.errors.slug ? 'text-destructive' : 'text-primary/90'}`} />
                       </div>
                       <Input 
                         id="slug" 
@@ -119,11 +119,11 @@ export default function OnboardingPage() {
 
                   <div className="relative group">
                     <div className="absolute -top-2.5 left-3 px-1.5 bg-white dark:bg-background z-10">
-                      <span className={`text-[11px] font-semibold uppercase tracking-wider transition-colors ${formik.touched.phone && formik.errors.phone ? 'text-destructive' : 'text-slate-500 group-focus-within:text-orange-600'}`}>Phone Number</span>
+                      <span className={`text-[11px] font-semibold uppercase tracking-wider transition-colors ${formik.touched.phone && formik.errors.phone ? 'text-destructive' : 'text-slate-500 group-focus-within:text-primary'}`}>Phone Number</span>
                     </div>
-                    <div className={`relative flex items-center border rounded-md transition-all bg-white dark:bg-zinc-900/50 ${formik.touched.phone && formik.errors.phone ? 'border-destructive focus-within:ring-1 focus-within:ring-destructive' : 'border-gray-300 dark:border-gray-700 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500'}`}>
+                    <div className={`relative flex items-center border rounded-md transition-all bg-white dark:bg-zinc-900/50 ${formik.touched.phone && formik.errors.phone ? 'border-destructive focus-within:ring-1 focus-within:ring-destructive' : 'border-gray-300 dark:border-gray-700 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-primary'}`}>
                       <div className="pl-3.5 flex items-center pointer-events-none">
-                        <Phone className={`h-5 w-5 ${formik.touched.phone && formik.errors.phone ? 'text-destructive' : 'text-orange-500'}`} />
+                        <Phone className={`h-5 w-5 ${formik.touched.phone && formik.errors.phone ? 'text-destructive' : 'text-primary/90'}`} />
                       </div>
                       <Input 
                         id="phone" 
@@ -142,11 +142,11 @@ export default function OnboardingPage() {
 
                   <div className="relative group">
                     <div className="absolute -top-2.5 left-3 px-1.5 bg-white dark:bg-background z-10">
-                      <span className={`text-[11px] font-semibold uppercase tracking-wider transition-colors ${formik.touched.email && formik.errors.email ? 'text-destructive' : 'text-slate-500 group-focus-within:text-orange-600'}`}>Email Address</span>
+                      <span className={`text-[11px] font-semibold uppercase tracking-wider transition-colors ${formik.touched.email && formik.errors.email ? 'text-destructive' : 'text-slate-500 group-focus-within:text-primary'}`}>Email Address</span>
                     </div>
                     <div className={`relative flex items-center border rounded-md transition-all bg-white dark:bg-zinc-900/50 opacity-70 cursor-not-allowed ${formik.touched.email && formik.errors.email ? 'border-destructive focus-within:ring-1 focus-within:ring-destructive' : 'border-gray-300 dark:border-gray-700'}`}>
                       <div className="pl-3.5 flex items-center pointer-events-none">
-                        <Mail className={`h-5 w-5 ${formik.touched.email && formik.errors.email ? 'text-destructive' : 'text-orange-500'}`} />
+                        <Mail className={`h-5 w-5 ${formik.touched.email && formik.errors.email ? 'text-destructive' : 'text-primary/90'}`} />
                       </div>
                       <Input 
                         id="email" 
@@ -167,7 +167,7 @@ export default function OnboardingPage() {
                   
                   <Button 
                     type="submit" 
-                    className="w-full h-12 mt-2 rounded-md font-semibold shadow-md hover:shadow-lg transition-all active:scale-[0.98] bg-orange-600 hover:bg-orange-700 text-white group" 
+                    className="w-full h-12 mt-2 rounded-md font-semibold shadow-md hover:shadow-lg transition-all active:scale-[0.98] bg-primary hover:bg-primary/90 text-white group" 
                     disabled={formik.isSubmitting}
                   >
                     {formik.isSubmitting ? (

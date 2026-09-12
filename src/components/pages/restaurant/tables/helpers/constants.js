@@ -20,9 +20,9 @@ export const TABLE_STATUS_CONFIG = {
     },
     occupied: {
         label: "Occupied",
-        dot: "bg-orange-500",
-        badge: "bg-orange-50 text-orange-700 border-orange-200/80 dark:bg-orange-950/40 dark:text-orange-400 dark:border-orange-800/40",
-        color: "bg-orange-500",
+        dot: "bg-primary/90",
+        badge: "bg-primary/10 text-primary border-orange-200/80 dark:bg-orange-950/40 dark:text-orange-400 dark:border-orange-800/40",
+        color: "bg-primary/90",
     },
     reserved: {
         label: "Reserved",

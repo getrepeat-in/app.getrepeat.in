@@ -30,7 +30,7 @@ export function SelectItemsTree({ items = [], categories = [] }) {
                 className="flex items-center gap-3 p-2 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer select-none" 
                 onClick={() => toggleCategory(catId)}
               >
-                <button className="flex items-center justify-center w-6 h-6 rounded-full border-2 border-orange-400 text-orange-500 bg-white shrink-0">
+                <button className="flex items-center justify-center w-6 h-6 rounded-full border-2 border-orange-400 text-primary/90 bg-white shrink-0">
                   {isExpanded ? <ChevronDown className="w-3.5 h-3.5" strokeWidth={3} /> : <ChevronRight className="w-3.5 h-3.5" strokeWidth={3} />}
                 </button>
                 <TreeCheckbox checked={isCatSelected} onChange={() => toggleCatSelect(catId)} />

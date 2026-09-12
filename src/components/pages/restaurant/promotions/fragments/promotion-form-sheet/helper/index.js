@@ -10,7 +10,8 @@ export const getInitialFormData = (promotion) => ({
         : (promotion ? "" : new Date().toISOString().split('T')[0]),
     ends_at: promotion?.ends_at ? new Date(promotion.ends_at).toISOString().split('T')[0] : "",
     usage_limit: promotion?.usage_limit || "",
-    per_user_limit: promotion?.per_user_limit || ""
+    per_user_limit: promotion?.per_user_limit || "",
+    min_order_value: promotion?.min_order_value || ""
 });
 
 export const preparePayload = (formData) => {
@@ -24,6 +25,10 @@ export const preparePayload = (formData) => {
     if (formData.type === "ITEM_DISCOUNT" || formData.type === "BESTSELLER") {
         payload.discount_type = formData.discount_type;
         payload.discount_value = Number(formData.discount_value);
+    }
+
+    if (formData.type === "FREEBIE") {
+        payload.min_order_value = Number(formData.min_order_value);
     }
 
     if (formData.starts_at) payload.starts_at = new Date(formData.starts_at);

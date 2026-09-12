@@ -6,11 +6,11 @@ export function BasicFields({ formik, isEditMode, domain, showPassword, setShowP
         <>
             <div className="relative group">
                 <div className="absolute -top-2.5 left-3 px-1.5 bg-white dark:bg-zinc-950 z-10">
-                    <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-orange-600 transition-colors">Full Name</span>
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-primary transition-colors">Full Name</span>
                 </div>
-                <div className="relative flex items-center border border-gray-300 dark:border-gray-700 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all bg-white dark:bg-zinc-900/50">
+                <div className="relative flex items-center border border-gray-300 dark:border-gray-700 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-primary transition-all bg-white dark:bg-zinc-900/50">
                     <div className="pl-3.5 flex items-center pointer-events-none shrink-0">
-                        <User className="h-5 w-5 text-orange-500" />
+                        <User className="h-5 w-5 text-primary/90" />
                     </div>
                     <Input 
                         id="name"
@@ -26,12 +26,12 @@ export function BasicFields({ formik, isEditMode, domain, showPassword, setShowP
 
             <div className="relative group">
                 <div className="absolute -top-2.5 left-3 px-1.5 bg-white dark:bg-zinc-950 z-10 flex items-center gap-1">
-                    <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-orange-600 transition-colors">Email Address</span>
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-primary transition-colors">Email Address</span>
                     {isEditMode && <span className="normal-case font-medium text-[10px] text-red-400">(Cannot be changed)</span>}
                 </div>
-                <div className={`relative flex items-center border border-gray-300 dark:border-gray-700 rounded-md transition-all bg-white dark:bg-zinc-900/50 overflow-hidden ${!isEditMode ? 'focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500' : 'opacity-70'}`}>
+                <div className={`relative flex items-center border border-gray-300 dark:border-gray-700 rounded-md transition-all bg-white dark:bg-zinc-900/50 overflow-hidden ${!isEditMode ? 'focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-primary' : 'opacity-70'}`}>
                     <div className="pl-3.5 flex items-center pointer-events-none shrink-0">
-                        <Mail className="h-5 w-5 text-orange-500" />
+                        <Mail className="h-5 w-5 text-primary/90" />
                     </div>
                     <Input 
                         id="emailPrefix"
@@ -55,11 +55,11 @@ export function BasicFields({ formik, isEditMode, domain, showPassword, setShowP
             {!isEditMode && (
                 <div className="relative group">
                     <div className="absolute -top-2.5 left-3 px-1.5 bg-white dark:bg-zinc-950 z-10">
-                        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-orange-600 transition-colors">Password</span>
+                        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-primary transition-colors">Password</span>
                     </div>
-                    <div className="relative flex items-center border border-gray-300 dark:border-gray-700 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all bg-white dark:bg-zinc-900/50 overflow-hidden">
+                    <div className="relative flex items-center border border-gray-300 dark:border-gray-700 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-primary transition-all bg-white dark:bg-zinc-900/50 overflow-hidden">
                         <div className="pl-3.5 flex items-center pointer-events-none shrink-0">
-                            <KeyRound className="h-5 w-5 text-orange-500" />
+                            <KeyRound className="h-5 w-5 text-primary/90" />
                         </div>
                         <Input 
                             id="password"

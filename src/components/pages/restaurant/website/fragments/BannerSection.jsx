@@ -92,7 +92,7 @@ const BannerSection = ({ formik }) => {
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Add banners that will appear on the top of your digital storefront.</p>
         </div>
         <div>
-          <label htmlFor="new-banner-upload" className={`inline-flex cursor-pointer h-10 items-center justify-center rounded-md border border-orange-600 bg-orange-50 px-4 py-2 text-sm font-medium text-orange-600 shadow-sm hover:bg-orange-100 transition-all ${uploadingNew ? 'opacity-70 pointer-events-none' : ''}`}>
+          <label htmlFor="new-banner-upload" className={`inline-flex cursor-pointer h-10 items-center justify-center rounded-md border border-primary bg-primary/10 px-4 py-2 text-sm font-medium text-primary shadow-sm hover:bg-primary/20 transition-all ${uploadingNew ? 'opacity-70 pointer-events-none' : ''}`}>
             {uploadingNew ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
             {uploadingNew ? "Uploading..." : "Add Banner"}
           </label>

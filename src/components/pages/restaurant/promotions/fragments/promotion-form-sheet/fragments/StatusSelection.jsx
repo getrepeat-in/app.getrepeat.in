@@ -5,7 +5,7 @@ export const StatusSelection = ({ formData, handleSelectChange }) => {
         <div className="space-y-6 mt-6 pt-6 border-t border-gray-100 dark:border-zinc-800">
             <div className="relative group">
                 <div className="absolute -top-2.5 left-3 px-1.5 bg-white dark:bg-zinc-950 z-10">
-                    <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-orange-600 transition-colors">Promotion Status</span>
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-primary transition-colors">Promotion Status</span>
                 </div>
                 <div className="flex items-center border border-gray-300 dark:border-gray-700 rounded-md bg-gray-50/50 dark:bg-zinc-900/50 p-1">
                     {STATUS_OPTIONS.map(status => {
@@ -14,7 +14,7 @@ export const StatusSelection = ({ formData, handleSelectChange }) => {
                         if (isActive) {
                             if (status.value === "ACTIVE") activeBg = "bg-[#00c950] text-white shadow-sm ring-1 ring-[#00c950]/50";
                             else if (status.value === "INACTIVE") activeBg = "bg-slate-500 text-white shadow-sm ring-1 ring-slate-500/50";
-                            else activeBg = "bg-orange-500 text-white shadow-sm ring-1 ring-orange-500/50";
+                            else activeBg = "bg-primary/90 text-white shadow-sm ring-1 ring-primary/50";
                         }
                         
                         return (

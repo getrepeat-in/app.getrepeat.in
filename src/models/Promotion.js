@@ -12,7 +12,7 @@ const PromotionSchema = new Schema(
     type: {
       type: String,
       required: true,
-      enum: ["ITEM_DISCOUNT", "BESTSELLER"],
+      enum: ["ITEM_DISCOUNT", "BESTSELLER", "CART_DISCOUNT", "BOGO", "FREEBIE"],
       default: "ITEM_DISCOUNT",
     },
 
@@ -69,6 +69,12 @@ const PromotionSchema = new Schema(
     },
 
     per_user_limit: { type: Number, default: null, comment: "Maximum number of times a single user can use this promotion" },
+
+    min_order_value: {
+      type: Number,
+      default: null,
+      min: 0
+    },
 
     times_used: {
       type: Number,

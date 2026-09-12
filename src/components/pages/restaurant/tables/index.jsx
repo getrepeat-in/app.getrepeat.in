@@ -4,7 +4,7 @@ import QRCodeLib from "qrcode";
 import { getImageUrl } from "@/lib/utils";
 import { useState, useMemo } from "react";
 import { TableFormSheet } from "./fragments";
-import { Button } from "@/components/ui/button";
+import GlobalButton from "@/components/global/button";
 import { useTable } from "@/store/hooks/useTable";
 import DataTable from "@/components/global/table";
 import { useRestaurant } from "@/store/hooks/useRestaurant";
@@ -59,10 +59,8 @@ export default function TablesManagement() {
             ctx.fillStyle = "#ffffff";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            const grad = ctx.createLinearGradient(0, 0, canvas.width, 0);
-            grad.addColorStop(0, "#ea580c");
-            grad.addColorStop(1, "#f97316");
-            ctx.fillStyle = grad;
+            const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
+            ctx.fillStyle = primaryColor || "#ea580c";
             ctx.fillRect(0, 0, canvas.width, 160);
 
             ctx.fillStyle = "#ffffff";
@@ -102,11 +100,11 @@ export default function TablesManagement() {
             ctx.fillStyle = "#fff7ed";
             ctx.fillRect(0, 680, canvas.width, 100);
 
-            ctx.fillStyle = "#ea580c";
+            ctx.fillStyle = primaryColor || "#ea580c";
             ctx.font = "bold 26px sans-serif";
             ctx.fillText("📱 Scan & Order Instantly", canvas.width / 2, 725);
             
-            ctx.fillStyle = "#9a3412";
+            ctx.fillStyle = "#fff7ed";
             ctx.font = "normal 16px sans-serif";
             ctx.globalAlpha = 0.8;
             ctx.fillText(`Capacity: ${table.capacity} seats`, canvas.width / 2, 755);
@@ -227,17 +225,17 @@ export default function TablesManagement() {
 
                 actions={
                     <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto">
-                        <Button
+                        <GlobalButton
                             onClick={handleAddTable}
                             size="sm"
-                            className="h-8.5 rounded-md bg-orange-600 hover:bg-orange-700 text-white shadow-2xs gap-1.5 font-semibold text-xs shrink-0"
+                            className="h-8.5 rounded-md shadow-2xs gap-1.5 font-semibold text-xs shrink-0"
                         >
                             <Plus size={14} strokeWidth={2.5} />
                             <span>Add Table</span>
-                        </Button>
+                        </GlobalButton>
 
                         {refetch && (
-                            <Button
+                            <GlobalButton
                                 variant="outline"
                                 size="sm"
                                 onClick={() => refetch()}
@@ -246,7 +244,7 @@ export default function TablesManagement() {
                             >
                                 <RefreshCw className="h-3.5 w-3.5" />
                                 <span className="hidden sm:inline text-xs">Refresh</span>
-                            </Button>
+                            </GlobalButton>
                         )}
                     </div>
                 }

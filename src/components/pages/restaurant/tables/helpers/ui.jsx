@@ -4,7 +4,7 @@
 export const Field = ({ label, icon: Icon, error, children }) => (
     <div className="space-y-1.5">
         <label className="flex items-center gap-2 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">
-            {Icon && <Icon size={12} className="text-orange-500" />}
+            {Icon && <Icon size={12} className="text-primary/90" />}
             {label}
         </label>
         {children}
@@ -15,7 +15,7 @@ export const Field = ({ label, icon: Icon, error, children }) => (
 /** Styled input that matches the design system */
 export const FormInput = ({ className = "", ...props }) => (
     <input
-        className={`w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-gray-100 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-400 transition-colors ${className}`}
+        className={`w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-gray-100 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-orange-400 transition-colors ${className}`}
         {...props}
     />
 );
@@ -27,8 +27,8 @@ export const Toggle = ({ checked, onChange }) => (
         onClick={onChange}
         aria-checked={checked}
         role="switch"
-        className={`relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500/40
-            ${checked ? "bg-orange-500" : "bg-gray-200 dark:bg-zinc-700"}`}
+        className={`relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/40
+            ${checked ? "bg-primary/90" : "bg-gray-200 dark:bg-zinc-700"}`}
     >
         <span
             className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200

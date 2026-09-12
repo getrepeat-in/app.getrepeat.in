@@ -1,5 +1,5 @@
 import { PROMOTION_STATUS_CONFIG } from "./constants";
-import { Edit2, Trash2, Tag, Percent, UtensilsCrossed, Calendar } from "lucide-react";
+import { Edit2, Trash2, Tag, Percent, UtensilsCrossed, Calendar, Gift, Star } from "lucide-react";
 
 export const formatDate = (dateString) => {
     if (!dateString) return { date: "N/A", time: "" };
@@ -24,6 +24,24 @@ export const PromotionNameCell = ({ promotion }) => (
 );
 
 export const PromotionTypeBadge = ({ promotion }) => {
+    if (promotion.type === "FREEBIE") {
+        return (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold bg-pink-50 dark:bg-pink-950/40 text-pink-700 dark:text-pink-400 border border-pink-200/80 dark:border-pink-800/40 rounded-md uppercase tracking-wider w-fit whitespace-nowrap">
+                <Gift size={11} strokeWidth={2.5} />
+                Freebie
+            </span>
+        );
+    }
+    
+    if (promotion.type === "BESTSELLER") {
+        return (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/80 dark:border-amber-800/40 rounded-md uppercase tracking-wider w-fit whitespace-nowrap">
+                <Star size={11} strokeWidth={2.5} />
+                Bestseller
+            </span>
+        );
+    }
+
     const isPercent = promotion.discount_type === "PERCENTAGE";
     return (
         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200/80 dark:border-blue-800/40 rounded-md uppercase tracking-wider w-fit whitespace-nowrap">
@@ -33,18 +51,25 @@ export const PromotionTypeBadge = ({ promotion }) => {
     );
 };
 
-export const PromotionDiscountCell = ({ promotion }) => (
-    <div className="flex flex-col">
-        <span className="font-bold text-gray-900 dark:text-zinc-100 text-sm">
-            {promotion.discount_type === "PERCENTAGE" ? `${promotion.discount_value}% OFF` : `₹${promotion.discount_value} OFF`}
-        </span>
-        {promotion.min_order_value > 0 && (
-            <span className="text-[11px] text-gray-500 dark:text-zinc-400">
-                Min. order ₹{promotion.min_order_value}
+export const PromotionDiscountCell = ({ promotion }) => {
+    const isFreebie = promotion.type === "FREEBIE";
+    return (
+        <div className="flex flex-col">
+            <span className="font-bold text-gray-900 dark:text-zinc-100 text-sm">
+                {isFreebie 
+                    ? "FREE ITEMS" 
+                    : promotion.discount_type === "PERCENTAGE" 
+                        ? `${promotion.discount_value}% OFF` 
+                        : `₹${promotion.discount_value} OFF`}
             </span>
-        )}
-    </div>
-);
+            {promotion.min_order_value > 0 && (
+                <span className="text-[11px] text-gray-500 dark:text-zinc-400">
+                    Min. order ₹{promotion.min_order_value}
+                </span>
+            )}
+        </div>
+    );
+};
 
 export const PromotionTargetCell = ({ promotion }) => {
     const count = promotion.items?.length || 0;

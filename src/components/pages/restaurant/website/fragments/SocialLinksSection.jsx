@@ -13,11 +13,11 @@ const SocialLinksSection = ({ formik }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
         <div className="relative group">
           <div className="absolute -top-2.5 left-3 px-1.5 bg-white dark:bg-zinc-900 z-10">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-orange-600 transition-colors">Facebook URL</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-primary transition-colors">Facebook URL</span>
           </div>
-          <div className="relative flex items-center border border-gray-300 dark:border-gray-700 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all bg-white dark:bg-zinc-900/50">
+          <div className="relative flex items-center border border-gray-300 dark:border-gray-700 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-primary transition-all bg-white dark:bg-zinc-900/50">
             <div className="pl-3.5 flex items-center pointer-events-none">
-              <Link2 className="h-5 w-5 text-orange-500" />
+              <Link2 className="h-5 w-5 text-primary/90" />
             </div>
             <Input 
               id="socialLinks.facebook" 
@@ -33,11 +33,11 @@ const SocialLinksSection = ({ formik }) => {
 
         <div className="relative group">
           <div className="absolute -top-2.5 left-3 px-1.5 bg-white dark:bg-zinc-900 z-10">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-orange-600 transition-colors">Instagram URL</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-primary transition-colors">Instagram URL</span>
           </div>
-          <div className="relative flex items-center border border-gray-300 dark:border-gray-700 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all bg-white dark:bg-zinc-900/50">
+          <div className="relative flex items-center border border-gray-300 dark:border-gray-700 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-primary transition-all bg-white dark:bg-zinc-900/50">
             <div className="pl-3.5 flex items-center pointer-events-none">
-              <Link2 className="h-5 w-5 text-orange-500" />
+              <Link2 className="h-5 w-5 text-primary/90" />
             </div>
             <Input 
               id="socialLinks.instagram" 
@@ -53,11 +53,11 @@ const SocialLinksSection = ({ formik }) => {
 
         <div className="relative group">
           <div className="absolute -top-2.5 left-3 px-1.5 bg-white dark:bg-zinc-900 z-10">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-orange-600 transition-colors">Twitter / X URL</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-primary transition-colors">Twitter / X URL</span>
           </div>
-          <div className="relative flex items-center border border-gray-300 dark:border-gray-700 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all bg-white dark:bg-zinc-900/50">
+          <div className="relative flex items-center border border-gray-300 dark:border-gray-700 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-primary transition-all bg-white dark:bg-zinc-900/50">
             <div className="pl-3.5 flex items-center pointer-events-none">
-              <Link2 className="h-5 w-5 text-orange-500" />
+              <Link2 className="h-5 w-5 text-primary/90" />
             </div>
             <Input 
               id="socialLinks.twitter" 

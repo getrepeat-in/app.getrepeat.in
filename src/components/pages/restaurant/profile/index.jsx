@@ -70,7 +70,7 @@ const ProfilePage = () => {
                     size={15}
                     className={
                       isActive
-                        ? "text-orange-600 dark:text-orange-400"
+                        ? "text-primary dark:text-orange-400"
                         : "text-gray-400 dark:text-zinc-500"
                     }
                   />

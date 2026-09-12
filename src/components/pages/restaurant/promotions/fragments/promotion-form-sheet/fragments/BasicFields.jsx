@@ -16,6 +16,12 @@ const FIELD_CONFIG = {
         showDiscount: true,
         showDates: true,
         showLimits: false,
+    },
+    FREEBIE: {
+        showDiscount: false,
+        showDates: true,
+        showLimits: true,
+        showMinOrder: true,
     }
 };
 
@@ -26,13 +32,13 @@ export const BasicFields = ({ formData, handleChange, handleSelectChange }) => {
         <div className="space-y-6">
             <div className="relative group">
                 <div className="absolute -top-2.5 left-3 px-1.5 bg-white dark:bg-zinc-950 z-10 max-w-[calc(100%-24px)]">
-                    <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-orange-600 transition-colors whitespace-nowrap block truncate">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-primary transition-colors whitespace-nowrap block truncate">
                         Promotion Name <span className="text-red-500">*</span>
                     </span>
                 </div>
-                <div className="relative flex items-center border border-gray-300 dark:border-gray-700 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all bg-white dark:bg-zinc-900/50">
+                <div className="relative flex items-center border border-gray-300 dark:border-gray-700 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-primary transition-all bg-white dark:bg-zinc-900/50">
                     <div className="pl-3.5 flex items-center pointer-events-none absolute left-0 z-10">
-                        <Tag className="h-5 w-5 text-orange-500" />
+                        <Tag className="h-5 w-5 text-primary/90" />
                     </div>
                     <Input 
                         name="name" 
@@ -49,7 +55,7 @@ export const BasicFields = ({ formData, handleChange, handleSelectChange }) => {
                 <div className="grid grid-cols-1 gap-5">
                     <div className="relative group">
                         <div className="absolute -top-2.5 left-3 px-1.5 bg-white dark:bg-zinc-950 z-10 max-w-[calc(100%-24px)]">
-                            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-orange-600 transition-colors whitespace-nowrap block truncate">
+                            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-primary transition-colors whitespace-nowrap block truncate">
                                 Discount Type <span className="text-red-500">*</span>
                             </span>
                         </div>
@@ -63,7 +69,7 @@ export const BasicFields = ({ formData, handleChange, handleSelectChange }) => {
                                         onClick={() => handleSelectChange("discount_type", type.value)}
                                         className={`flex items-center justify-center gap-2 flex-1 py-2 px-3 h-10 text-[14px] font-bold rounded-md transition-all ${
                                             isActive
-                                                ? "bg-white dark:bg-zinc-800 text-orange-600 shadow-sm ring-1 ring-gray-200 dark:ring-zinc-700"
+                                                ? "bg-white dark:bg-zinc-800 text-primary shadow-sm ring-1 ring-gray-200 dark:ring-zinc-700"
                                                 : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-200/50 dark:hover:bg-zinc-800/50"
                                         }`}
                                     >
@@ -77,16 +83,16 @@ export const BasicFields = ({ formData, handleChange, handleSelectChange }) => {
 
                     <div className="relative group">
                         <div className="absolute -top-2.5 left-3 px-1.5 bg-white dark:bg-zinc-950 z-10 max-w-[calc(100%-24px)]">
-                            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-orange-600 transition-colors whitespace-nowrap block truncate">
+                            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-primary transition-colors whitespace-nowrap block truncate">
                                 Discount Value <span className="text-red-500">*</span>
                             </span>
                         </div>
-                        <div className="relative flex items-center border border-gray-300 dark:border-gray-700 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all bg-white dark:bg-zinc-900/50">
+                        <div className="relative flex items-center border border-gray-300 dark:border-gray-700 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-primary transition-all bg-white dark:bg-zinc-900/50">
                             <div className="pl-3.5 flex items-center pointer-events-none absolute left-0 z-10">
                                 {formData.discount_type === "PERCENTAGE" ? (
-                                    <Percent className="h-5 w-5 text-orange-500" />
+                                    <Percent className="h-5 w-5 text-primary/90" />
                                 ) : (
-                                    <IndianRupee className="h-5 w-5 text-orange-500" />
+                                    <IndianRupee className="h-5 w-5 text-primary/90" />
                                 )}
                             </div>
                             <Input 
@@ -111,15 +117,41 @@ export const BasicFields = ({ formData, handleChange, handleSelectChange }) => {
                 </div>
             )}
 
+            {config.showMinOrder && (
+                <div className="relative group">
+                    <div className="absolute -top-2.5 left-3 px-1.5 bg-white dark:bg-zinc-950 z-10 max-w-[calc(100%-24px)]">
+                        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-primary transition-colors whitespace-nowrap block truncate">
+                            Minimum Order Value <span className="text-red-500">*</span>
+                        </span>
+                    </div>
+                    <div className="relative flex items-center border border-gray-300 dark:border-gray-700 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-primary transition-all bg-white dark:bg-zinc-900/50">
+                        <div className="pl-3.5 flex items-center pointer-events-none absolute left-0 z-10">
+                            <IndianRupee className="h-5 w-5 text-primary/90" />
+                        </div>
+                        <Input 
+                            name="min_order_value" 
+                            type="number"
+                            min="1"
+                            step="1"
+                            value={formData.min_order_value || ""} 
+                            onChange={handleChange}
+                            placeholder="e.g. 500" 
+                            required
+                            className="border-0 focus-visible:ring-0 shadow-none h-12 bg-transparent text-[15px] pl-11 pr-3 w-full font-medium"
+                        />
+                    </div>
+                </div>
+            )}
+
             {config.showDates && (
                 <div className="grid grid-cols-1 gap-5">
                     <div className="relative group">
                     <div className="absolute -top-2.5 left-3 px-1.5 bg-white dark:bg-zinc-950 z-10 max-w-[calc(100%-24px)]">
-                        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-orange-600 transition-colors whitespace-nowrap block truncate">
+                        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-primary transition-colors whitespace-nowrap block truncate">
                             Starts At
                         </span>
                     </div>
-                    <div className="relative flex items-center border border-gray-300 dark:border-gray-700 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all bg-white dark:bg-zinc-900/50">
+                    <div className="relative flex items-center border border-gray-300 dark:border-gray-700 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-primary transition-all bg-white dark:bg-zinc-900/50">
                         <Popover>
                             <PopoverTrigger asChild>
                                 <button
@@ -130,7 +162,7 @@ export const BasicFields = ({ formData, handleChange, handleSelectChange }) => {
                                     )}
                                 >
                                     <div className="pl-3.5 flex items-center pointer-events-none absolute left-0 z-10">
-                                        <Calendar className="h-5 w-5 text-orange-500 shrink-0" />
+                                        <Calendar className="h-5 w-5 text-primary/90 shrink-0" />
                                     </div>
                                     <span className="truncate block w-full">{formData.starts_at ? format(parseISO(formData.starts_at), "PPP") : "Pick a date"}</span>
                                 </button>
@@ -148,7 +180,7 @@ export const BasicFields = ({ formData, handleChange, handleSelectChange }) => {
                                         return date < today;
                                     }}
                                     classNames={{
-                                        day_today: "bg-orange-100 text-orange-700 font-bold border border-orange-500 dark:bg-orange-950 dark:text-orange-400 dark:border-orange-700",
+                                        day_today: "bg-primary/20 text-primary font-bold border border-orange-500 dark:bg-orange-950 dark:text-orange-400 dark:border-orange-700",
                                     }}
                                 />
                             </PopoverContent>
@@ -158,11 +190,11 @@ export const BasicFields = ({ formData, handleChange, handleSelectChange }) => {
 
                 <div className="relative group">
                     <div className="absolute -top-2.5 left-3 px-1.5 bg-white dark:bg-zinc-950 z-10 max-w-[calc(100%-24px)]">
-                        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-orange-600 transition-colors whitespace-nowrap block truncate">
+                        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-primary transition-colors whitespace-nowrap block truncate">
                             Ends At
                         </span>
                     </div>
-                    <div className="relative flex items-center border border-gray-300 dark:border-gray-700 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all bg-white dark:bg-zinc-900/50">
+                    <div className="relative flex items-center border border-gray-300 dark:border-gray-700 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-primary transition-all bg-white dark:bg-zinc-900/50">
                         <Popover>
                             <PopoverTrigger asChild>
                                 <button
@@ -173,7 +205,7 @@ export const BasicFields = ({ formData, handleChange, handleSelectChange }) => {
                                     )}
                                 >
                                     <div className="pl-3.5 flex items-center pointer-events-none absolute left-0 z-10">
-                                        <Calendar className="h-5 w-5 text-orange-500 shrink-0" />
+                                        <Calendar className="h-5 w-5 text-primary/90 shrink-0" />
                                     </div>
                                     <span className="truncate block w-full">{formData.ends_at ? format(parseISO(formData.ends_at), "PPP") : "Pick a date"}</span>
                                 </button>
@@ -196,7 +228,7 @@ export const BasicFields = ({ formData, handleChange, handleSelectChange }) => {
                                         return date < today;
                                     }}
                                     classNames={{
-                                        day_today: "bg-orange-100 text-orange-700 font-bold border border-orange-500 dark:bg-orange-950 dark:text-orange-400 dark:border-orange-700",
+                                        day_today: "bg-primary/20 text-primary font-bold border border-orange-500 dark:bg-orange-950 dark:text-orange-400 dark:border-orange-700",
                                     }}
                                 />
                             </PopoverContent>
@@ -210,11 +242,11 @@ export const BasicFields = ({ formData, handleChange, handleSelectChange }) => {
                 <div className="grid grid-cols-2 gap-5">
                     <div className="relative group">
                     <div className="absolute -top-2.5 left-3 px-1.5 bg-white dark:bg-zinc-950 z-10 max-w-[calc(100%-24px)]">
-                        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-orange-600 transition-colors whitespace-nowrap block truncate">
+                        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-primary transition-colors whitespace-nowrap block truncate">
                             Global Usage Limit
                         </span>
                     </div>
-                    <div className="relative flex items-center border border-gray-300 dark:border-gray-700 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all bg-white dark:bg-zinc-900/50">
+                    <div className="relative flex items-center border border-gray-300 dark:border-gray-700 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-primary transition-all bg-white dark:bg-zinc-900/50">
                         <Input 
                             name="usage_limit" 
                             type="number"
@@ -229,11 +261,11 @@ export const BasicFields = ({ formData, handleChange, handleSelectChange }) => {
 
                 <div className="relative group">
                     <div className="absolute -top-2.5 left-3 px-1.5 bg-white dark:bg-zinc-950 z-10 max-w-[calc(100%-24px)]">
-                        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-orange-600 transition-colors whitespace-nowrap block truncate">
+                        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-primary transition-colors whitespace-nowrap block truncate">
                             Max Per User Limit
                         </span>
                     </div>
-                    <div className="relative flex items-center border border-gray-300 dark:border-gray-700 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all bg-white dark:bg-zinc-900/50">
+                    <div className="relative flex items-center border border-gray-300 dark:border-gray-700 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-primary transition-all bg-white dark:bg-zinc-900/50">
                         <Input 
                             name="per_user_limit" 
                             type="number"

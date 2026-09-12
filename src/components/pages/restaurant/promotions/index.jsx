@@ -168,7 +168,7 @@ export default function Promotions() {
                         <Button
                             onClick={handleCreate}
                             size="sm"
-                            className="h-8.5 rounded-md bg-orange-600 hover:bg-orange-700 text-white shadow-2xs gap-1.5 font-semibold text-xs shrink-0"
+                            className="h-8.5 rounded-md bg-primary hover:bg-primary/90 text-white shadow-2xs gap-1.5 font-semibold text-xs shrink-0"
                         >
                             <Plus size={14} strokeWidth={2.5} />
                             <span>Create Promotion</span>
@@ -206,6 +206,7 @@ export default function Promotions() {
                 promotion={editingPromotion}
                 onSubmit={handleSubmit}
                 isSubmitting={isCreating || isUpdating}
+                hasFreebie={promotions?.some(p => p.type === "FREEBIE")}
             />
 
             <ConfirmDeleteAlert

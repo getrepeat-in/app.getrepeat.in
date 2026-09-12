@@ -133,7 +133,7 @@ export default function StaffFormSheet({ isOpen, onClose, staff }) {
                                 </>
                             ) : (
                                 <>
-                                    <div className="w-8 h-8 rounded-md bg-orange-100 text-orange-600 flex items-center justify-center">
+                                    <div className="w-8 h-8 rounded-md bg-primary/20 text-primary flex items-center justify-center">
                                         <Shield size={18} />
                                     </div>
                                     Add New Staff
@@ -185,7 +185,7 @@ export default function StaffFormSheet({ isOpen, onClose, staff }) {
                         <Button 
                             onClick={formik.handleSubmit}
                             disabled={isLoading}
-                            className="flex-1 h-11 bg-orange-600 hover:bg-orange-700 text-white font-medium shadow-sm"
+                            className="flex-1 h-11 bg-primary hover:bg-primary/90 text-white font-medium shadow-sm"
                         >
                             {isLoading ? (
                                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {isEditMode ? "Updating..." : "Creating..."}</>

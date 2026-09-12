@@ -97,7 +97,7 @@ export function ExportCSV() {
         <Button
           onClick={handleDownload}
           disabled={items.length === 0}
-          className="w-full bg-orange-600 hover:bg-white hover:border-orange-600 hover:text-orange-600 text-white font-bold h-12 text-sm rounded-md shadow-md transition-all active:scale-[0.98] flex items-center justify-center gap-2 duration-200 cursor-pointer"
+          className="w-full bg-primary hover:bg-white hover:border-primary hover:text-primary text-white font-bold h-12 text-sm rounded-md shadow-md transition-all active:scale-[0.98] flex items-center justify-center gap-2 duration-200 cursor-pointer"
         >
           <Download className="w-4 h-4 stroke-[2.5]" />
           Download CSV Spreadsheet

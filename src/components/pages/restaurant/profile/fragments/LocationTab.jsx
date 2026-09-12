@@ -43,11 +43,11 @@ const LocationTab = ({ locationData }) => {
       <div className="space-y-7">
         <div className="relative group">
           <div className="absolute -top-2.5 left-3.5 px-1.5 bg-white dark:bg-zinc-900 z-10">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-orange-600 transition-colors">Street Address</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-primary transition-colors">Street Address</span>
           </div>
-          <div className="relative flex items-center border border-gray-200 dark:border-zinc-800 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all bg-white dark:bg-zinc-900 shadow-2xs">
+          <div className="relative flex items-center border border-gray-200 dark:border-zinc-800 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-primary transition-all bg-white dark:bg-zinc-900 shadow-2xs">
             <div className="pl-3.5 flex items-center pointer-events-none">
-              <MapPin className="h-4.5 w-4.5 text-orange-500 shrink-0" />
+              <MapPin className="h-4.5 w-4.5 text-primary/90 shrink-0" />
             </div>
             <Input 
               id="street" 
@@ -64,11 +64,11 @@ const LocationTab = ({ locationData }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-1">
           <div className="relative group">
             <div className="absolute -top-2.5 left-3.5 px-1.5 bg-white dark:bg-zinc-900 z-10">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-orange-600 transition-colors">City</span>
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-primary transition-colors">City</span>
             </div>
-            <div className="relative flex items-center border border-gray-200 dark:border-zinc-800 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all bg-white dark:bg-zinc-900 shadow-2xs">
+            <div className="relative flex items-center border border-gray-200 dark:border-zinc-800 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-primary transition-all bg-white dark:bg-zinc-900 shadow-2xs">
               <div className="pl-3.5 flex items-center pointer-events-none">
-                <Building className="h-4.5 w-4.5 text-orange-500 shrink-0" />
+                <Building className="h-4.5 w-4.5 text-primary/90 shrink-0" />
               </div>
               <Input 
                 id="city" 
@@ -84,11 +84,11 @@ const LocationTab = ({ locationData }) => {
 
           <div className="relative group">
             <div className="absolute -top-2.5 left-3.5 px-1.5 bg-white dark:bg-zinc-900 z-10">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-orange-600 transition-colors">State / Province</span>
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-primary transition-colors">State / Province</span>
             </div>
-            <div className="relative flex items-center border border-gray-200 dark:border-zinc-800 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all bg-white dark:bg-zinc-900 shadow-2xs">
+            <div className="relative flex items-center border border-gray-200 dark:border-zinc-800 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-primary transition-all bg-white dark:bg-zinc-900 shadow-2xs">
               <div className="pl-3.5 flex items-center pointer-events-none">
-                <Map className="h-4.5 w-4.5 text-orange-500 shrink-0" />
+                <Map className="h-4.5 w-4.5 text-primary/90 shrink-0" />
               </div>
               <Input 
                 id="state" 
@@ -106,11 +106,11 @@ const LocationTab = ({ locationData }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-1">
           <div className="relative group">
             <div className="absolute -top-2.5 left-3.5 px-1.5 bg-white dark:bg-zinc-900 z-10">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-orange-600 transition-colors">Postal Code</span>
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-primary transition-colors">Postal Code</span>
             </div>
-            <div className="relative flex items-center border border-gray-200 dark:border-zinc-800 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all bg-white dark:bg-zinc-900 shadow-2xs">
+            <div className="relative flex items-center border border-gray-200 dark:border-zinc-800 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-primary transition-all bg-white dark:bg-zinc-900 shadow-2xs">
               <div className="pl-3.5 flex items-center pointer-events-none">
-                <Hash className="h-4.5 w-4.5 text-orange-500 shrink-0" />
+                <Hash className="h-4.5 w-4.5 text-primary/90 shrink-0" />
               </div>
               <Input 
                 id="postalCode" 
@@ -126,11 +126,11 @@ const LocationTab = ({ locationData }) => {
 
           <div className="relative group">
             <div className="absolute -top-2.5 left-3.5 px-1.5 bg-white dark:bg-zinc-900 z-10">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-orange-600 transition-colors">Country</span>
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-primary transition-colors">Country</span>
             </div>
-            <div className="relative flex items-center border border-gray-200 dark:border-zinc-800 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all bg-white dark:bg-zinc-900 shadow-2xs">
+            <div className="relative flex items-center border border-gray-200 dark:border-zinc-800 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-primary transition-all bg-white dark:bg-zinc-900 shadow-2xs">
               <div className="pl-3.5 flex items-center pointer-events-none">
-                <Globe className="h-4.5 w-4.5 text-orange-500 shrink-0" />
+                <Globe className="h-4.5 w-4.5 text-primary/90 shrink-0" />
               </div>
               <Input 
                 id="country" 
@@ -148,11 +148,11 @@ const LocationTab = ({ locationData }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-1">
           <div className="relative group">
             <div className="absolute -top-2.5 left-3.5 px-1.5 bg-white dark:bg-zinc-900 z-10">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-orange-600 transition-colors">Latitude</span>
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-primary transition-colors">Latitude</span>
             </div>
-            <div className="relative flex items-center border border-gray-200 dark:border-zinc-800 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all bg-white dark:bg-zinc-900 shadow-2xs">
+            <div className="relative flex items-center border border-gray-200 dark:border-zinc-800 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-primary transition-all bg-white dark:bg-zinc-900 shadow-2xs">
               <div className="pl-3.5 flex items-center pointer-events-none">
-                <Compass className="h-4.5 w-4.5 text-orange-500 shrink-0" />
+                <Compass className="h-4.5 w-4.5 text-primary/90 shrink-0" />
               </div>
               <Input 
                 id="lat" 
@@ -168,11 +168,11 @@ const LocationTab = ({ locationData }) => {
 
           <div className="relative group">
             <div className="absolute -top-2.5 left-3.5 px-1.5 bg-white dark:bg-zinc-900 z-10">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-orange-600 transition-colors">Longitude</span>
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-primary transition-colors">Longitude</span>
             </div>
-            <div className="relative flex items-center border border-gray-200 dark:border-zinc-800 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all bg-white dark:bg-zinc-900 shadow-2xs">
+            <div className="relative flex items-center border border-gray-200 dark:border-zinc-800 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-primary transition-all bg-white dark:bg-zinc-900 shadow-2xs">
               <div className="pl-3.5 flex items-center pointer-events-none">
-                <Compass className="h-4.5 w-4.5 text-orange-500 shrink-0" />
+                <Compass className="h-4.5 w-4.5 text-primary/90 shrink-0" />
               </div>
               <Input 
                 id="long" 
@@ -192,7 +192,7 @@ const LocationTab = ({ locationData }) => {
         <Button 
           type="submit" 
           disabled={isPending || !formik.dirty} 
-          className="h-9 px-5 rounded-md font-semibold text-xs sm:text-sm shadow-2xs transition-all active:scale-[0.98] bg-orange-600 hover:bg-orange-700 text-white gap-2"
+          className="h-9 px-5 rounded-md font-semibold text-xs sm:text-sm shadow-2xs transition-all active:scale-[0.98] bg-primary hover:bg-primary/90 text-white gap-2"
         >
           {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           {isPending ? "Saving changes..." : "Save Location"}

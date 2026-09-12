@@ -72,7 +72,7 @@ const TimingTab = ({ timingsData }) => {
 
         <div className="space-y-4 pt-2">
           <div className="flex items-center gap-2 pb-3 border-b border-border/40">
-            <CalendarDays className="h-5 w-5 text-orange-500 dark:text-orange-400" />
+            <CalendarDays className="h-5 w-5 text-primary/90 dark:text-orange-400" />
             <h4 className="text-lg font-semibold tracking-tight text-gray-800 dark:text-gray-100">Weekly Schedule</h4>
           </div>
           
@@ -95,7 +95,7 @@ const TimingTab = ({ timingsData }) => {
                 <div className={`flex flex-1 items-center gap-3 transition-opacity duration-300 ${schedule?.isOpen ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
                   <div className="flex-1 relative group">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Sunrise className="h-4 w-4 text-orange-400 group-focus-within:text-orange-500 transition-colors" />
+                      <Sunrise className="h-4 w-4 text-orange-400 group-focus-within:text-primary/90 transition-colors" />
                     </div>
                     <Input 
                       type="time" 
@@ -104,7 +104,7 @@ const TimingTab = ({ timingsData }) => {
                       onChange={formik.handleChange}
                       onBlur={formik.handleBlur}
                       disabled={!schedule?.isOpen}
-                      className="pl-9 h-11 w-full bg-white dark:bg-zinc-900/50 border-gray-200 dark:border-gray-800 focus-visible:ring-orange-500" 
+                      className="pl-9 h-11 w-full bg-white dark:bg-zinc-900/50 border-gray-200 dark:border-gray-800 focus-visible:ring-primary" 
                     />
                     <span className="absolute -top-2.5 left-3 px-1 text-[10px] font-medium uppercase tracking-wider text-gray-500 bg-white dark:bg-background">Opens</span>
                   </div>
@@ -113,7 +113,7 @@ const TimingTab = ({ timingsData }) => {
                   
                   <div className="flex-1 relative group">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Sunset className="h-4 w-4 text-orange-400 group-focus-within:text-orange-500 transition-colors" />
+                      <Sunset className="h-4 w-4 text-orange-400 group-focus-within:text-primary/90 transition-colors" />
                     </div>
                     <Input 
                       type="time" 
@@ -122,7 +122,7 @@ const TimingTab = ({ timingsData }) => {
                       onChange={formik.handleChange}
                       onBlur={formik.handleBlur}
                       disabled={!schedule?.isOpen}
-                      className="pl-9 h-11 w-full bg-white dark:bg-zinc-900/50 border-gray-200 dark:border-gray-800 focus-visible:ring-orange-500" 
+                      className="pl-9 h-11 w-full bg-white dark:bg-zinc-900/50 border-gray-200 dark:border-gray-800 focus-visible:ring-primary" 
                     />
                     <span className="absolute -top-2.5 left-3 px-1 text-[10px] font-medium uppercase tracking-wider text-gray-500 bg-white dark:bg-background">Closes</span>
                   </div>
@@ -143,7 +143,7 @@ const TimingTab = ({ timingsData }) => {
         <Button 
           type="submit" 
           disabled={isPending || !formik.dirty}
-          className="h-9 px-5 rounded-md font-semibold text-xs sm:text-sm shadow-2xs transition-all active:scale-[0.98] bg-orange-600 hover:bg-orange-700 text-white gap-2"
+          className="h-9 px-5 rounded-md font-semibold text-xs sm:text-sm shadow-2xs transition-all active:scale-[0.98] bg-primary hover:bg-primary/90 text-white gap-2"
         >
           {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           {isPending ? "Saving changes..." : "Save Operating Hours"}

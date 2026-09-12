@@ -6,8 +6,8 @@ import { Link, Copy, Check, Pencil, Trash2, Download, ExternalLink } from "lucid
 
 export const TableNumberCell = ({ table }) => (
     <div className="flex items-center gap-2.5">
-        <div className="w-8 h-8 rounded-lg bg-orange-50 dark:bg-orange-950/50 border border-orange-100 dark:border-orange-900/50 flex items-center justify-center shrink-0">
-            <span className="text-orange-600 dark:text-orange-500 font-bold text-xs">{table.tableNumber}</span>
+        <div className="w-8 h-8 rounded-lg bg-primary/10 dark:bg-orange-950/50 border border-orange-100 dark:border-orange-900/50 flex items-center justify-center shrink-0">
+            <span className="text-primary dark:text-primary/90 font-bold text-xs">{table.tableNumber}</span>
         </div>
         <span className="font-semibold text-gray-900 dark:text-gray-100 text-xs sm:text-sm">
             {table.label || `Table ${table.tableNumber}`}
@@ -77,7 +77,7 @@ export const TableQRCell = ({ qrToken }) => {
                     href={qrUrl} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="p-1 text-gray-400 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950/40 rounded-md transition-colors"
+                    className="p-1 text-gray-400 hover:text-primary hover:bg-primary/10 dark:hover:bg-orange-950/40 rounded-md transition-colors"
                     title="Open ordering link"
                 >
                     <ExternalLink size={13} />
@@ -96,7 +96,7 @@ export const TableActionsCell = ({ table, onEdit, onDownloadQR, onDelete }) => (
                 e.stopPropagation();
                 onDownloadQR(table);
             }}
-            className="h-7 px-2 text-[11px] font-semibold bg-orange-50 hover:bg-orange-100 text-orange-600 border-orange-200 dark:bg-orange-950/40 dark:text-orange-400 dark:border-orange-900/40 shadow-2xs gap-1"
+            className="h-7 px-2 text-[11px] font-semibold bg-primary/10 hover:bg-primary/20 text-primary border-orange-200 dark:bg-orange-950/40 dark:text-orange-400 dark:border-orange-900/40 shadow-2xs gap-1"
             title="Download QR Code"
         >
             <Download size={12} />

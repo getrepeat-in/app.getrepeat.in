@@ -6,13 +6,14 @@ import { BasicFields } from "./fragments/BasicFields";
 import { Tag, Loader2, RefreshCcw } from "lucide-react";
 import { useCategory } from "@/store/hooks/useCategory";
 import { useRestaurant } from "@/store/hooks/useRestaurant";
+import useNotification from "@/store/hooks/useNotification";
 import { StatusSelection } from "./fragments/StatusSelection";
 import { getInitialFormData, preparePayload } from "./helper";
 import { NestedItemSelection } from "./fragments/NestedItemSelection";
 import { PromotionTypeSelection } from "./fragments/PromotionTypeSelection";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 
-export default function PromotionFormSheet({ isOpen, onClose, promotion, onSubmit, isSubmitting }) {
+export default function PromotionFormSheet({ isOpen, onClose, promotion, onSubmit, isSubmitting, hasFreebie }) {
     const isEditMode = !!promotion;
     const [isVisible, setIsVisible] = useState(false);
     const [currentStep, setCurrentStep] = useState("SELECT_TYPE");
@@ -20,6 +21,7 @@ export default function PromotionFormSheet({ isOpen, onClose, promotion, onSubmi
     const { restaurantId } = useRestaurant();
     const { items, isLoading: itemsLoading } = useItem(restaurantId);
     const { rawCategories: categories, isLoading: categoriesLoading } = useCategory(restaurantId);
+    const notification = useNotification();
 
     const [formData, setFormData] = useState({
         type: "ITEM_DISCOUNT",
@@ -31,7 +33,8 @@ export default function PromotionFormSheet({ isOpen, onClose, promotion, onSubmi
         starts_at: "",
         ends_at: "",
         usage_limit: "",
-        per_user_limit: ""
+        per_user_limit: "",
+        min_order_value: ""
     });
 
     useEffect(() => {
@@ -72,6 +75,11 @@ export default function PromotionFormSheet({ isOpen, onClose, promotion, onSubmi
     const handleItemToggle = (itemId) => {
         setFormData(prev => {
             const currentItems = prev.items || [];
+            
+            if (prev.type === "FREEBIE" && !currentItems.includes(itemId) && currentItems.length >= 5) {
+                return prev;
+            }
+
             const newItems = currentItems.includes(itemId)
                 ? currentItems.filter(id => id !== itemId)
                 : [...currentItems, itemId];
@@ -88,6 +96,10 @@ export default function PromotionFormSheet({ isOpen, onClose, promotion, onSubmi
             } else {
                 itemIds.forEach(id => currentItems.add(id));
             }
+
+            if (prev.type === "FREEBIE" && currentItems.size > 5) {
+                return prev; 
+         }
             
             return { ...prev, items: Array.from(currentItems) };
         });
@@ -95,6 +107,14 @@ export default function PromotionFormSheet({ isOpen, onClose, promotion, onSubmi
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        
+        if (["ITEM_DISCOUNT", "BESTSELLER", "FREEBIE"].includes(formData.type)) {
+            if (!formData.items || formData.items.length === 0) {
+                notification.error("Please select at least one item for this promotion.");
+                return;
+            }
+        }
+
         const payload = preparePayload(formData);
         onSubmit(payload);
     };
@@ -103,9 +123,9 @@ export default function PromotionFormSheet({ isOpen, onClose, promotion, onSubmi
 
     return (
         <Sheet open={isOpen} onOpenChange={(open) => !isSubmitting && !open && onClose()}>
-            <SheetContent className="w-full sm:max-w-md bg-[#f8fafc] dark:bg-zinc-950 border-l border-gray-200 dark:border-zinc-800 p-0 flex flex-col h-full shadow-2xl">
+            <SheetContent className="w-full bg-[#f8fafc] dark:bg-zinc-950 border-l border-gray-200 dark:border-zinc-800 p-0 flex flex-col h-full shadow-2xl">
                 <div className="flex-1 overflow-y-auto">
-                    <SheetHeader className="px-6 py-6 border-b border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 sticky top-0 z-10">
+                    <SheetHeader className="px-6 py-6 border-b border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 sticky top-0 z-40">
                         <SheetTitle className="text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
                             {!isEditMode && currentStep === "FORM" && (
                                 <button 
@@ -143,7 +163,7 @@ export default function PromotionFormSheet({ isOpen, onClose, promotion, onSubmi
 
                     <div className="p-6">
                         {currentStep === "SELECT_TYPE" ? (
-                            <PromotionTypeSelection onSelect={handleTypeSelect} />
+                            <PromotionTypeSelection onSelect={handleTypeSelect} hasFreebie={hasFreebie} />
                         ) : (
                             <form id="promotion-form" onSubmit={handleSubmit} className="space-y-6">
                                 <BasicFields 
@@ -152,20 +172,32 @@ export default function PromotionFormSheet({ isOpen, onClose, promotion, onSubmi
                                     handleSelectChange={handleSelectChange} 
                                 />
 
-                                {(formData.type === "ITEM_DISCOUNT" || formData.type === "BESTSELLER") && (
+                                {(formData.type === "ITEM_DISCOUNT" || formData.type === "BESTSELLER" || formData.type === "FREEBIE") && (
                                     <div className="space-y-3">
                                         {itemsLoading || categoriesLoading ? (
                                             <div className="flex items-center justify-center py-10 text-gray-500">
                                                 <Loader2 className="w-5 h-5 animate-spin mr-2" />
                                             </div>
                                         ) : (
-                                            <NestedItemSelection 
-                                                items={items} 
-                                                categories={categories} 
-                                                selectedItems={formData.items || []}
-                                                onToggleItem={handleItemToggle}
-                                                onToggleCategory={handleCategoryToggleList}
-                                            />
+                                            <div className="flex flex-col gap-2">
+                                                {formData.type === "FREEBIE" && (
+                                                    <div className="flex items-center justify-between bg-pink-50 dark:bg-pink-900/20 px-3 py-2 rounded-md border border-pink-100 dark:border-pink-800/30">
+                                                        <span className="text-[13px] font-medium text-pink-700 dark:text-pink-400">
+                                                            Select up to 5 items to offer for free.
+                                                        </span>
+                                                        <span className="text-[13px] font-bold text-pink-700 dark:text-pink-400">
+                                                            {(formData.items || []).length} / 5 Selected
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                <NestedItemSelection 
+                                                    items={items} 
+                                                    categories={categories} 
+                                                    selectedItems={formData.items || []}
+                                                    onToggleItem={handleItemToggle}
+                                                    onToggleCategory={handleCategoryToggleList}
+                                                />
+                                            </div>
                                         )}
                                     </div>
                                 )}

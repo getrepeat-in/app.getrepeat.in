@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Percent, ShoppingCart, Gift, Star } from "lucide-react";
 
-export const PromotionTypeSelection = ({ onSelect }) => {
+export const PromotionTypeSelection = ({ onSelect, hasFreebie }) => {
     const promotionTypes = [
         {
             id: "ITEM_DISCOUNT",
@@ -43,6 +43,17 @@ export const PromotionTypeSelection = ({ onSelect }) => {
             border: "border-emerald-200 dark:border-emerald-500/20",
             enabled: false,
         },
+        {
+            id: "FREEBIE",
+            title: "Freebies",
+            description: hasFreebie ? "You already have an active Freebie promotion. Max 1 allowed." : "Offer free items when a customer reaches a minimum order value.",
+            icon: Gift,
+            color: "text-pink-600 dark:text-pink-400",
+            bg: "bg-pink-50 dark:bg-pink-500/10",
+            border: "border-pink-200 dark:border-pink-500/20",
+            enabled: !hasFreebie,
+            customBadge: hasFreebie ? "Max 1 Limit" : null,
+        },
     ];
 
     return (
@@ -77,8 +88,11 @@ export const PromotionTypeSelection = ({ onSelect }) => {
                                 )}>
                                     {type.title}
                                 </span>
-                                {!type.enabled && (
+                                {!type.enabled && !type.customBadge && (
                                     <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-gray-100 dark:bg-zinc-800 text-gray-500">Coming Soon</span>
+                                )}
+                                {!type.enabled && type.customBadge && (
+                                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">{type.customBadge}</span>
                                 )}
                             </div>
                             <span className="text-sm text-slate-500 dark:text-gray-400 leading-snug">

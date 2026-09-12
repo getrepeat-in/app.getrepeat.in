@@ -66,7 +66,7 @@ export default function OrdersManagement() {
             sortable: true,
             render: (row) => (
                 <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-md bg-orange-50 dark:bg-orange-950/50 flex items-center justify-center text-orange-600 dark:text-orange-500 shrink-0 border border-orange-100 dark:border-orange-900/50">
+                    <div className="w-8 h-8 rounded-md bg-primary/10 dark:bg-orange-950/50 flex items-center justify-center text-primary dark:text-primary/90 shrink-0 border border-orange-100 dark:border-orange-900/50">
                         <Receipt size={14} />
                     </div>
                     <div>
@@ -168,7 +168,7 @@ export default function OrdersManagement() {
                         e.stopPropagation();
                         setSelectedOrder(row);
                     }}
-                    className="rounded-md hover:bg-orange-50 hover:text-orange-600 dark:hover:bg-orange-950/50"
+                    className="rounded-md hover:bg-primary/10 hover:text-primary dark:hover:bg-orange-950/50"
                     title="View Details"
                 >
                     <Eye size={15} />

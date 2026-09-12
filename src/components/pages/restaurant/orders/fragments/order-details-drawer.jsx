@@ -93,7 +93,7 @@ export const OrderDetailsDrawer = ({ isOpen, onClose, order }) => {
                                             <div className="text-[12px] text-gray-500 mt-0.5">Add-ons: {item.addons.map(a => a.name).join(", ")}</div>
                                         )}
                                         {item.specialInstructions && (
-                                            <div className="text-[12px] text-orange-600 dark:text-orange-400 mt-1 italic">
+                                            <div className="text-[12px] text-primary dark:text-orange-400 mt-1 italic">
                                                 Note: {item.specialInstructions}
                                             </div>
                                         )}

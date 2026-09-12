@@ -30,7 +30,7 @@ export function StatusSelection({ formik }) {
                     onClick={() => formik.setFieldValue("status", "SUSPENDED")}
                     className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all duration-200 ${
                         formik.values.status === "SUSPENDED"
-                            ? "bg-orange-500 text-white shadow-sm ring-1 ring-gray-900/5"
+                            ? "bg-primary/90 text-white shadow-sm ring-1 ring-gray-900/5"
                             : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                     }`}
                 >

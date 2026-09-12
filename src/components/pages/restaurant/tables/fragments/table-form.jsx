@@ -57,7 +57,7 @@ export default function TableFormSheet({ isOpen, onClose, table }) {
                 <div className="flex-1 overflow-y-auto">
                     <SheetHeader className="px-6 py-5 border-b border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 sticky top-0 z-10">
                         <SheetTitle className="text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                            <div className={`w-8 h-8 rounded-md flex items-center justify-center ${isEditMode ? "bg-blue-100 text-blue-600" : "bg-orange-100 text-orange-600"}`}>
+                            <div className={`w-8 h-8 rounded-md flex items-center justify-center ${isEditMode ? "bg-blue-100 text-blue-600" : "bg-primary/20 text-primary"}`}>
                                 {isEditMode ? <Pencil size={16} /> : <TableProperties size={16} />}
                             </div>
                             {isEditMode ? "Edit Table" : "Add New Table"}
@@ -87,8 +87,8 @@ export default function TableFormSheet({ isOpen, onClose, table }) {
                                                 onClick={() => formik.setFieldValue("zone", z)}
                                                 className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all
                                                     ${formik.values.zone === z
-                                                        ? "bg-orange-500 text-white border-orange-500"
-                                                        : "bg-white dark:bg-zinc-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-zinc-700 hover:border-orange-300 hover:text-orange-600"
+                                                        ? "bg-primary/90 text-white border-orange-500"
+                                                        : "bg-white dark:bg-zinc-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-zinc-700 hover:border-orange-300 hover:text-primary"
                                                     }`}
                                             >
                                                 {z}
@@ -145,7 +145,7 @@ export default function TableFormSheet({ isOpen, onClose, table }) {
                                                 onClick={() => formik.setFieldValue("status", s.value)}
                                                 className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border text-sm font-medium transition-all
                                                     ${formik.values.status === s.value
-                                                        ? "border-orange-500 bg-orange-50 dark:bg-orange-950 text-orange-700 dark:text-orange-300"
+                                                        ? "border-orange-500 bg-primary/10 dark:bg-orange-950 text-primary dark:text-orange-300"
                                                         : "border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-600 dark:text-gray-400 hover:border-gray-300"
                                                     }`}
                                             >
@@ -181,7 +181,7 @@ export default function TableFormSheet({ isOpen, onClose, table }) {
                         <Button
                             onClick={formik.handleSubmit}
                             disabled={isLoading}
-                            className="flex-1 h-11 bg-orange-600 hover:bg-orange-700 text-white font-medium shadow-sm"
+                            className="flex-1 h-11 bg-primary hover:bg-primary/90 text-white font-medium shadow-sm"
                         >
                             {isLoading ? (
                                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {isEditMode ? "Saving..." : "Creating..."}</>

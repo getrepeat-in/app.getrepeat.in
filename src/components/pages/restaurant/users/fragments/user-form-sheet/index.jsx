@@ -150,11 +150,11 @@ export default function UserFormSheet({ isOpen, onClose, user }) {
                             />
 
                             {/* Name Field */}
-                            <div className="relative border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-3 flex items-center gap-3 bg-white dark:bg-zinc-900 mt-2 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all">
+                            <div className="relative border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-3 flex items-center gap-3 bg-white dark:bg-zinc-900 mt-2 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-primary transition-all">
                                 <span className="absolute -top-2.5 left-4 px-1.5 bg-[#f8fafc] dark:bg-zinc-950 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     Full Name
                                 </span>
-                                <User className="text-orange-500 w-5 h-5 shrink-0" />
+                                <User className="text-primary/90 w-5 h-5 shrink-0" />
                                 <input
                                     type="text"
                                     name="name"
@@ -170,11 +170,11 @@ export default function UserFormSheet({ isOpen, onClose, user }) {
                             </div>
 
                             {/* Phone Field */}
-                            <div className="relative border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-3 flex items-center gap-3 bg-white dark:bg-zinc-900 mt-6 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all">
+                            <div className="relative border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-3 flex items-center gap-3 bg-white dark:bg-zinc-900 mt-6 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-primary transition-all">
                                 <span className="absolute -top-2.5 left-4 px-1.5 bg-[#f8fafc] dark:bg-zinc-950 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     Phone Number
                                 </span>
-                                <Phone className="text-orange-500 w-5 h-5 shrink-0" />
+                                <Phone className="text-primary/90 w-5 h-5 shrink-0" />
                                 <input
                                     type="text"
                                     name="phone"
@@ -191,11 +191,11 @@ export default function UserFormSheet({ isOpen, onClose, user }) {
                             </div>
 
                             {/* Password Field */}
-                            <div className="relative border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-3 flex items-center gap-3 bg-white dark:bg-zinc-900 mt-6 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all">
+                            <div className="relative border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-3 flex items-center gap-3 bg-white dark:bg-zinc-900 mt-6 focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-primary transition-all">
                                 <span className="absolute -top-2.5 left-4 px-1.5 bg-[#f8fafc] dark:bg-zinc-950 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     Password {isEditMode && !isResettingPassword && <span className="text-red-500 font-medium normal-case">(Cannot be changed)</span>}
                                 </span>
-                                <Lock className="text-orange-500 w-5 h-5 shrink-0" />
+                                <Lock className="text-primary/90 w-5 h-5 shrink-0" />
                                 <input
                                     type={(!isEditMode || isResettingPassword) && showPassword ? "text" : "password"}
                                     name="password"
@@ -274,7 +274,7 @@ export default function UserFormSheet({ isOpen, onClose, user }) {
                         <Button 
                             onClick={formik.handleSubmit}
                             disabled={isLoading || isUploading}
-                            className="flex-1 h-11 bg-orange-600 hover:bg-orange-700 text-white font-medium shadow-sm"
+                            className="flex-1 h-11 bg-primary hover:bg-primary/90 text-white font-medium shadow-sm"
                         >
                             {isLoading ? (
                                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</>

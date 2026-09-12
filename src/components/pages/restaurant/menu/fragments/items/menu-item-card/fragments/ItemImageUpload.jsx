@@ -36,7 +36,7 @@ export default function ItemImageUpload({ item, updateField }) {
     return (
         <div className="flex flex-col items-center gap-2 shrink-0">
             <div 
-                className="p-1 bg-orange-50 border-2 border-orange-100 rounded-xl cursor-pointer relative group/img transition-all hover:border-orange-300 shadow-sm hover:shadow-md"
+                className="p-1 bg-primary/10 border-2 border-orange-100 rounded-xl cursor-pointer relative group/img transition-all hover:border-orange-300 shadow-sm hover:shadow-md"
                 onClick={() => fileInputRef.current?.click()}
                 title="Upload Image"
             >

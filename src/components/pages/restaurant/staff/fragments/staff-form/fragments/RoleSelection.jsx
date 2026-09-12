@@ -3,7 +3,7 @@ import { Shield, Loader2 } from "lucide-react";
 export function RoleSelection({ formik, roles, rolesLoading }) {
     return (
         <div className="space-y-2.5 group">
-            <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5 group-focus-within:text-orange-600 transition-colors">
+            <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5 group-focus-within:text-primary transition-colors">
                 <Shield size={13} /> Assigned Role
             </label>
             
@@ -21,12 +21,12 @@ export function RoleSelection({ formik, roles, rolesLoading }) {
                                 onClick={() => formik.setFieldValue("role", role._id)}
                                 className={`relative flex items-center gap-2.5 px-3.5 py-2 w-fit rounded-lg border cursor-pointer transition-all duration-200 ${
                                     isSelected 
-                                        ? "bg-orange-50 border-orange-500 ring-1 ring-orange-500 shadow-sm" 
+                                        ? "bg-primary/10 border-orange-500 ring-1 ring-primary shadow-sm" 
                                         : "bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800 hover:border-orange-300 hover:shadow-sm"
                                 }`}
                             >
                                 <div className="flex flex-col justify-center">
-                                    <span className={`font-semibold text-sm ${isSelected ? "text-orange-700" : "text-gray-900"}`}>
+                                    <span className={`font-semibold text-sm ${isSelected ? "text-primary" : "text-gray-900"}`}>
                                         {role.name}
                                     </span>
                                 </div>

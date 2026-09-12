@@ -35,7 +35,15 @@ export const GET = async (req, { params }) => {
                 { $or: [{ ends_at: null }, { ends_at: { $gte: currentDate } }] }
             ]
         })
-        .select("name type discount_type discount_value items starts_at ends_at usage_limit per_user_limit times_used")
+        .populate({
+            path: "items",
+            select: "name base_price description dietaryType isAvailable image",
+            populate: {
+                path: "image",
+                select: "variants original blurHash status"
+            }
+        })
+        .select("name type discount_type discount_value min_order_value items starts_at ends_at usage_limit per_user_limit times_used")
         .lean();
         
         await setCache(cacheKey, promotions, 300);

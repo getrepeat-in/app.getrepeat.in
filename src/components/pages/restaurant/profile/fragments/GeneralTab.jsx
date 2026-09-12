@@ -92,7 +92,7 @@ const GeneralTab = ({ generalData }) => {
               </div>
             )}
             <div className="flex-1">
-              <label htmlFor="logo-upload" className={`inline-flex cursor-pointer h-10 items-center justify-center rounded-md border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4.5 py-2 text-xs sm:text-sm font-semibold text-gray-700 dark:text-zinc-200 shadow-2xs hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 dark:hover:bg-orange-950/30 transition-all ${uploadingLogo ? 'opacity-70 pointer-events-none' : ''}`}>
+              <label htmlFor="logo-upload" className={`inline-flex cursor-pointer h-10 items-center justify-center rounded-md border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4.5 py-2 text-xs sm:text-sm font-semibold text-gray-700 dark:text-zinc-200 shadow-2xs hover:bg-primary/10 hover:text-primary hover:border-orange-200 dark:hover:bg-orange-950/30 transition-all ${uploadingLogo ? 'opacity-70 pointer-events-none' : ''}`}>
                 {uploadingLogo ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
                 {uploadingLogo ? "Uploading..." : "Upload new image"}
               </label>
@@ -112,11 +112,11 @@ const GeneralTab = ({ generalData }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-1">
           <div className="relative group">
             <div className="absolute -top-2.5 left-3.5 px-1.5 bg-white dark:bg-zinc-900 z-10">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-orange-600 transition-colors">Restaurant Name</span>
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-primary transition-colors">Restaurant Name</span>
             </div>
-            <div className="relative flex items-center border border-gray-200 dark:border-zinc-800 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all bg-white dark:bg-zinc-900 shadow-2xs">
+            <div className="relative flex items-center border border-gray-200 dark:border-zinc-800 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-primary transition-all bg-white dark:bg-zinc-900 shadow-2xs">
               <div className="pl-3.5 flex items-center pointer-events-none">
-                <Store className="h-4.5 w-4.5 text-orange-500 shrink-0" />
+                <Store className="h-4.5 w-4.5 text-primary/90 shrink-0" />
               </div>
               <Input 
                 id="name" 
@@ -133,11 +133,11 @@ const GeneralTab = ({ generalData }) => {
 
           <div className="relative group">
             <div className="absolute -top-2.5 left-3.5 px-1.5 bg-white dark:bg-zinc-900 z-10">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-orange-600 transition-colors">Slug URL</span>
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-primary transition-colors">Slug URL</span>
             </div>
-            <div className="relative flex items-center border border-gray-200 dark:border-zinc-800 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all bg-white dark:bg-zinc-900 shadow-2xs">
+            <div className="relative flex items-center border border-gray-200 dark:border-zinc-800 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-primary transition-all bg-white dark:bg-zinc-900 shadow-2xs">
               <div className="pl-3.5 flex items-center pointer-events-none">
-                <Link2 className="h-4.5 w-4.5 text-orange-500 shrink-0" />
+                <Link2 className="h-4.5 w-4.5 text-primary/90 shrink-0" />
               </div>
               <Input 
                 id="slug" 
@@ -156,11 +156,11 @@ const GeneralTab = ({ generalData }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-1">
           <div className="relative group">
             <div className="absolute -top-2.5 left-3.5 px-1.5 bg-white dark:bg-zinc-900 z-10">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-orange-600 transition-colors">Phone Number</span>
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-primary transition-colors">Phone Number</span>
             </div>
-            <div className="relative flex items-center border border-gray-200 dark:border-zinc-800 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all bg-white dark:bg-zinc-900 shadow-2xs">
+            <div className="relative flex items-center border border-gray-200 dark:border-zinc-800 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-primary transition-all bg-white dark:bg-zinc-900 shadow-2xs">
               <div className="pl-3.5 flex items-center pointer-events-none">
-                <Phone className="h-4.5 w-4.5 text-orange-500 shrink-0" />
+                <Phone className="h-4.5 w-4.5 text-primary/90 shrink-0" />
               </div>
               <Input 
                 id="phone" 
@@ -177,11 +177,11 @@ const GeneralTab = ({ generalData }) => {
 
           <div className="relative group">
             <div className="absolute -top-2.5 left-3.5 px-1.5 bg-white dark:bg-zinc-900 z-10">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-orange-600 transition-colors">Email Address</span>
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-primary transition-colors">Email Address</span>
             </div>
-            <div className="relative flex items-center border border-gray-200 dark:border-zinc-800 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all bg-white dark:bg-zinc-900 shadow-2xs">
+            <div className="relative flex items-center border border-gray-200 dark:border-zinc-800 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-primary transition-all bg-white dark:bg-zinc-900 shadow-2xs">
               <div className="pl-3.5 flex items-center pointer-events-none">
-                <Mail className="h-4.5 w-4.5 text-orange-500 shrink-0" />
+                <Mail className="h-4.5 w-4.5 text-primary/90 shrink-0" />
               </div>
               <Input 
                 id="email" 
@@ -199,11 +199,11 @@ const GeneralTab = ({ generalData }) => {
 
           <div className="relative group md:col-span-2">
             <div className="absolute -top-2.5 left-3.5 px-1.5 bg-white dark:bg-zinc-900 z-10">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-orange-600 transition-colors">Custom Domain</span>
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-primary transition-colors">Custom Domain</span>
             </div>
-            <div className="relative flex items-center border border-gray-200 dark:border-zinc-800 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-orange-500 transition-all bg-white dark:bg-zinc-900 shadow-2xs">
+            <div className="relative flex items-center border border-gray-200 dark:border-zinc-800 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-primary transition-all bg-white dark:bg-zinc-900 shadow-2xs">
               <div className="pl-3.5 flex items-center pointer-events-none">
-                <Link2 className="h-4.5 w-4.5 text-orange-500 shrink-0" />
+                <Link2 className="h-4.5 w-4.5 text-primary/90 shrink-0" />
               </div>
               <Input 
                 id="domain" 
@@ -223,7 +223,7 @@ const GeneralTab = ({ generalData }) => {
         <Button 
           type="submit" 
           disabled={isPending || !formik.dirty} 
-          className="h-9 px-5 rounded-md font-semibold text-xs sm:text-sm shadow-2xs transition-all active:scale-[0.98] bg-orange-600 hover:bg-orange-700 text-white gap-2"
+          className="h-9 px-5 rounded-md font-semibold text-xs sm:text-sm shadow-2xs transition-all active:scale-[0.98] bg-primary hover:bg-primary/90 text-white gap-2"
         >
           {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           {isPending ? "Saving changes..." : "Save General Info"}

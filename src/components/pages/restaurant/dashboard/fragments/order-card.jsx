@@ -24,7 +24,7 @@ export default function OrderCard({ order, statusType, refetchOrders }) {
   const getUrgencyColor = () => {
     const elapsedMinutes = (new Date() - new Date(order.createdAt)) / 60000;
     if (elapsedMinutes > 30) return "text-red-600 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/30";
-    if (elapsedMinutes > 15) return "text-orange-600 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-900/30";
+    if (elapsedMinutes > 15) return "text-primary bg-primary/10 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-900/30";
     return "text-green-600 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-900/30";
   };
 
@@ -56,7 +56,7 @@ export default function OrderCard({ order, statusType, refetchOrders }) {
                 <span className={`px-2 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider flex items-center gap-1
                   ${order.orderType === 'dine-in' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
                   order.orderType === 'online' ? 'bg-purple-100 text-purple-700 border border-purple-200' :
-                  'bg-orange-100 text-orange-700 border border-orange-200'}
+                  'bg-primary/20 text-primary border border-orange-200'}
                 `}>
                   {order.orderType === "dine-in" ? <Utensils className="w-3.5 h-3.5" /> : <Receipt className="w-3.5 h-3.5" />}
                   {order.orderType}
@@ -110,7 +110,7 @@ export default function OrderCard({ order, statusType, refetchOrders }) {
           </div>
 
           {order.specialInstructions && order.specialInstructions.toLowerCase() !== "na" && (
-            <div className="bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 p-3 rounded-lg text-sm flex items-start gap-2 border border-orange-200 dark:border-orange-900/40 mt-auto">
+            <div className="bg-primary/10 dark:bg-orange-900/20 text-primary dark:text-orange-300 p-3 rounded-lg text-sm flex items-start gap-2 border border-orange-200 dark:border-orange-900/40 mt-auto">
               <Info className="w-5 h-5 shrink-0 mt-0.5" />
               <div className="flex flex-col">
                 <span className="font-bold text-[11px] uppercase tracking-wider mb-0.5 opacity-80">Order Notes</span>

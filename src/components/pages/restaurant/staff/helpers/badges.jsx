@@ -37,8 +37,8 @@ export const StaffRoleBadge = ({ role }) => {
         <TooltipProvider delay={0}>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-semibold bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400 border border-orange-200/80 dark:border-orange-800/40 rounded-md shadow-2xs w-fit cursor-help">
-                        <ShieldCheck size={13} className="text-orange-500" strokeWidth={2.5} />
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-semibold bg-primary/10 dark:bg-orange-950/40 text-primary dark:text-orange-400 border border-orange-200/80 dark:border-orange-800/40 rounded-md shadow-2xs w-fit cursor-help">
+                        <ShieldCheck size={13} className="text-primary/90" strokeWidth={2.5} />
                         {roleName}
                     </span>
                 </TooltipTrigger>
@@ -61,7 +61,7 @@ export const StaffRoleBadge = ({ role }) => {
                                     key={idx} 
                                     className="flex items-center gap-2 text-gray-600 dark:text-gray-300"
                                 >
-                                    <div className="w-1.5 h-1.5 rounded-full bg-orange-500 shrink-0" />
+                                    <div className="w-1.5 h-1.5 rounded-full bg-primary/90 shrink-0" />
                                     <span className="text-[11px] font-medium">{perm.code ? perm.code.replace(/_/g, ' ') : (perm.name || "Permission")}</span>
                                 </div>
                             ))}

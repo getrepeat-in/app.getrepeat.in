@@ -11,7 +11,8 @@ const PROMOTION_TYPE_REQUIREMENTS = {
     ITEM_DISCOUNT: ["name", "discount_type", "discount_value"],
     BESTSELLER: ["name", "discount_type", "discount_value"],
     CART_DISCOUNT: ["name", "discount_type", "discount_value"],
-    BOGO: ["name"] 
+    BOGO: ["name"],
+    FREEBIE: ["name", "min_order_value"]
 };
 
 export const GET = async (req, { params }) => {
@@ -101,6 +102,23 @@ export const POST = async (req, { params }) => {
             });
             if (existingCode) {
                 return JsonResponse.error("A promotion with this code already exists for this restaurant.", 400);
+            }
+        }
+
+        if (["ITEM_DISCOUNT", "BESTSELLER", "FREEBIE"].includes(type)) {
+            if (!data.items || data.items.length === 0) {
+                return JsonResponse.error("At least one item must be selected for this promotion type.", 400);
+            }
+        }
+
+        if (type === "FREEBIE") {
+            if (data.items && data.items.length > 5) {
+                return JsonResponse.error("You can only select up to 5 free items.", 400);
+            }
+            
+            const existingFreebie = await Promotion.findOne({ restaurant: id, type: "FREEBIE" });
+            if (existingFreebie) {
+                return JsonResponse.error("You already have an active Freebie promotion. Please delete it before creating a new one.", 400);
             }
         }
 

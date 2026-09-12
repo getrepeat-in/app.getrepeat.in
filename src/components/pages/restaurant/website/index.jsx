@@ -98,7 +98,7 @@ const WebsiteConfigPage = () => {
           <Button 
             onClick={formik.handleSubmit}
             disabled={isPending || !formik.dirty} 
-            className="h-11 px-8 rounded-md font-medium shadow-md hover:shadow-lg transition-all active:scale-[0.98] bg-orange-600 hover:bg-orange-700 text-white"
+            className="h-11 px-8 rounded-md font-medium shadow-md hover:shadow-lg transition-all active:scale-[0.98] bg-primary hover:bg-primary/90 text-white"
           >
             {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
             {isPending ? "Saving..." : "Save Configuration"}
