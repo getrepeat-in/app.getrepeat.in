@@ -12,7 +12,8 @@ const PROMOTION_TYPE_REQUIREMENTS = {
     BESTSELLER: ["name", "discount_type", "discount_value"],
     CART_DISCOUNT: ["name", "discount_type", "discount_value"],
     BOGO: ["name"],
-    FREEBIE: ["name", "min_order_value"]
+    FREEBIE: ["name", "min_order_value"],
+    FLAT_PRICE: ["name", "discount_value", "min_order_value"]
 };
 
 export const GET = async (req, { params }) => {
@@ -105,7 +106,7 @@ export const POST = async (req, { params }) => {
             }
         }
 
-        if (["ITEM_DISCOUNT", "BESTSELLER", "FREEBIE"].includes(type)) {
+        if (["ITEM_DISCOUNT", "BESTSELLER", "FREEBIE", "FLAT_PRICE"].includes(type)) {
             if (!data.items || data.items.length === 0) {
                 return JsonResponse.error("At least one item must be selected for this promotion type.", 400);
             }
@@ -120,6 +121,19 @@ export const POST = async (req, { params }) => {
             if (existingFreebie) {
                 return JsonResponse.error("You already have an active Freebie promotion. Please delete it before creating a new one.", 400);
             }
+        }
+
+        if (type === "FLAT_PRICE") {
+            if (data.items && data.items.length > 5) {
+                return JsonResponse.error("You can only select up to 5 items for a flat price promotion.", 400);
+            }
+            
+            const existingFlatPrice = await Promotion.findOne({ restaurant: id, type: "FLAT_PRICE" });
+            if (existingFlatPrice) {
+                return JsonResponse.error("You already have an active Flat Price promotion. Please delete it before creating a new one.", 400);
+            }
+
+            data.per_user_limit = data.per_user_limit || 1;
         }
 
         const newPromotion = await Promotion.create({

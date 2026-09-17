@@ -12,7 +12,7 @@ const PromotionSchema = new Schema(
     type: {
       type: String,
       required: true,
-      enum: ["ITEM_DISCOUNT", "BESTSELLER", "CART_DISCOUNT", "BOGO", "FREEBIE"],
+      enum: ["ITEM_DISCOUNT", "BESTSELLER", "CART_DISCOUNT", "BOGO", "FREEBIE", "FLAT_PRICE"],
       default: "ITEM_DISCOUNT",
     },
 

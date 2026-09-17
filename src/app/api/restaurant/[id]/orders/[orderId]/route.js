@@ -1,13 +1,9 @@
 import dbConnect from "@/lib/db";
-import Table from "@/models/Table";
-import MenuItem from "@/models/Item";
-import { User } from "@/models/User";
-import { Staff } from "@/models/Staff";
 import Restaurant from "@/models/Restaurant";
+import { Staff } from "@/models/Staff";
 import { getUser } from "@/lib/api/hooks/getUser";
-import Order, { OrderStatus } from "@/models/Order";
 import { JsonResponse } from "@/lib/api/responseHandler";
-import { invalidateOrderCache } from "@/lib/api/helpers/cacheKeys";
+import { OrderService } from "@/services/backend/order";
 
 export const GET = async (req, { params }) => {
     try {
@@ -23,24 +19,16 @@ export const GET = async (req, { params }) => {
             return JsonResponse.error("Please log in first to continue!", 401);
         }
 
-        const restaurant = await Restaurant.findOne({ _id: id, createdBy: user.id });
+        const restaurant = await Restaurant.findOne({ _id: id, createdBy: user.id }).select("_id").lean();
         if (!restaurant) {
             return JsonResponse.error("Restaurant not found or unauthorized", 404);
         }
 
-        const order = await Order.findOne({ _id: orderId, restaurant: id })
-            .populate("items.menuItem", "name base_price image")
-            .populate("table", "tableNumber label zone")
-            .populate("customer", "name phone email")
-            .populate("statusHistory.updatedBy", "name email");
-
-        if (!order) {
-            return JsonResponse.error("Order not found", 404);
-        }
-
+        const order = await OrderService.getOrderById(orderId, { restaurantId: id });
         return JsonResponse.success(order, "Order fetched successfully", 200);
     } catch (err) {
-        return JsonResponse.error(err?.message || "Internal Server Error!", 500);
+        console.error("GET order error:", err);
+        return JsonResponse.error(err?.message || "Internal Server Error!", 404);
     }
 };
 
@@ -58,44 +46,42 @@ export const PATCH = async (req, { params }) => {
             return JsonResponse.error("Please log in first to continue!", 401);
         }
 
-        const restaurant = await Restaurant.findOne({ _id: id, createdBy: user.id });
+        const restaurant = await Restaurant.findOne({ _id: id, createdBy: user.id }).select("_id").lean();
         if (!restaurant) {
             return JsonResponse.error("Restaurant not found or unauthorized", 404);
         }
 
-        const order = await Order.findOne({ _id: orderId, restaurant: id });
-        if (!order) {
-            return JsonResponse.error("Order not found", 404);
-        }
-
-        const staff = await Staff.findOne({ clerkUserId: user.id, restaurant: id });
+        const staff = await Staff.findOne({ clerkUserId: user.id, restaurant: id }).select("_id").lean();
+        const updatedBy = staff ? staff._id : user.id;
 
         const data = await req.json();
+        let updatedOrder;
+
         if (data.status) {
-            if (!Object.values(OrderStatus).includes(data.status)) {
-                return JsonResponse.error("Invalid order status", 400);
-            }
-            order.status = data.status;
-            order.statusHistory.push({
+            updatedOrder = await OrderService.updateOrderStatus(orderId, {
                 status: data.status,
-                updatedBy: staff ? staff._id : null
+                updatedBy,
+                restaurantId: id,
             });
         }
 
-        if (data.paymentStatus) {
-            order.paymentStatus = data.paymentStatus;
-        }
-        
-        if (data.paymentMethod) {
-            order.paymentMethod = data.paymentMethod;
+        if (data.paymentStatus || data.paymentMethod) {
+            updatedOrder = await OrderService.updateOrderPayment(orderId, {
+                paymentStatus: data.paymentStatus,
+                paymentMethod: data.paymentMethod,
+                updatedBy,
+                restaurantId: id,
+            });
         }
 
-        await order.save();
-        await invalidateOrderCache(id);
+        if (!updatedOrder) {
+            return JsonResponse.error("No valid update fields provided", 400);
+        }
 
-        return JsonResponse.success(order, "Order updated successfully", 200);
+        return JsonResponse.success(updatedOrder, "Order updated successfully", 200);
     } catch (err) {
-        return JsonResponse.error(err?.message || "Internal Server Error!", 500);
+        console.error("PATCH order error:", err);
+        return JsonResponse.error(err?.message || "Internal Server Error!", 400);
     }
 };
 
@@ -113,19 +99,15 @@ export const DELETE = async (req, { params }) => {
             return JsonResponse.error("Please log in first to continue!", 401);
         }
 
-        const restaurant = await Restaurant.findOne({ _id: id, createdBy: user.id });
+        const restaurant = await Restaurant.findOne({ _id: id, createdBy: user.id }).select("_id").lean();
         if (!restaurant) {
             return JsonResponse.error("Restaurant not found or unauthorized", 404);
         }
 
-        const order = await Order.findOne({ _id: orderId, restaurant: id });
-        if (!order) {
-            return JsonResponse.error("Order not found", 404);
-        }
-
-        await Order.deleteOne({ _id: orderId });
+        await OrderService.deleteOrder(orderId, { restaurantId: id });
         return JsonResponse.success(null, "Order deleted successfully", 200);
     } catch (err) {
-        return JsonResponse.error(err?.message || "Internal Server Error!", 500);
+        console.error("DELETE order error:", err);
+        return JsonResponse.error(err?.message || "Internal Server Error!", 400);
     }
 };

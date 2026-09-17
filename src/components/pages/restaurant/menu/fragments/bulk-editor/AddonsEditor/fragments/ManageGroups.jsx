@@ -111,12 +111,12 @@ export function ManageGroups({ addonGroups, items, selectedGroups, setSelectedGr
                             </div>
                             <div className="bg-slate-50 border-t border-gray-100 px-4 py-2.5">
                                 <div className="flex flex-wrap gap-1.5">
-                                    {group.items.map((mapped, idx) => (
+                                    {group.items?.filter(mapped => mapped?.item).map((mapped, idx) => (
                                         <div key={idx} className="bg-white border border-slate-200 text-slate-700 text-[11px] font-medium px-2 py-1 rounded-sm shadow-sm">
-                                            {mapped.item?.name || 'Unknown'} {mapped.priceOverride !== null ? <span className="text-primary font-bold ml-1">+₹{mapped.priceOverride}</span> : <span className="text-slate-400 font-bold ml-1">+₹{mapped.item?.base_price}</span>}
+                                            {mapped.item?.name || 'Unknown'} {mapped.priceOverride !== null && mapped.priceOverride !== undefined ? <span className="text-primary font-bold ml-1">+₹{mapped.priceOverride}</span> : mapped.item?.base_price !== undefined ? <span className="text-slate-400 font-bold ml-1">+₹{mapped.item?.base_price}</span> : null}
                                         </div>
                                     ))}
-                                    {group.items.length === 0 && (
+                                    {(!group.items || group.items.length === 0 || group.items.every(m => !m?.item)) && (
                                         <span className="text-[12px] text-slate-400 italic">No items in this group.</span>
                                     )}
                                 </div>

@@ -1,11 +1,30 @@
 import dbConnect from "@/lib/db";
 import MenuItem from "@/models/Item";
 import AddonGroup from "@/models/AddonGroup";
+import ImageAsset from "@/models/Image";
 import Restaurant from "@/models/Restaurant";
 import { getUser } from "@/lib/api/hooks/getUser";
 import { JsonResponse } from "@/lib/api/responseHandler";
 import { getCache, setCache } from "@/services/backend/redis/cache.service";
 import { getAddonGroupsCacheKey, invalidateAddonGroupCache, invalidateItemCache } from "@/lib/api/helpers/cacheKeys";
+import { ImageService } from "@/services/backend/images";
+
+const formatAddonGroup = (group) => {
+    if (!group) return group;
+    const obj = group.toObject ? group.toObject() : { ...group };
+    return {
+        ...obj,
+        items: Array.isArray(obj.items)
+            ? obj.items.map((mapped) => ({
+                ...mapped,
+                item: mapped && mapped.item && typeof mapped.item === "object" ? {
+                    ...mapped.item,
+                    image: ImageService.formatImage(mapped.item.image),
+                } : mapped?.item,
+            }))
+            : [],
+    };
+};
 
 export const GET = async (req, { params }) => {
     try {
@@ -18,7 +37,10 @@ export const GET = async (req, { params }) => {
         let groups = await getCache(cacheKey);
 
         if (!groups) {
-            groups = await AddonGroup.find({ restaurant: restaurantId }).populate('items.item').sort({ createdAt: -1 });
+            const rawGroups = await AddonGroup.find({ restaurant: restaurantId })
+                .populate({ path: 'items.item', populate: { path: 'image' } })
+                .sort({ createdAt: -1 });
+            groups = rawGroups.map(formatAddonGroup);
             await setCache(cacheKey, groups, 3600);
         }
 
@@ -53,11 +75,11 @@ export const POST = async (req, { params }) => {
             items: data.items || []
         });
 
-        const populatedGroup = await newGroup.populate('items.item');
+        const populatedGroup = await newGroup.populate({ path: 'items.item', populate: { path: 'image' } });
 
         await invalidateAddonGroupCache(restaurantId);
 
-        return JsonResponse.success(populatedGroup, "Addon group created successfully", 201);
+        return JsonResponse.success(formatAddonGroup(populatedGroup), "Addon group created successfully", 201);
     } catch (err) {
         console.error("Create Addon Group Error:", err);
         return JsonResponse.error(err?.message || "Internal Server Error!", 500);
@@ -86,14 +108,14 @@ export const PUT = async (req, { params }) => {
             { _id: groupId, restaurant: restaurantId },
             { $set: data },
             { new: true }
-        ).populate('items.item');
+        ).populate({ path: 'items.item', populate: { path: 'image' } });
 
         if (!updatedGroup) return JsonResponse.error("Addon group not found", 404);
 
         await invalidateAddonGroupCache(restaurantId);
         await invalidateItemCache(restaurantId); 
 
-        return JsonResponse.success(updatedGroup, "Addon group updated successfully", 200);
+        return JsonResponse.success(formatAddonGroup(updatedGroup), "Addon group updated successfully", 200);
     } catch (err) {
         console.error("Update Addon Group Error:", err);
         return JsonResponse.error(err?.message || "Internal Server Error!", 500);

@@ -1,17 +1,9 @@
-import crypto from "crypto";
-import mongoose from "mongoose";
 import dbConnect from "@/lib/db";
-import Order from "@/models/Order";
-import Table from "@/models/Table";
-import { User } from "@/models/User";
-import MenuItem from "@/models/Item";
 import Restaurant from "@/models/Restaurant";
 import { getUser } from "@/lib/api/hooks/getUser";
 import { JsonResponse } from "@/lib/api/responseHandler";
-import { validateRequiredFields } from "@/lib/api/helpers/validator";
+import { OrderService } from "@/services/backend/order";
 import { getCache, setCache } from "@/services/backend/redis/cache.service";
-
-const ORDER_POST_REQUIRED_FIELDS = ["orderType", "items", "subtotal", "totalAmount"];
 
 export const GET = async (req, { params }) => {
     try {
@@ -20,13 +12,6 @@ export const GET = async (req, { params }) => {
             return JsonResponse.error("Restaurant ID is required!", 400);
         }
 
-        const url = new URL(req.url);
-        const status = url.searchParams.get("status");
-        const orderType = url.searchParams.get("orderType");
-        const search = url.searchParams.get("search");
-        const page = parseInt(url.searchParams.get("page") || "1");
-        const limit = parseInt(url.searchParams.get("limit") || "50");
-
         await dbConnect();
         const user = await getUser();
 
@@ -34,90 +19,43 @@ export const GET = async (req, { params }) => {
             return JsonResponse.error("Please log in first to continue!", 401);
         }
 
-        const restaurant = await Restaurant.findOne({ _id: id, createdBy: user.id });
+        const restaurant = await Restaurant.findOne({ _id: id, createdBy: user.id }).select("_id").lean();
         if (!restaurant) {
             return JsonResponse.error("Restaurant not found or unauthorized", 404);
         }
 
+        const url = new URL(req.url);
+        const status = url.searchParams.get("status");
+        const orderType = url.searchParams.get("orderType");
+        const search = url.searchParams.get("search");
+        const page = parseInt(url.searchParams.get("page") || "1", 10);
+        const limit = parseInt(url.searchParams.get("limit") || "50", 10);
         const summary = url.searchParams.get("summary") === "true";
         const startDate = url.searchParams.get("startDate");
         const endDate = url.searchParams.get("endDate");
 
-        const query = { restaurant: id };
-        if (status) {
-            if (status.includes(",")) {
-                query.status = { $in: status.split(",") };
-            } else {
-                query.status = status;
-            }
-        }
-        if (orderType) query.orderType = orderType;
-        if (startDate || endDate) {
-            query.createdAt = {};
-            if (startDate) query.createdAt.$gte = new Date(startDate);
-            if (endDate) query.createdAt.$lte = new Date(endDate);
+        const cacheKey = `restaurant:${id}:orders:page:${page}:limit:${limit}:status:${status || "all"}:type:${orderType || "all"}:search:${search || "none"}:start:${startDate || "all"}:end:${endDate || "all"}:summary:${summary}`;
+        const cachedResult = await getCache(cacheKey);
+
+        if (cachedResult) {
+            return JsonResponse.success(cachedResult, "Orders fetched successfully (cached)", 200);
         }
 
-        if (summary) {
-            const counts = await Order.aggregate([
-                { $match: { restaurant: mongoose.Types.ObjectId.createFromHexString(id), status: { $in: ["PENDING_PAYMENT", "PLACED", "ACCEPTED", "PREPARING", "READY_FOR_PICKUP", "OUT_FOR_DELIVERY", "PICKED_UP"] } } },
-                { $group: { _id: "$status", count: { $sum: 1 } } }
-            ]);
-            
-            const summaryData = counts.reduce((acc, curr) => {
-                acc[curr._id] = curr.count;
-                return acc;
-            }, {});
+        const result = await OrderService.listOrders({
+            restaurantId: id,
+            status,
+            orderType,
+            search,
+            startDate,
+            endDate,
+            page,
+            limit,
+            summary,
+        });
 
-            return JsonResponse.success(summaryData, "Order summary fetched successfully", 200);
-        }
+        await setCache(cacheKey, result, 60 * 2);
 
-        if (search) {
-            const matchingCustomers = await User.find({
-                $or: [
-                    { name: { $regex: search, $options: "i" } },
-                    { phone: { $regex: search, $options: "i" } }
-                ]
-            }).select('_id');
-            const customerIds = matchingCustomers.map(c => c._id);
-
-            query.$or = [
-                { orderNumber: { $regex: search, $options: "i" } },
-                { customer: { $in: customerIds } }
-            ];
-        }
-
-        const skip = (page - 1) * limit;
-
-        const cacheKey = `restaurant:${id}:orders:page:${page}:limit:${limit}:status:${status || "all"}:type:${orderType || "all"}:search:${search || "none"}:start:${startDate || "all"}:end:${endDate || "all"}`;
-        const cachedOrders = await getCache(cacheKey);
-
-        if (cachedOrders) {
-            return JsonResponse.success(
-                cachedOrders,
-                "Orders fetched successfully (cached)",
-                200
-            );
-        }
-
-        const orders = await Order.find(query)
-            .populate("items.menuItem", "name description image base_price isVeg cuisineType")
-            .populate("table", "tableNumber label zone")
-            .populate("customer", "name phone email profileImageUrl")
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(limit);
-
-        const totalOrders = await Order.countDocuments(query);
-        const result = { orders, total: totalOrders, page, limit };
-
-        await setCache(cacheKey, result, 60 * 5);
-
-        return JsonResponse.success(
-            result,
-            "Orders fetched successfully",
-            200
-        );
+        return JsonResponse.success(result, "Orders fetched successfully", 200);
     } catch (err) {
         console.error("API GET ORDERS ERROR:", err);
         return JsonResponse.error(err?.message || "Internal Server Error!", 500);
@@ -132,52 +70,39 @@ export const POST = async (req, { params }) => {
         }
 
         await dbConnect();
-        const restaurant = await Restaurant.findById(id);
+        const user = await getUser();
+        if (!user?.id) {
+            return JsonResponse.error("Please log in first to continue!", 401);
+        }
+
+        const restaurant = await Restaurant.findOne({ _id: id, createdBy: user.id }).select("_id").lean();
         if (!restaurant) {
-            return JsonResponse.error("Restaurant not found", 404);
+            return JsonResponse.error("Restaurant not found or unauthorized", 404);
         }
 
         const data = await req.json();
-        const { isValid, message } = validateRequiredFields(data, ORDER_POST_REQUIRED_FIELDS);
-        
-        if (!isValid) {
-            return JsonResponse.error(message, 400);
-        }
 
-        const { orderType, table, items, subtotal, tax, discount, totalAmount, paymentMethod, specialInstructions } = data;
-
-        if (orderType === "dine-in" && !table) {
-            return JsonResponse.error("Table is required for dine-in orders", 400);
-        }
-
-        if (!Array.isArray(items) || items.length === 0) {
-            return JsonResponse.error("Order must contain at least one item", 400);
-        }
-
-        const user = await getUser();
-        const customer = user?.id || null;
-
-        const orderNumber = "ORD-" + crypto.randomBytes(4).toString("hex").toUpperCase();
-
-        const newOrder = await Order.create({
-            restaurant: id,
-            orderNumber,
-            orderType,
-            table: orderType === "dine-in" ? table : undefined,
-            customer,
-            items,
-            subtotal,
-            tax: tax || 0,
-            discount: discount || 0,
-            totalAmount,
-            paymentMethod: paymentMethod || "cash",
-            specialInstructions: specialInstructions || "",
-            status: "PENDING_PAYMENT",
-            statusHistory: [{ status: "PENDING_PAYMENT", updatedBy: user?.id || null }]
+        const order = await OrderService.createOrder({
+            restaurantId: id,
+            orderType: data.orderType,
+            table: data.table,
+            customer: data.customer,
+            customerInfo: data.customerInfo,
+            items: data.items,
+            subtotal: data.subtotal,
+            tax: data.tax,
+            discount: data.discount,
+            totalAmount: data.totalAmount,
+            paymentMethod: data.paymentMethod || "cash",
+            paymentStatus: data.paymentStatus || "pending",
+            specialInstructions: data.specialInstructions || "",
+            initialStatus: data.status || null,
+            updatedBy: user.id,
         });
 
-        return JsonResponse.success(newOrder, "Order created successfully", 201);
+        return JsonResponse.success(order, "Order created successfully", 201);
     } catch (err) {
-        return JsonResponse.error(err?.message || "Internal Server Error!", 500);
+        console.error("API POST ORDER ERROR:", err);
+        return JsonResponse.error(err?.message || "Internal Server Error!", 400);
     }
 };

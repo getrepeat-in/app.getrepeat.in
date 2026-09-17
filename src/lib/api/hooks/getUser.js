@@ -16,5 +16,7 @@ export async function getUser() {
     id: userId,
     email: clerkUser.emailAddresses[0]?.emailAddress ?? '',
     name: [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' '),
+    publicMetadata: clerkUser.publicMetadata || {},
+
   };
 }

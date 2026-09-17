@@ -1,11 +1,13 @@
 import dbConnect from "@/lib/db";
+import MenuItem from "@/models/Item";
 import Category from "@/models/Category";
 import Restaurant from "@/models/Restaurant";
 import { getUser } from "@/lib/api/hooks/getUser";
 import { JsonResponse } from "@/lib/api/responseHandler";
 import { validateRequiredFields } from "@/lib/api/helpers/validator";
 import { getCache, setCache } from "@/services/backend/redis/cache.service";
-import { getCategoriesCacheKey, invalidateCategoryCache } from "@/lib/api/helpers/cacheKeys";
+import { getCategoriesCacheKey, invalidateCategoryCache, invalidateItemCache } from "@/lib/api/helpers/cacheKeys";
+import { ImageService } from "@/services/backend/images";
 
 const MENU_CATEGORY_POST_REQUIRED_FIELDS = ["name"];
 
@@ -35,8 +37,13 @@ export const GET = async (req, { params }) => {
         }
 
         const categories = await Category.find({ restaurant: id }).populate("image").sort({ displayOrder: 1, createdAt: -1 });
-        await setCache(cacheKey, categories, 3600);
-        return JsonResponse.success(categories, "Categories fetched successfully", 200);
+        const formattedCategories = categories.map(c => {
+            const obj = c.toObject ? c.toObject() : { ...c };
+            return { ...obj, image: ImageService.formatImage(obj.image) };
+        });
+
+        await setCache(cacheKey, formattedCategories, 3600);
+        return JsonResponse.success(formattedCategories, "Categories fetched successfully", 200);
     } catch (err) {
         return JsonResponse.error(err?.message || "Internal Server Error!", 500);
     }
@@ -78,8 +85,14 @@ export const POST = async (req, { params }) => {
             parentCategory: parentCategory || null,
         });
 
+        const createdCategory = await Category.findById(newCategory._id).populate("image");
+        const formatted = {
+            ...createdCategory.toObject(),
+            image: ImageService.formatImage(createdCategory.image),
+        };
+
         await invalidateCategoryCache(id);
-        return JsonResponse.success(newCategory, "Category created successfully", 201);
+        return JsonResponse.success(formatted, "Category created successfully", 201);
     } catch (err) {
         return JsonResponse.error(err?.message || "Internal Server Error!", 500);
     }
@@ -124,9 +137,15 @@ export const PUT = async (req, { params }) => {
         if (data.parentCategory !== undefined) category.parentCategory = data.parentCategory;
 
         await category.save();
+        const updatedCategory = await Category.findById(category._id).populate("image");
+        const formatted = {
+            ...updatedCategory.toObject(),
+            image: ImageService.formatImage(updatedCategory.image),
+        };
+
         await invalidateCategoryCache(id);
 
-        return JsonResponse.success(category, "Category updated successfully", 200);
+        return JsonResponse.success(formatted, "Category updated successfully", 200);
     } catch (err) {
         return JsonResponse.error(err?.message || "Internal Server Error!", 500);
     }
@@ -163,9 +182,36 @@ export const DELETE = async (req, { params }) => {
             return JsonResponse.error("Category not found!", 404);
         }
 
-        await Category.deleteOne({ _id: categoryId });
+        // Recursively find all subcategories under this category
+        const findDescendantCategoryIds = async (parentIds) => {
+            const children = await Category.find({ parentCategory: { $in: parentIds }, restaurant: id }).select('_id');
+            if (!children || children.length === 0) return [];
+            const childIds = children.map(c => c._id);
+            const descendantIds = await findDescendantCategoryIds(childIds);
+            return [...childIds, ...descendantIds];
+        };
+
+        const subCategoryIds = await findDescendantCategoryIds([categoryId]);
+        const allCategoryIdsToDelete = [categoryId, ...subCategoryIds];
+
+        // Delete all items belonging to this category or any of its subcategories
+        await MenuItem.deleteMany({
+            restaurant: id,
+            $or: [
+                { category: { $in: allCategoryIdsToDelete } },
+                { subCategory: { $in: allCategoryIdsToDelete } }
+            ]
+        });
+
+        // Delete the category and all its descendant subcategories
+        await Category.deleteMany({
+            _id: { $in: allCategoryIdsToDelete },
+            restaurant: id
+        });
+
         await invalidateCategoryCache(id);
-        return JsonResponse.success(null, "Category deleted successfully", 200);
+        await invalidateItemCache(id);
+        return JsonResponse.success(null, "Category and all associated subcategories and items deleted successfully", 200);
     } catch (err) {
         return JsonResponse.error(err?.message || "Internal Server Error!", 500);
     }

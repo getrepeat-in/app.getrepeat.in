@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
-import { Percent, ShoppingCart, Gift, Star } from "lucide-react";
+import { Percent, ShoppingCart, Gift, Star, Tag } from "lucide-react";
 
-export const PromotionTypeSelection = ({ onSelect, hasFreebie }) => {
+export const PromotionTypeSelection = ({ onSelect, hasFreebie, hasFlatPrice }) => {
     const promotionTypes = [
         {
             id: "ITEM_DISCOUNT",
@@ -53,6 +53,17 @@ export const PromotionTypeSelection = ({ onSelect, hasFreebie }) => {
             border: "border-pink-200 dark:border-pink-500/20",
             enabled: !hasFreebie,
             customBadge: hasFreebie ? "Max 1 Limit" : null,
+        },
+        {
+            id: "FLAT_PRICE",
+            title: "Flat Price",
+            description: hasFlatPrice ? "You already have an active Flat Price promotion. Max 1 allowed." : "Sell specific menu items at a fixed special price.",
+            icon: Tag,
+            color: "text-cyan-600 dark:text-cyan-400",
+            bg: "bg-cyan-50 dark:bg-cyan-500/10",
+            border: "border-cyan-200 dark:border-cyan-500/20",
+            enabled: !hasFlatPrice,
+            customBadge: hasFlatPrice ? "Max 1 Limit" : null,
         },
     ];
 

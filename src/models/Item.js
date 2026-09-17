@@ -52,6 +52,7 @@ const MenuItemSchema = new Schema(
     },
     name: { type: String, required: true, trim: true },
     description: { type: String, default: "" },
+    media: [{ url: String, fileDirectory: String, image_id: String }],
     image: {
       type: Schema.Types.ObjectId,
       ref: "ImageAsset",

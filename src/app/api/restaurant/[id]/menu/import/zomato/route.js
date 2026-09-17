@@ -136,6 +136,8 @@ export const GET = async (req, { params }) => {
                     let zomatoImageUrl = null;
                     if (itemData.item_image_url) {
                         zomatoImageUrl = itemData.item_image_url;
+                    } else if (Array.isArray(itemData.media) && itemData.media[0]?.image?.url) {
+                        zomatoImageUrl = itemData.media[0].image.url;
                     } else if (itemData.media?.url) {
                         zomatoImageUrl = itemData.media.url;
                     }
@@ -176,7 +178,8 @@ export const GET = async (req, { params }) => {
                         subCategory: subCategory._id,
                         name: itemData.name,
                         description: itemData.desc || "",
-                        image: image, 
+                        image: image,
+                        media: zomatoImageUrl ? [{ url: zomatoImageUrl, fileDirectory: "", image_id: zomatoImageUrl.split("?")[0].split("/").pop() || "" }] : [], 
                         base_price: basePrice,
                         dietaryType: dietaryType,
                         variants: variants,

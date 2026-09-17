@@ -31,6 +31,12 @@ export const preparePayload = (formData) => {
         payload.min_order_value = Number(formData.min_order_value);
     }
 
+    if (formData.type === "FLAT_PRICE") {
+        payload.discount_type = "FLAT"; 
+        payload.discount_value = Number(formData.discount_value);
+        payload.min_order_value = Number(formData.min_order_value);
+    }
+
     if (formData.starts_at) payload.starts_at = new Date(formData.starts_at);
     if (formData.ends_at) payload.ends_at = new Date(formData.ends_at);
     if (formData.usage_limit) payload.usage_limit = Number(formData.usage_limit);

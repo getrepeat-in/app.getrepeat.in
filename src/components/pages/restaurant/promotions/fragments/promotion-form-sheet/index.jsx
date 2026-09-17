@@ -9,11 +9,11 @@ import { useRestaurant } from "@/store/hooks/useRestaurant";
 import useNotification from "@/store/hooks/useNotification";
 import { StatusSelection } from "./fragments/StatusSelection";
 import { getInitialFormData, preparePayload } from "./helper";
-import { NestedItemSelection } from "./fragments/NestedItemSelection";
+import { NestedItemSelection } from "@/components/global/nested-item-selector";
 import { PromotionTypeSelection } from "./fragments/PromotionTypeSelection";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 
-export default function PromotionFormSheet({ isOpen, onClose, promotion, onSubmit, isSubmitting, hasFreebie }) {
+export default function PromotionFormSheet({ isOpen, onClose, promotion, onSubmit, isSubmitting, hasFreebie, hasFlatPrice }) {
     const isEditMode = !!promotion;
     const [isVisible, setIsVisible] = useState(false);
     const [currentStep, setCurrentStep] = useState("SELECT_TYPE");
@@ -76,7 +76,7 @@ export default function PromotionFormSheet({ isOpen, onClose, promotion, onSubmi
         setFormData(prev => {
             const currentItems = prev.items || [];
             
-            if (prev.type === "FREEBIE" && !currentItems.includes(itemId) && currentItems.length >= 5) {
+            if (["FREEBIE", "FLAT_PRICE"].includes(prev.type) && !currentItems.includes(itemId) && currentItems.length >= 5) {
                 return prev;
             }
 
@@ -97,7 +97,7 @@ export default function PromotionFormSheet({ isOpen, onClose, promotion, onSubmi
                 itemIds.forEach(id => currentItems.add(id));
             }
 
-            if (prev.type === "FREEBIE" && currentItems.size > 5) {
+            if (["FREEBIE", "FLAT_PRICE"].includes(prev.type) && currentItems.size > 5) {
                 return prev; 
          }
             
@@ -108,7 +108,7 @@ export default function PromotionFormSheet({ isOpen, onClose, promotion, onSubmi
     const handleSubmit = (e) => {
         e.preventDefault();
         
-        if (["ITEM_DISCOUNT", "BESTSELLER", "FREEBIE"].includes(formData.type)) {
+        if (["ITEM_DISCOUNT", "BESTSELLER", "FREEBIE", "FLAT_PRICE"].includes(formData.type)) {
             if (!formData.items || formData.items.length === 0) {
                 notification.error("Please select at least one item for this promotion.");
                 return;
@@ -163,7 +163,7 @@ export default function PromotionFormSheet({ isOpen, onClose, promotion, onSubmi
 
                     <div className="p-6">
                         {currentStep === "SELECT_TYPE" ? (
-                            <PromotionTypeSelection onSelect={handleTypeSelect} hasFreebie={hasFreebie} />
+                            <PromotionTypeSelection onSelect={handleTypeSelect} hasFreebie={hasFreebie} hasFlatPrice={hasFlatPrice} />
                         ) : (
                             <form id="promotion-form" onSubmit={handleSubmit} className="space-y-6">
                                 <BasicFields 
@@ -172,7 +172,7 @@ export default function PromotionFormSheet({ isOpen, onClose, promotion, onSubmi
                                     handleSelectChange={handleSelectChange} 
                                 />
 
-                                {(formData.type === "ITEM_DISCOUNT" || formData.type === "BESTSELLER" || formData.type === "FREEBIE") && (
+                                {(formData.type === "ITEM_DISCOUNT" || formData.type === "BESTSELLER" || formData.type === "FREEBIE" || formData.type === "FLAT_PRICE") && (
                                     <div className="space-y-3">
                                         {itemsLoading || categoriesLoading ? (
                                             <div className="flex items-center justify-center py-10 text-gray-500">
@@ -180,10 +180,10 @@ export default function PromotionFormSheet({ isOpen, onClose, promotion, onSubmi
                                             </div>
                                         ) : (
                                             <div className="flex flex-col gap-2">
-                                                {formData.type === "FREEBIE" && (
+                                                {["FREEBIE", "FLAT_PRICE"].includes(formData.type) && (
                                                     <div className="flex items-center justify-between bg-pink-50 dark:bg-pink-900/20 px-3 py-2 rounded-md border border-pink-100 dark:border-pink-800/30">
                                                         <span className="text-[13px] font-medium text-pink-700 dark:text-pink-400">
-                                                            Select up to 5 items to offer for free.
+                                                            Select up to 5 items.
                                                         </span>
                                                         <span className="text-[13px] font-bold text-pink-700 dark:text-pink-400">
                                                             {(formData.items || []).length} / 5 Selected

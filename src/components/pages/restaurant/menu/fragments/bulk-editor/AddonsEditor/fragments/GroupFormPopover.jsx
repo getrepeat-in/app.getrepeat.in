@@ -17,8 +17,12 @@ export function GroupFormPopover({ children, initialData, onSubmit, items = [], 
     
     // items is [{ item: ID, priceOverride: X }]
     const [selectedItems, setSelectedItems] = useState(() => {
-        if (!initialData?.items) return new Set();
-        return new Set(initialData.items.map(i => i.item._id || i.item));
+        if (!initialData?.items || !Array.isArray(initialData.items)) return new Set();
+        const ids = initialData.items
+            .filter(i => i && i.item)
+            .map(i => (typeof i.item === 'object' ? i.item._id : i.item))
+            .filter(Boolean);
+        return new Set(ids);
     });
     
     const [searchQuery, setSearchQuery] = useState("");
@@ -45,11 +49,13 @@ export function GroupFormPopover({ children, initialData, onSubmit, items = [], 
         if (trimmed && onSubmit) {
             setIsSubmitting(true);
             try {
-                // Convert set to array of objects
                 const itemsPayload = Array.from(selectedItems).map(id => {
-                    // Try to preserve priceOverride if we have it
-                    const existing = initialData?.items?.find(i => (i.item._id || i.item) === id);
-                    return { item: id, priceOverride: existing?.priceOverride || null };
+                    const existing = initialData?.items?.find(i => {
+                        if (!i || !i.item) return false;
+                        const itemId = typeof i.item === 'object' ? i.item._id : i.item;
+                        return itemId?.toString() === id?.toString();
+                    });
+                    return { item: id, priceOverride: existing?.priceOverride ?? null };
                 });
 
                 await onSubmit({ 

@@ -207,6 +207,7 @@ export default function Promotions() {
                 onSubmit={handleSubmit}
                 isSubmitting={isCreating || isUpdating}
                 hasFreebie={promotions?.some(p => p.type === "FREEBIE")}
+                hasFlatPrice={promotions?.some(p => p.type === "FLAT_PRICE")}
             />
 
             <ConfirmDeleteAlert

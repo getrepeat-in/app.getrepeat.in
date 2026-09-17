@@ -22,6 +22,12 @@ const FIELD_CONFIG = {
         showDates: true,
         showLimits: true,
         showMinOrder: true,
+    },
+    FLAT_PRICE: {
+        showFlatPrice: true,
+        showDates: true,
+        showLimits: true,
+        showMinOrder: true,
     }
 };
 
@@ -113,6 +119,32 @@ export const BasicFields = ({ formData, handleChange, handleSelectChange }) => {
                                 className="border-0 focus-visible:ring-0 shadow-none h-12 bg-transparent text-[15px] pl-11 pr-3 w-full font-medium"
                             />
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {config.showFlatPrice && (
+                <div className="relative group">
+                    <div className="absolute -top-2.5 left-3 px-1.5 bg-white dark:bg-zinc-950 z-10 max-w-[calc(100%-24px)]">
+                        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-primary transition-colors whitespace-nowrap block truncate">
+                            Special Fixed Price <span className="text-red-500">*</span>
+                        </span>
+                    </div>
+                    <div className="relative flex items-center border border-gray-300 dark:border-gray-700 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-primary transition-all bg-white dark:bg-zinc-900/50">
+                        <div className="pl-3.5 flex items-center pointer-events-none absolute left-0 z-10">
+                            <IndianRupee className="h-5 w-5 text-primary/90" />
+                        </div>
+                        <Input 
+                            name="discount_value" 
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={formData.discount_value} 
+                            onChange={handleChange}
+                            placeholder="e.g. 9 or 19" 
+                            required
+                            className="border-0 focus-visible:ring-0 shadow-none h-12 bg-transparent text-[15px] pl-11 pr-3 w-full font-medium"
+                        />
                     </div>
                 </div>
             )}

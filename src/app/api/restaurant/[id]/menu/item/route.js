@@ -9,6 +9,29 @@ import { JsonResponse } from "@/lib/api/responseHandler";
 import { validateRequiredFields } from "@/lib/api/helpers/validator";
 import { getCache, setCache } from "@/services/backend/redis/cache.service";
 import { getItemsCacheKey, invalidateItemCache } from "@/lib/api/helpers/cacheKeys";
+import { ImageService } from "@/services/backend/images";
+
+const formatMenuItem = (item) => {
+    if (!item) return item;
+    const obj = item.toObject ? item.toObject() : { ...item };
+    return {
+        ...obj,
+        image: ImageService.formatImage(obj.image),
+        addonGroups: Array.isArray(obj.addonGroups) ? obj.addonGroups.map(ag => {
+            if (!ag || typeof ag !== 'object' || !Array.isArray(ag.items)) return ag;
+            return {
+                ...ag,
+                items: ag.items.map(mapped => ({
+                    ...mapped,
+                    item: mapped && mapped.item && typeof mapped.item === 'object' ? {
+                        ...mapped.item,
+                        image: ImageService.formatImage(mapped.item.image)
+                    } : mapped?.item
+                }))
+            };
+        }) : []
+    };
+};
 
 const MENU_ITEM_POST_REQUIRED_FIELDS = ["category", "name", "base_price", "dietaryType"];
 
@@ -72,7 +95,8 @@ export const GET = async (req, { params }) => {
         if (categoryId) filteredItems = filteredItems.filter(i => i.category?.toString() === categoryId || i.category?._id?.toString() === categoryId);
         if (subCategoryId) filteredItems = filteredItems.filter(i => i.subCategory?.toString() === subCategoryId || i.subCategory?._id?.toString() === subCategoryId);
 
-        return JsonResponse.success(filteredItems, "Items fetched successfully", 200);
+        const formattedItems = (filteredItems || []).map(formatMenuItem);
+        return JsonResponse.success(formattedItems, "Items fetched successfully", 200);
     } catch (err) {
         return JsonResponse.error(err?.message || "Internal Server Error!", 500);
     }
@@ -155,7 +179,7 @@ export const POST = async (req, { params }) => {
             });
         
         await invalidateItemCache(id);
-        return JsonResponse.success(populatedItem, "Item created successfully", 201);
+        return JsonResponse.success(formatMenuItem(populatedItem), "Item created successfully", 201);
     } catch (err) {
         return JsonResponse.error(err?.message || "Internal Server Error!", 500);
     }
@@ -230,7 +254,7 @@ export const PUT = async (req, { params }) => {
         }
 
         await invalidateItemCache(id);
-        return JsonResponse.success(updatedItem, "Item updated successfully", 200);
+        return JsonResponse.success(formatMenuItem(updatedItem), "Item updated successfully", 200);
     } catch (err) {
         return JsonResponse.error(err?.message || "Internal Server Error!", 500);
     }

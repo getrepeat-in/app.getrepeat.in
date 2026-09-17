@@ -39,6 +39,7 @@ export const useCategory = (resId) => {
         mutationFn: (categoryId) => MenuService.category.delete(resId, categoryId),
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ["categories", resId] });
+            queryClient.invalidateQueries({ queryKey: ["items", resId] });
             notification.success(data?.message || "Category deleted successfully");
         },
         onError: (err) => {

@@ -4,6 +4,7 @@ import MenuItem from "@/models/Item";
 import ImageAsset from "@/models/Image";
 import Category from "@/models/Category";
 import { getRestaurantFromSlug } from "@/lib/api/hooks/getRestaurant";
+import { ImageService } from "@/services/backend/images";
 
 export class MenuSearchService {
     static async search(slug, { query = "", isVeg = false, page = 1, limit = 10, categoryId = "" }) {
@@ -186,15 +187,48 @@ export class MenuSearchService {
         }
 
         const addonGroupIds = [...new Set(items.flatMap(item => item.addonGroups || []).map(id => id.toString()))];
-        const addonGroups = await mongoose.models.AddonGroup.find({ _id: { $in: addonGroupIds } })
+        const rawAddonGroups = await mongoose.models.AddonGroup.find({ _id: { $in: addonGroupIds } })
             .populate({
                 path: 'items.item',
+                populate: { path: 'image' },
                 select: 'name base_price image variants dietaryType isAvailable'
             })
             .lean();
 
+        const addonGroups = rawAddonGroups.map(group => ({
+            ...group,
+            items: group.items ? group.items.filter(i => i && i.item).map(mapped => ({
+                ...mapped,
+                item: {
+                    ...mapped.item,
+                    image: ImageService.formatImage(mapped.item.image)
+                }
+            })) : []
+        }));
+
+        const now = new Date();
+        const activePromotions = await mongoose.models.Promotion.find({
+            restaurant: restaurant._id,
+            status: "ACTIVE",
+            $and: [
+                { $or: [{ starts_at: null }, { starts_at: { $lte: now } }] },
+                { $or: [{ ends_at: null }, { ends_at: { $gte: now } }] }
+            ]
+        }).lean();
+
+        const formattedItems = items.map(item => {
+            const itemPromotions = activePromotions.filter(promo => 
+                promo.items && promo.items.some(promoItemId => promoItemId.toString() === item._id.toString())
+            );
+            return {
+                ...item,
+                image: ImageService.formatImage(item.image),
+                promotions: itemPromotions
+            };
+        });
+
         return {
-            items,
+            items: formattedItems,
             totalResults,
             addonGroups
         };

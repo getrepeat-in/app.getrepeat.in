@@ -3,6 +3,8 @@ import TimingTab from "../fragments/TimingTab";
 import GeneralTab from "../fragments/GeneralTab";
 import LocationTab from "../fragments/LocationTab";
 import SettingsTab from "../fragments/SettingsTab";
+import IntegrationsTab from "../fragments/IntegrationsTab";
+import { Plug } from "lucide-react";
 
 export const TABS = [
   {
@@ -29,6 +31,13 @@ export const TABS = [
     label: "System Settings",
     icon: Settings,
   },
+  {
+    id: "integrations",
+    label: "Integrations",
+    icon: Plug,
+    badge: "New",
+    badgeClasses: "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200/80 dark:border-blue-800/40",
+  },
 ];
 
 export const renderTabContent = (activeTab, data) => {
@@ -48,6 +57,9 @@ export const renderTabContent = (activeTab, data) => {
   const settingsTab = {
     settings: resData?.settings || {},
   };
+  const integrationsTab = {
+    instagram: resData?.instagram || {},
+  };
 
   switch (activeTab) {
     case "general":
@@ -58,6 +70,8 @@ export const renderTabContent = (activeTab, data) => {
       return <TimingTab timingsData={timingsTab} />;
     case "settings":
       return <SettingsTab settingData={settingsTab} />;
+    case "integrations":
+      return <IntegrationsTab integrationsData={integrationsTab} />;
     default:
       return null;
   }

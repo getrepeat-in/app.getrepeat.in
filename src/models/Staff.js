@@ -24,7 +24,6 @@ const staffSchema = new Schema(
     
     clerkUserId: {
       type: String,
-      unique: true,
       sparse: true,
       index: true,
     },
@@ -71,5 +70,6 @@ const staffSchema = new Schema(
 );
 
 staffSchema.index({ email: 1, restaurant: 1 }, { unique: true });
+staffSchema.index({ clerkUserId: 1, restaurant: 1 }, { unique: true, sparse: true });
 
 export const Staff = models.Staff || model("Staff", staffSchema);
