@@ -43,14 +43,12 @@ export const StaffRoleBadge = ({ role }) => {
 
     return (
         <Popover>
-            <PopoverTrigger asChild>
-                <button
-                    type="button"
-                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-semibold bg-primary/10 dark:bg-orange-950/40 text-primary dark:text-orange-400 border border-orange-200/80 dark:border-orange-800/40 rounded-md shadow-2xs w-fit cursor-pointer hover:bg-primary/20 transition-colors"
-                >
-                    <ShieldCheck size={13} className="text-primary/90" strokeWidth={2.5} />
-                    {roleName}
-                </button>
+            <PopoverTrigger
+                type="button"
+                className="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-semibold bg-primary/10 dark:bg-orange-950/40 text-primary dark:text-orange-400 border border-orange-200/80 dark:border-orange-800/40 rounded-md shadow-2xs w-fit cursor-pointer hover:bg-primary/20 transition-colors"
+            >
+                <ShieldCheck size={13} className="text-primary/90" strokeWidth={2.5} />
+                {roleName}
             </PopoverTrigger>
             
             <PopoverContent 

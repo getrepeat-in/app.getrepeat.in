@@ -1,33 +1,58 @@
 import dbConnect from "@/lib/db";
-import Restaurant from "@/models/Restaurant";
 import { NextResponse } from "next/server";
+import Restaurant from "@/models/Restaurant";
 import { invalidateRestaurantCache } from "@/lib/api/helpers/cacheKeys";
-import { deleteCache } from "@/services/backend/redis/cache.service";
 
 export const GET = async (req) => {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    let returnTo = "social";
+    let restaurantId = null;
+
     try {
         const url = new URL(req.url);
         const code = url.searchParams.get("code");
-        const state = url.searchParams.get("state"); // This is the restaurant ID
+        const rawState = url.searchParams.get("state");
         const error = url.searchParams.get("error");
         const error_description = url.searchParams.get("error_description");
 
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-        
-        // If the user cancelled or there was an error
-        if (error) {
-            console.error("Instagram OAuth Error:", error, error_description);
-            // Redirect back with an error query param
-            return NextResponse.redirect(`${appUrl}/restaurant/profile?tab=integrations&ig_error=${error}`);
+        if (rawState) {
+            try {
+                if (rawState.startsWith("{")) {
+                    const parsed = JSON.parse(rawState);
+                    restaurantId = parsed.restaurantId || null;
+                    returnTo = parsed.returnTo || "social";
+                } else if (rawState.includes(":")) {
+                    const parts = rawState.split(":");
+                    restaurantId = parts[0];
+                    returnTo = parts[1] || "social";
+                } else {
+                    restaurantId = rawState;
+                }
+            } catch {
+                restaurantId = rawState;
+            }
         }
 
-        if (!code || !state) {
-            return NextResponse.redirect(`${appUrl}/restaurant/profile?tab=integrations&ig_error=missing_params`);
+        const buildRedirect = (queryParam) => {
+            const basePath = returnTo === "integrations"
+                ? "/restaurant/profile?tab=integrations"
+                : `/restaurant/${returnTo || "social"}`;
+            const separator = basePath.includes("?") ? "&" : "?";
+            return NextResponse.redirect(`${appUrl}${basePath}${separator}${queryParam}`);
+        };
+
+        if (error) {
+            console.error("Instagram OAuth Error:", error, error_description);
+            return buildRedirect(`ig_error=${encodeURIComponent(error_description || error)}`);
+        }
+
+        if (!code || !restaurantId) {
+            return buildRedirect("ig_error=missing_params");
         }
 
         await dbConnect();
         
-        const restaurant = await Restaurant.findById(state);
+        const restaurant = await Restaurant.findById(restaurantId);
         if (!restaurant) {
             return NextResponse.redirect(`${appUrl}/dashboard`);
         }
@@ -35,8 +60,6 @@ export const GET = async (req) => {
         const clientId = process.env.INSTAGRAM_CLIENT_ID;
         const clientSecret = process.env.INSTAGRAM_CLIENT_SECRET;
         const redirectUri = `${appUrl}/api/instagram/callback`;
-
-        // 1. Exchange Code for Short-Lived Token
         const tokenFormData = new URLSearchParams();
         tokenFormData.append("client_id", clientId);
         tokenFormData.append("client_secret", clientSecret);
@@ -56,13 +79,11 @@ export const GET = async (req) => {
         
         if (!shortLivedRes.ok) {
             console.error("Failed to get short-lived token:", shortLivedData);
-            return NextResponse.redirect(`${appUrl}/restaurant/profile?tab=integrations&ig_error=token_exchange_failed`);
+            return buildRedirect("ig_error=token_exchange_failed");
         }
 
         const shortLivedToken = shortLivedData.access_token;
         const igUserId = shortLivedData.user_id;
-
-        // 2. Exchange Short-Lived Token for Long-Lived Token
         const longLivedUrl = new URL("https://graph.instagram.com/access_token");
         longLivedUrl.searchParams.append("grant_type", "ig_exchange_token");
         longLivedUrl.searchParams.append("client_secret", clientSecret);
@@ -73,15 +94,12 @@ export const GET = async (req) => {
 
         if (!longLivedRes.ok) {
             console.error("Failed to get long-lived token:", longLivedData);
-            return NextResponse.redirect(`${appUrl}/restaurant/profile?tab=integrations&ig_error=long_lived_token_failed`);
+            return buildRedirect("ig_error=long_lived_token_failed");
         }
 
         const longLivedToken = longLivedData.access_token;
-        // expires_in is in seconds, typically ~60 days
         const expiresInSeconds = longLivedData.expires_in;
         const expiryDate = new Date(Date.now() + (expiresInSeconds * 1000));
-
-        // 3. Fetch user profile to get the username
         const profileUrl = new URL("https://graph.instagram.com/me");
         profileUrl.searchParams.append("fields", "id,username");
         profileUrl.searchParams.append("access_token", longLivedToken);
@@ -91,7 +109,7 @@ export const GET = async (req) => {
 
         if (!profileRes.ok) {
             console.error("Failed to get profile data:", profileData);
-            return NextResponse.redirect(`${appUrl}/restaurant/profile?tab=integrations&ig_error=profile_fetch_failed`);
+            return buildRedirect("ig_error=profile_fetch_failed");
         }
         
         restaurant.instagram = {
@@ -110,10 +128,11 @@ export const GET = async (req) => {
             slugs: restaurant.slug
         });
 
-        return NextResponse.redirect(`${appUrl}/restaurant/profile?tab=integrations&ig_success=true`);        
+        return buildRedirect("ig_success=true");        
     } catch (err) {
         console.error("Instagram Callback Exception:", err);
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-        return NextResponse.redirect(`${appUrl}/dashboard?ig_error=internal_error`);
+        const basePath = returnTo === "integrations" ? "/restaurant/profile?tab=integrations" : `/restaurant/${returnTo || "social"}`;
+        const separator = basePath.includes("?") ? "&" : "?";
+        return NextResponse.redirect(`${appUrl}${basePath}${separator}ig_error=internal_error`);
     }
 };

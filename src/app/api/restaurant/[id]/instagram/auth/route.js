@@ -12,8 +12,10 @@ export const GET = withErrorHandler(async (req, { params }) => {
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     const redirectUri = `${appUrl}/api/instagram/callback`;
-    const state = id;
+    const url = new URL(req.url);
+    const returnTo = url.searchParams.get("returnTo") || "social";
 
+    const state = JSON.stringify({ restaurantId: id, returnTo });
     const authUrl = new URL("https://www.instagram.com/oauth/authorize");
     authUrl.searchParams.append("client_id", clientId);
     authUrl.searchParams.append("redirect_uri", redirectUri);

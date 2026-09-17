@@ -23,6 +23,9 @@ export default function DataTable({
   renderMobileCard,
   enableMobileCards = true,
   mobileCardClassName,
+  renderGrid,
+  gridClassName,
+  renderGridLoading,
 
   title,
   subtitle,
@@ -225,6 +228,40 @@ export default function DataTable({
       >
         {error ? (
           React.isValidElement(error) ? error : <TableError error={error} onRetry={onRetry} />
+        ) : renderGrid ? (
+          isLoading ? (
+            renderGridLoading ? (
+              renderGridLoading()
+            ) : (
+              <div className={cn("p-4 sm:p-5", gridClassName)}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map((item) => (
+                    <div
+                      key={item}
+                      className="overflow-hidden flex flex-col bg-white dark:bg-zinc-900 border border-border/50 rounded-xl shadow-2xs"
+                    >
+                      <div className="aspect-square w-full bg-muted/60 animate-pulse" />
+                      <div className="p-3.5 space-y-3">
+                        <div className="space-y-2">
+                          <div className="h-3.5 w-full bg-muted/70 rounded animate-pulse" />
+                          <div className="h-3.5 w-3/4 bg-muted/70 rounded animate-pulse" />
+                        </div>
+                        <div className="h-8 w-full bg-muted/60 rounded-lg animate-pulse" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
+          ) : paginatedData.length === 0 ? (
+            <div className="p-6">
+              {React.isValidElement(emptyState) ? emptyState : <TableEmpty {...emptyState} />}
+            </div>
+          ) : (
+            <div className={cn("p-4 sm:p-5", gridClassName)}>
+              {renderGrid(paginatedData)}
+            </div>
+          )
         ) : (
           <>
             {/* Desktop Table View */}

@@ -7,9 +7,9 @@ import { ExportCSV } from "./fragments/bulk-editor/ExportCSV";
 import { ImageEditor } from "./fragments/bulk-editor/ImageEditor";
 import { PriceEditor } from "./fragments/bulk-editor/PriceEditor";
 import { ImportEditor } from "./fragments/bulk-editor/ImportEditor";
+import { AddonsEditor } from "./fragments/bulk-editor/AddonsEditor";
 import { DescriptionEditor } from "./fragments/bulk-editor/DescriptionEditor";
 import { StructureOrganizer } from "./fragments/bulk-editor/StructureOrganizer";
-import { AddonsEditor } from "./fragments/bulk-editor/AddonsEditor";
 
 const Menu = () => {
     const [activeCategory, setActiveCategory] = useState(null);

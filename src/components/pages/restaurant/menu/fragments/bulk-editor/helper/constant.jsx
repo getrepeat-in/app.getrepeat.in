@@ -1,11 +1,48 @@
 import { AlignLeft, DollarSign, FileUp, ImageIcon, Layers, PlusCircle, Table } from "lucide-react";
 
 export const BULK_EDIT_MODES = [
-        { id: "PRICE", icon: DollarSign, label: "Price Editor" },
-        { id: "STRUCTURE", icon: Layers, label: "Structure Organizer" },
-        { id: "ADDONS", icon: PlusCircle, label: "Addons Builder" },
-        { id: "DESCRIPTION", icon: AlignLeft, label: "Description Editor" },
-        { id: "IMAGE", icon: ImageIcon, label: "Image Editor" },
-        { id: "IMPORT", icon: FileUp, label: "Import Menu" },
-        { id: "EXPORT_CSV", icon: Table, label: "Export CSV" },
-    ];
+    { 
+        id: "PRICE", 
+        icon: DollarSign, 
+        label: "Price Editor", 
+        category: "EDITORS"
+    },
+    { 
+        id: "STRUCTURE", 
+        icon: Layers, 
+        label: "Structure Organizer", 
+        category: "EDITORS"
+    },
+    { 
+        id: "ADDONS", 
+        icon: PlusCircle, 
+        label: "Addons Builder", 
+        category: "EDITORS"
+    },
+    { 
+        id: "DESCRIPTION", 
+        icon: AlignLeft, 
+        label: "Description Editor", 
+        category: "EDITORS"
+    },
+    { 
+        id: "IMAGE", 
+        icon: ImageIcon, 
+        label: "Image Editor", 
+        category: "EDITORS"
+    },
+    { 
+        id: "IMPORT", 
+        icon: FileUp, 
+        label: "Import Menu", 
+        category: "DATA"
+    },
+    { 
+        id: "EXPORT_CSV", 
+        icon: Table, 
+        label: "Export CSV", 
+        category: "DATA"
+    },
+];
+
+
