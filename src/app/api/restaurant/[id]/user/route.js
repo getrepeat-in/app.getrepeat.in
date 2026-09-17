@@ -1,38 +1,42 @@
-import ImageAsset from "@/models/Image";
-import { JsonResponse } from "@/lib/api/responseHandler";
-import { UserService } from "@/services/backend/user.service";
-import { getCache, setCache } from "@/services/backend/redis/cache.service";
-import { getUsersCacheKey, invalidateUserCache } from "@/lib/api/helpers/cacheKeys";
+import { UserService } from "@/services/backend/user";
+import { getRestaurant } from "@/lib/api/hooks/getRestaurant";
+import { withErrorHandler, successResponse, BadRequestError } from "@/lib/api/response-handler";
 
-export const GET = async (req, { params }) => {
-    try {
-        const { id: restaurantId } = await params;
-        const cacheKey = getUsersCacheKey(restaurantId);
-        const cachedUsers = await getCache(cacheKey);
-        
-        if (cachedUsers) {
-            return JsonResponse.success(cachedUsers, "Users fetched successfully (cached)");
-        }
-        
-        const allUsers = await UserService.getAll(restaurantId);
-        await setCache(cacheKey, allUsers, 3600);
-        return JsonResponse.success(allUsers, "Users fetched successfully");
-    } catch (error) {
-        console.error("Failed to fetch user list:", error);
-        return JsonResponse.error(error.message || "Failed to fetch user list", 500);
-    }
-};
+export const GET = withErrorHandler(async (req, { params }) => {
+  const { id: restaurantId } = await params;
+  if (!restaurantId) throw new BadRequestError("Restaurant ID is required");
 
-export const POST = async (req, { params }) => {
-    try {
-        const { id: restaurantId } = await params;
-        const body = await req.json();
-        const newUser = await UserService.create(restaurantId, body);
-        
-        await invalidateUserCache(restaurantId);
-        return JsonResponse.success(newUser, "User added successfully", 201);
-    } catch (error) {
-        console.error("Failed to create user:", error);
-        return JsonResponse.error(error.message || "Failed to create user", 500);
-    }
-};
+  await getRestaurant({ restaurantId });
+
+  const url = new URL(req.url);
+  const status = url.searchParams.get("status") || "all";
+  const search = url.searchParams.get("search") || "";
+  const page = url.searchParams.get("page");
+  const limit = url.searchParams.get("limit");
+
+  const result = await UserService.getUsers(restaurantId, {
+    status,
+    search,
+    page,
+    limit,
+  });
+
+  const isPaginated = Boolean(page && limit);
+  const responseData = isPaginated ? result : (result.users || []);
+
+  return successResponse(
+    responseData,
+    `Customers fetched successfully${result.isCached ? " (cached)" : ""}`
+  );
+});
+
+export const POST = withErrorHandler(async (req, { params }) => {
+  const { id: restaurantId } = await params;
+  if (!restaurantId) throw new BadRequestError("Restaurant ID is required");
+
+  await getRestaurant({ restaurantId });
+
+  const body = await req.json();
+  const newUser = await UserService.createUser(restaurantId, body);
+  return successResponse(newUser, "Customer added successfully", 201);
+});

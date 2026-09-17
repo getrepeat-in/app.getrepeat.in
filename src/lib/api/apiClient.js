@@ -4,18 +4,8 @@ const client = axios.create({
   timeout: 30000,
 });
 
-export async function apiClient({
-  req,
-  baseURL = process.env.ZOMATO_API_BASE_URL,
-  endpoint,
-  method = "GET",
-  data,
-  params,
-  headers = {},
-  contentType,
-}) {
+export async function apiClient({ req, baseURL = process.env.ZOMATO_API_BASE_URL, endpoint, method = "GET", data, params, headers = {}, contentType }) {
   const cookie = req?.headers?.get("x-zomato-cookie") ?? "";
-
   const finalHeaders = {
     Accept: "application/json, text/plain, */*",
     "User-Agent":
@@ -34,15 +24,7 @@ export async function apiClient({
   }
 
   try {
-    const { data: response } = await client.request({
-      baseURL,
-      url: endpoint,
-      method,
-      data,
-      params,
-      headers: finalHeaders,
-    });
-
+    const { data: response } = await client.request({ baseURL, url: endpoint, method, data, params, headers: finalHeaders });
     return response;
   } catch (err) {
     if (axios.isAxiosError(err)) {

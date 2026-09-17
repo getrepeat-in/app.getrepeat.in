@@ -1,10 +1,12 @@
 "use client";
 import { useFormik } from "formik";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { generateSlug } from "@/lib/client/helper";
 import { onboardingValidationSchema } from "./helper";
+import { useQueryClient } from "@tanstack/react-query";
 import { useActiveUser } from "@/store/hooks/useActiveUser";
 import useNotification from "@/store/hooks/useNotification";
 import { RestaurantService } from "@/services/frontend/restaurant";
@@ -12,12 +14,12 @@ import { Store, Link2, Phone, Mail, ArrowRight, CheckCircle2 } from "lucide-reac
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { createRestaurant } = RestaurantService;
+  const queryClient = useQueryClient();
   const { user } = useActiveUser();
-  const notification = useNotification()
+  const notification = useNotification();
+  const [isSlugManual, setIsSlugManual] = useState(false);
  
   const formik = useFormik({
-    enableReinitialize: true,
     initialValues: {
       name: "",
       slug: "",
@@ -26,34 +28,51 @@ export default function OnboardingPage() {
     },
     validationSchema: onboardingValidationSchema,
     onSubmit: async (values, { setSubmitting }) => {
-        try {
-          const res = await createRestaurant(values);
+      try {
+        const res = await RestaurantService.createRestaurant({
+          ...values,
+          name: values.name.trim(),
+          slug: values.slug.trim().toLowerCase(),
+          phone: values.phone.trim(),
+        });
 
-          if (res.success) {
-            notification.success(
-              res?.message || "Restaurant created successfully!",
-              { duration: 4000 }
-            );
-
-            router.push("/");
-          } else {
-            notification.error(
-              res?.message || "Failed to create restaurant.",
-              { duration: 4000 }
-            );
-          }
-        } catch (err) {
-          notification.error(
-            err?.response?.data?.message ||
-              err?.message ||
-            "Something went wrong.",
+        if (res.success) {
+          notification.success(
+            res?.message || "Restaurant created successfully!",
             { duration: 4000 }
           );
-        } finally {
-          setSubmitting(false);
+
+          const newId = res?.data?.restaurantId || res?.restaurantId;
+          if (newId) {
+            localStorage.setItem("activeRestaurantId", newId);
+          }
+
+          await queryClient.invalidateQueries({ queryKey: ["restaurants"] });
+          router.push("/");
+        } else {
+          notification.error(
+            res?.message || "Failed to create restaurant.",
+            { duration: 4000 }
+          );
         }
-      },
+      } catch (err) {
+        notification.error(
+          err?.response?.data?.message ||
+            err?.message ||
+            "Something went wrong.",
+          { duration: 4000 }
+        );
+      } finally {
+        setSubmitting(false);
+      }
+    },
   });
+
+  useEffect(() => {
+    if (user?.email && !formik.values.email) {
+      formik.setFieldValue("email", user.email);
+    }
+  }, [user?.email, formik]);
 
   return (
     <div className="grid min-h-svh lg:grid-cols-2 font-sans bg-background">
@@ -85,7 +104,9 @@ export default function OnboardingPage() {
                         onChange={(e) => {
                           const name = e.target.value;
                           formik.setFieldValue("name", name);
-                          formik.setFieldValue("slug", generateSlug(name));
+                          if (!isSlugManual) {
+                            formik.setFieldValue("slug", generateSlug(name));
+                          }
                         }} 
                       />
                     </div>
@@ -107,7 +128,10 @@ export default function OnboardingPage() {
                         name="slug"
                         placeholder="the-rustic-spoon" 
                         className="border-0 focus-visible:ring-0 shadow-none h-12 bg-transparent text-base px-3 w-full"
-                        onChange={formik.handleChange}
+                        onChange={(e) => {
+                          setIsSlugManual(true);
+                          formik.setFieldValue("slug", e.target.value.toLowerCase().trim());
+                        }}
                         onBlur={formik.handleBlur}
                         value={formik.values.slug}
                       />

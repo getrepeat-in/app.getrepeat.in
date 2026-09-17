@@ -56,3 +56,17 @@ export const deleteCacheByPattern = async (pattern) => {
     console.error(`Redis pattern delete error [${pattern}]:`, error.message || error);
   }
 };
+
+export const getOrSetCache = async (key, fetcherFn, ttl = 300) => {
+  const cached = await getCache(key);
+  if (cached !== null && cached !== undefined) {
+    return { data: cached, isCached: true };
+  }
+
+  const freshData = await fetcherFn();
+  if (freshData !== null && freshData !== undefined) {
+    await setCache(key, freshData, ttl);
+  }
+
+  return { data: freshData, isCached: false };
+};

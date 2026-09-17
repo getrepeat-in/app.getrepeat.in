@@ -1,59 +1,37 @@
 import { getUser } from "@/lib/api/hooks/getUser";
-import { JsonResponse } from "@/lib/api/responseHandler";
-import { validateRequiredFields } from "@/lib/api/helpers/validator";
 import { RestaurantService } from "@/services/backend/restaurant";
+import { validateRequiredFields } from "@/lib/api/helpers/validator";
+import { withErrorHandler, successResponse, BadRequestError } from "@/lib/api/response-handler";
 
 const RESTAURANT_POST_REQUIRED_FIELDS = ["name", "phone", "email", "slug"];
 
-export const POST = async (req) => {
-    try {
-        const data = await req.json();
-        const { isValid, message } = validateRequiredFields(data, RESTAURANT_POST_REQUIRED_FIELDS);
-        
-        if (!isValid) {
-            return JsonResponse.error(message, 400);
-        }
-
-        const user = await getUser();
-        if (!user || !user.id) {
-            return JsonResponse.error("Please login first to continue !", 401);
-        }
-
-        const newRestaurant = await RestaurantService.createRestaurant(user, data);
-
-        return JsonResponse.success(
-            { restaurantId: newRestaurant._id },
-            "Restaurant created successfully",
-            200
-        );
-    } catch (err) {
-        return JsonResponse.error(
-            err?.message || "Internal Server Error !",
-            err?.statusCode || 500
-        );
+export const POST = withErrorHandler(async (req) => {
+    const data = await req.json();
+    const { isValid, message } = validateRequiredFields(data, RESTAURANT_POST_REQUIRED_FIELDS);
+    
+    if (!isValid) {
+        throw new BadRequestError(message);
     }
-};
 
-export const GET = async () => {
-    try {
-        const user = await getUser();
-        if (!user?.id) {
-            return JsonResponse.error("Please log in first to continue!", 401);
-        }
+    const user = await getUser();
+    const newRestaurant = await RestaurantService.createRestaurant(user, data);
 
-        const { restaurants, isCached } = await RestaurantService.getRestaurantsByUser(user.id);
+    return successResponse(
+        { restaurantId: newRestaurant._id },
+        "Restaurant created successfully",
+        200
+    );
+});
 
-        return JsonResponse.success(
-            { restaurants },
-            restaurants.length
-                ? `Restaurants fetched successfully${isCached ? " (cached)" : ""}`
-                : `No restaurants found${isCached ? " (cached)" : ""}`,
-            200
-        );
-    } catch (err) {
-        return JsonResponse.error(
-            err?.message || "Internal Server Error!",
-            err?.statusCode || 500
-        );
-    }
-};
+export const GET = withErrorHandler(async () => {
+    const user = await getUser();
+    const { restaurants, isCached } = await RestaurantService.getRestaurantsByUser(user.id);
+
+    return successResponse(
+        { restaurants },
+        restaurants.length
+            ? `Restaurants fetched successfully${isCached ? " (cached)" : ""}`
+            : `No restaurants found${isCached ? " (cached)" : ""}`,
+        200
+    );
+});

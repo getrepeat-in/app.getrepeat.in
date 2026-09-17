@@ -2,13 +2,13 @@ import useNotification from "./useNotification";
 import { UserService } from "@/services/frontend/user";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-export const useUsers = (resId) => {
+export const useUsers = (resId, { status = "all", search = "", page, limit } = {}) => {
     const queryClient = useQueryClient();
     const notification = useNotification();
 
     const { data: usersData, isLoading, error, refetch } = useQuery({
-        queryKey: ["users", resId],
-        queryFn: () => UserService.getAll(resId),
+        queryKey: ["users", resId, { status, search, page, limit }],
+        queryFn: () => UserService.getAll(resId, { status, search, page, limit }),
         enabled: !!resId,
     });
 
@@ -45,10 +45,17 @@ export const useUsers = (resId) => {
         },
     });
 
-    const rawUsers = usersData?.data || [];
+    const rawData = usersData?.data;
+    const userList = Array.isArray(rawData) ? rawData : rawData?.users || [];
+    const totalCount = rawData?.totalCount ?? userList.length;
+    const totalPages = rawData?.totalPages ?? 1;
 
     return {
-        userList: rawUsers,
+        userList,
+        totalCount,
+        totalPages,
+        page: rawData?.page,
+        limit: rawData?.limit,
         isLoading,
         error,
         refetch,

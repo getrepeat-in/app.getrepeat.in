@@ -1,56 +1,29 @@
-import dbConnect from "@/lib/db";
-import { Role } from "@/models/Role";
-import { Staff } from "@/models/Staff";
-import ImageAsset from "@/models/Image";
-import { JsonResponse } from "@/lib/api/responseHandler";
-import { invalidateStaffCache } from "@/lib/api/helpers/cacheKeys";
+import { StaffService } from "@/services/backend/staff";
+import { getRestaurant } from "@/lib/api/hooks/getRestaurant";
+import { withErrorHandler, successResponse } from "@/lib/api/response-handler";
 
-export const PUT = async (req, { params }) => {
-    try {
-        await dbConnect();
-        const { id: restaurantId, staffId } = await params;
-        const body = await req.json();
-        const { name, role, status, image } = body;
-        
-        const staff = await Staff.findOne({ _id: staffId, restaurant: restaurantId });
-        if (!staff) {
-            return JsonResponse.error("Staff member not found", 404);
-        }
-        
-        if (role && role !== staff.role.toString()) {
-            const roleExists = await Role.findById(role);
-            if (!roleExists) {
-                return JsonResponse.error("Invalid role assigned", 400);
-            }
-            staff.role = role;
-        }
-        
-        if (name) staff.name = name;
-        if (status) staff.status = status;
-        if (image !== undefined) staff.image = image;
-        
-        await staff.save();
-        
-        await invalidateStaffCache(restaurantId);
-        const updatedStaff = await Staff.findById(staffId).populate("image").populate("role", "name description isSystemRole").select("-passwordHash");
-        return JsonResponse.success(updatedStaff, "Staff member updated successfully");
-    } catch (error) {
-        return JsonResponse.error(error.message || "Failed to update staff member");
-    }
-};
+export const GET = withErrorHandler(async (req, { params }) => {
+  const { id: restaurantId, staffId } = await params;
+  await getRestaurant({ restaurantId });
 
-export const DELETE = async (req, { params }) => {
-    try {
-        await dbConnect();
-        const { id: restaurantId, staffId } = await params;
-        const staff = await Staff.findOneAndDelete({ _id: staffId, restaurant: restaurantId });
-        
-        if (!staff) {
-            return JsonResponse.error("Staff member not found", 404);
-        }
-        await invalidateStaffCache(restaurantId);
-        return JsonResponse.success(null, "Staff member deleted successfully");
-    } catch (error) {
-        return JsonResponse.error(error.message || "Failed to delete staff member");
-    }
-};
+  const staff = await StaffService.getStaffById(staffId, restaurantId);
+  return successResponse(staff, "Staff member fetched successfully");
+});
+
+export const PUT = withErrorHandler(async (req, { params }) => {
+  const { id: restaurantId, staffId } = await params;
+  await getRestaurant({ restaurantId });
+
+  const body = await req.json();
+  const updatedStaff = await StaffService.updateStaff(staffId, restaurantId, body);
+
+  return successResponse(updatedStaff, "Staff member updated successfully");
+});
+
+export const DELETE = withErrorHandler(async (req, { params }) => {
+  const { id: restaurantId, staffId } = await params;
+  await getRestaurant({ restaurantId });
+
+  await StaffService.deleteStaff(staffId, restaurantId);
+  return successResponse(null, "Staff member deleted successfully");
+});

@@ -3,13 +3,13 @@ import useNotification from "./useNotification";
 import { StaffService } from "@/services/frontend/staff";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-export const useStaff = (resId) => {
+export const useStaff = (resId, { status = "all", search = "", page, limit } = {}) => {
     const queryClient = useQueryClient();
     const notification = useNotification();
 
     const { data: staffData, isLoading, error, refetch } = useQuery({
-        queryKey: ["staff", resId],
-        queryFn: () => StaffService.getAll(resId),
+        queryKey: ["staff", resId, { status, search, page, limit }],
+        queryFn: () => StaffService.getAll(resId, { status, search, page, limit }),
         enabled: !!resId,
     });
 
@@ -46,10 +46,17 @@ export const useStaff = (resId) => {
         },
     });
 
-    const rawStaff = staffData?.data || [];
+    const rawData = staffData?.data;
+    const staffList = Array.isArray(rawData) ? rawData : rawData?.staffList || [];
+    const totalCount = rawData?.totalCount ?? staffList.length;
+    const totalPages = rawData?.totalPages ?? 1;
 
     return {
-        staffList: rawStaff,
+        staffList,
+        totalCount,
+        totalPages,
+        page: rawData?.page,
+        limit: rawData?.limit,
         isLoading,
         error,
         refetch,

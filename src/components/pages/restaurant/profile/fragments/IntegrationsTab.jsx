@@ -1,6 +1,9 @@
 import { useState } from "react";
+import api from "@/lib/api/axiosInstance";
 import { Button } from "@/components/ui/button";
 import { Link2, Unlink, Loader2 } from "lucide-react";
+import useNotification from "@/store/hooks/useNotification";
+import { useRestaurant } from "@/store/hooks/useRestaurant";
 
 const InstagramIcon = ({ className }) => (
   <svg
@@ -20,9 +23,6 @@ const InstagramIcon = ({ className }) => (
     <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
   </svg>
 );
-import useNotification from "@/store/hooks/useNotification";
-import { useRestaurant } from "@/store/hooks/useRestaurant";
-import api from "@/lib/api/axiosInstance";
 
 const IntegrationsTab = ({ integrationsData }) => {
   const { restaurantId } = useRestaurant();

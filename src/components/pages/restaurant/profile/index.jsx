@@ -1,8 +1,7 @@
 "use client";
-
+import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import Loader from "@/components/global/loader";
-import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { renderTabContent, TABS } from "./helpers";
 import { useRestaurant } from "@/store/hooks/useRestaurant";
@@ -35,7 +34,6 @@ const ProfilePage = () => {
 
   return (
     <div className="flex flex-col bg-white dark:bg-zinc-900 m-2 sm:m-4 p-4 sm:p-5 md:p-6 space-y-6 rounded-md border border-border/40 shadow-xs min-w-0">
-      {/* Header & Tabs */}
       <div className="flex flex-col gap-4 pb-5 border-b border-gray-100 dark:border-zinc-800">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0">
           <div>
@@ -47,8 +45,7 @@ const ProfilePage = () => {
             </p>
           </div>
         </div>
-
-        {/* Pill Tabs with generous padding */}
+        
         <div className="flex items-center gap-1.5 p-1.5 bg-gray-100/80 dark:bg-zinc-900/80 border border-gray-200/60 dark:border-zinc-800 rounded-md overflow-x-auto scrollbar-none max-w-full w-fit">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.id;

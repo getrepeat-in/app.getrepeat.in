@@ -93,8 +93,7 @@ export const GET = async (req) => {
             console.error("Failed to get profile data:", profileData);
             return NextResponse.redirect(`${appUrl}/restaurant/profile?tab=integrations&ig_error=profile_fetch_failed`);
         }
-
-        // 4. Save to DB
+        
         restaurant.instagram = {
             userId: profileData.id || igUserId,
             accessToken: longLivedToken,
@@ -105,14 +104,13 @@ export const GET = async (req) => {
         
         await restaurant.save();
 
-        await invalidateRestaurantCache(restaurant.createdBy, restaurant._id);
-        if (restaurant.slug) {
-            await deleteCache(`restaurant:slug:${restaurant.slug}`);
-        }
+        await invalidateRestaurantCache({
+            userId: restaurant.createdBy,
+            restaurantId: restaurant._id,
+            slugs: restaurant.slug
+        });
 
-        // Redirect back to the restaurant dashboard profile settings page (success)
-        return NextResponse.redirect(`${appUrl}/restaurant/profile?tab=integrations&ig_success=true`);
-        
+        return NextResponse.redirect(`${appUrl}/restaurant/profile?tab=integrations&ig_success=true`);        
     } catch (err) {
         console.error("Instagram Callback Exception:", err);
         const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";

@@ -1,31 +1,38 @@
-import ImageAsset from "@/models/Image";
-import { JsonResponse } from "@/lib/api/responseHandler";
-import { UserService } from "@/services/backend/user.service";
-import { invalidateUserCache } from "@/lib/api/helpers/cacheKeys";
+import { UserService } from "@/services/backend/user";
+import { getRestaurant } from "@/lib/api/hooks/getRestaurant";
+import { withErrorHandler, successResponse, BadRequestError } from "@/lib/api/response-handler";
 
-export const PUT = async (req, { params }) => {
-    try {
-        const { id: restaurantId, userId } = await params;
-        const body = await req.json();
-        const updatedUser = await UserService.update(restaurantId, userId, body);
-        
-        await invalidateUserCache(restaurantId);
-        return JsonResponse.success(updatedUser, "User updated successfully");
-    } catch (error) {
-        console.error("Failed to update user:", error);
-        return JsonResponse.error(error.message || "Failed to update user", 500);
-    }
-};
+export const GET = withErrorHandler(async (req, { params }) => {
+  const { id: restaurantId, userId } = await params;
+  if (!restaurantId || !userId) {
+    throw new BadRequestError("Restaurant ID and Customer ID are required");
+  }
 
-export const DELETE = async (req, { params }) => {
-    try {
-        const { id: restaurantId, userId } = await params;
-        await UserService.delete(restaurantId, userId);
-        
-        await invalidateUserCache(restaurantId);
-        return JsonResponse.success(null, "User deleted successfully");
-    } catch (error) {
-        console.error("Failed to delete user:", error);
-        return JsonResponse.error(error.message || "Failed to delete user", 500);
-    }
-};
+  await getRestaurant({ restaurantId });
+  const user = await UserService.getUserById(userId, restaurantId);
+  return successResponse(user, "Customer fetched successfully");
+});
+
+export const PUT = withErrorHandler(async (req, { params }) => {
+  const { id: restaurantId, userId } = await params;
+  if (!restaurantId || !userId) {
+    throw new BadRequestError("Restaurant ID and Customer ID are required");
+  }
+
+  await getRestaurant({ restaurantId });
+
+  const body = await req.json();
+  const updatedUser = await UserService.updateUser(userId, restaurantId, body);
+  return successResponse(updatedUser, "Customer updated successfully");
+});
+
+export const DELETE = withErrorHandler(async (req, { params }) => {
+  const { id: restaurantId, userId } = await params;
+  if (!restaurantId || !userId) {
+    throw new BadRequestError("Restaurant ID and Customer ID are required");
+  }
+
+  await getRestaurant({ restaurantId });
+  await UserService.deleteUser(userId, restaurantId);
+  return successResponse(null, "Customer deleted successfully");
+});

@@ -1,113 +1,74 @@
 import dbConnect from "@/lib/db";
-import Restaurant from "@/models/Restaurant";
 import { Staff } from "@/models/Staff";
-import { getUser } from "@/lib/api/hooks/getUser";
-import { JsonResponse } from "@/lib/api/responseHandler";
+import { getRestaurant } from "@/lib/api/hooks/getRestaurant";
 import { OrderService } from "@/services/backend/order";
+import { 
+  withErrorHandler, 
+  successResponse, 
+  BadRequestError 
+} from "@/lib/api/response-handler";
 
-export const GET = async (req, { params }) => {
-    try {
-        const { id, orderId } = await params;
-        if (!id || !orderId) {
-            return JsonResponse.error("Restaurant ID and Order ID are required!", 400);
-        }
+export const GET = withErrorHandler(async (req, { params }) => {
+  const { id, orderId } = await params;
+  if (!id || !orderId) {
+    throw new BadRequestError("Restaurant ID and Order ID are required!");
+  }
 
-        await dbConnect();
-        const user = await getUser();
+  await getRestaurant({ restaurantId: id });
+  await dbConnect();
 
-        if (!user?.id) {
-            return JsonResponse.error("Please log in first to continue!", 401);
-        }
+  const order = await OrderService.getOrderById(orderId, { restaurantId: id });
+  return successResponse(order, "Order fetched successfully");
+});
 
-        const restaurant = await Restaurant.findOne({ _id: id, createdBy: user.id }).select("_id").lean();
-        if (!restaurant) {
-            return JsonResponse.error("Restaurant not found or unauthorized", 404);
-        }
+export const PATCH = withErrorHandler(async (req, { params }) => {
+  const { id, orderId } = await params;
+  if (!id || !orderId) {
+    throw new BadRequestError("Restaurant ID and Order ID are required!");
+  }
 
-        const order = await OrderService.getOrderById(orderId, { restaurantId: id });
-        return JsonResponse.success(order, "Order fetched successfully", 200);
-    } catch (err) {
-        console.error("GET order error:", err);
-        return JsonResponse.error(err?.message || "Internal Server Error!", 404);
-    }
-};
+  const { user } = await getRestaurant({ restaurantId: id });
+  await dbConnect();
 
-export const PATCH = async (req, { params }) => {
-    try {
-        const { id, orderId } = await params;
-        if (!id || !orderId) {
-            return JsonResponse.error("Restaurant ID and Order ID are required!", 400);
-        }
+  const staff = await Staff.findOne({ clerkUserId: user.id, restaurant: id }).select("_id").lean();
+  const updatedBy = staff ? staff._id : user.id;
 
-        await dbConnect();
-        const user = await getUser();
+  const data = await req.json();
+  let updatedOrder;
 
-        if (!user?.id) {
-            return JsonResponse.error("Please log in first to continue!", 401);
-        }
+  if (data.status) {
+    updatedOrder = await OrderService.updateOrderStatus(orderId, {
+      status: data.status,
+      updatedBy,
+      restaurantId: id,
+    });
+  }
 
-        const restaurant = await Restaurant.findOne({ _id: id, createdBy: user.id }).select("_id").lean();
-        if (!restaurant) {
-            return JsonResponse.error("Restaurant not found or unauthorized", 404);
-        }
+  if (data.paymentStatus || data.paymentMethod) {
+    updatedOrder = await OrderService.updateOrderPayment(orderId, {
+      paymentStatus: data.paymentStatus,
+      paymentMethod: data.paymentMethod,
+      updatedBy,
+      restaurantId: id,
+    });
+  }
 
-        const staff = await Staff.findOne({ clerkUserId: user.id, restaurant: id }).select("_id").lean();
-        const updatedBy = staff ? staff._id : user.id;
+  if (!updatedOrder) {
+    throw new BadRequestError("No valid update fields provided");
+  }
 
-        const data = await req.json();
-        let updatedOrder;
+  return successResponse(updatedOrder, "Order updated successfully");
+});
 
-        if (data.status) {
-            updatedOrder = await OrderService.updateOrderStatus(orderId, {
-                status: data.status,
-                updatedBy,
-                restaurantId: id,
-            });
-        }
+export const DELETE = withErrorHandler(async (req, { params }) => {
+  const { id, orderId } = await params;
+  if (!id || !orderId) {
+    throw new BadRequestError("Restaurant ID and Order ID are required!");
+  }
 
-        if (data.paymentStatus || data.paymentMethod) {
-            updatedOrder = await OrderService.updateOrderPayment(orderId, {
-                paymentStatus: data.paymentStatus,
-                paymentMethod: data.paymentMethod,
-                updatedBy,
-                restaurantId: id,
-            });
-        }
+  await getRestaurant({ restaurantId: id });
+  await dbConnect();
 
-        if (!updatedOrder) {
-            return JsonResponse.error("No valid update fields provided", 400);
-        }
-
-        return JsonResponse.success(updatedOrder, "Order updated successfully", 200);
-    } catch (err) {
-        console.error("PATCH order error:", err);
-        return JsonResponse.error(err?.message || "Internal Server Error!", 400);
-    }
-};
-
-export const DELETE = async (req, { params }) => {
-    try {
-        const { id, orderId } = await params;
-        if (!id || !orderId) {
-            return JsonResponse.error("Restaurant ID and Order ID are required!", 400);
-        }
-
-        await dbConnect();
-        const user = await getUser();
-
-        if (!user?.id) {
-            return JsonResponse.error("Please log in first to continue!", 401);
-        }
-
-        const restaurant = await Restaurant.findOne({ _id: id, createdBy: user.id }).select("_id").lean();
-        if (!restaurant) {
-            return JsonResponse.error("Restaurant not found or unauthorized", 404);
-        }
-
-        await OrderService.deleteOrder(orderId, { restaurantId: id });
-        return JsonResponse.success(null, "Order deleted successfully", 200);
-    } catch (err) {
-        console.error("DELETE order error:", err);
-        return JsonResponse.error(err?.message || "Internal Server Error!", 400);
-    }
-};
+  await OrderService.deleteOrder(orderId, { restaurantId: id });
+  return successResponse(null, "Order deleted successfully");
+});

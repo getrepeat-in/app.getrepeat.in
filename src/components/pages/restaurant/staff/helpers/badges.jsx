@@ -1,9 +1,8 @@
 "use client";
-import React from "react";
-import { Phone, ShieldCheck } from "lucide-react";
 import { getImageUrl } from "@/lib/utils";
+import { Phone, ShieldCheck } from "lucide-react";
 import { STAFF_STATUS_CONFIG } from "./constants";
-import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 
 export const StaffProfileCell = ({ staff }) => (
     <div className="flex items-center gap-3 min-w-0">
@@ -33,43 +32,63 @@ export const StaffRoleBadge = ({ role }) => {
     const roleName = role?.name || "Unassigned";
     const permissions = role?.permissions || [];
 
+    if (!permissions.length) {
+        return (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-semibold bg-primary/10 dark:bg-orange-950/40 text-primary dark:text-orange-400 border border-orange-200/80 dark:border-orange-800/40 rounded-md shadow-2xs w-fit">
+                <ShieldCheck size={13} className="text-primary/90" strokeWidth={2.5} />
+                {roleName}
+            </span>
+        );
+    }
+
     return (
-        <TooltipProvider delay={0}>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-semibold bg-primary/10 dark:bg-orange-950/40 text-primary dark:text-orange-400 border border-orange-200/80 dark:border-orange-800/40 rounded-md shadow-2xs w-fit cursor-help">
-                        <ShieldCheck size={13} className="text-primary/90" strokeWidth={2.5} />
+        <Popover>
+            <PopoverTrigger asChild>
+                <button
+                    type="button"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-semibold bg-primary/10 dark:bg-orange-950/40 text-primary dark:text-orange-400 border border-orange-200/80 dark:border-orange-800/40 rounded-md shadow-2xs w-fit cursor-pointer hover:bg-primary/20 transition-colors"
+                >
+                    <ShieldCheck size={13} className="text-primary/90" strokeWidth={2.5} />
+                    {roleName}
+                </button>
+            </PopoverTrigger>
+            
+            <PopoverContent 
+                side="bottom" 
+                align="start" 
+                sideOffset={6}
+                className="w-72 bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-lg shadow-xl p-3 z-[100]"
+            >
+                <div className="flex items-center justify-between mb-2 pb-2 border-b border-gray-100 dark:border-zinc-800 w-full">
+                    <span className="font-bold text-gray-800 dark:text-gray-200 text-[11px] uppercase tracking-wider">
+                        Active Permissions ({permissions.length})
+                    </span>
+                    <span className="text-[10px] text-gray-400 dark:text-zinc-500 font-medium">
                         {roleName}
                     </span>
-                </TooltipTrigger>
-                
-                {permissions.length > 0 && (
-                    <TooltipContent 
-                        side="bottom" 
-                        align="start" 
-                        sideOffset={6}
-                        className="[&>svg]:hidden !flex-col !items-start !bg-white !text-gray-900 dark:!bg-zinc-950 dark:!text-gray-100 border border-gray-200 dark:border-zinc-800 rounded-md shadow-xl min-w-[200px] max-w-[280px] z-[100] !p-3"
-                    >
-                        <div className="flex items-center mb-2 pb-1.5 border-b border-gray-100 dark:border-zinc-800 w-full">
-                            <span className="font-bold text-gray-800 dark:text-gray-200 text-[11px] uppercase tracking-wider">
-                                Active Permissions ({permissions.length})
-                            </span>
+                </div>
+                <div className="flex flex-col gap-1.5 w-full max-h-60 overflow-y-auto pr-1">
+                    {permissions.map((perm, idx) => (
+                        <div 
+                            key={idx} 
+                            className="flex items-start gap-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-900/50 p-1 rounded-sm transition-colors"
+                        >
+                            <div className="w-1.5 h-1.5 rounded-full bg-primary/90 shrink-0 mt-1.5" />
+                            <div className="flex flex-col min-w-0">
+                                <span className="text-[11px] font-semibold text-gray-900 dark:text-gray-100">
+                                    {perm.code || "PERMISSION"}
+                                </span>
+                                {perm.description && (
+                                    <span className="text-[10px] text-gray-500 dark:text-zinc-400 leading-tight">
+                                        {perm.description}
+                                    </span>
+                                )}
+                            </div>
                         </div>
-                        <div className="flex flex-col gap-1 w-full max-h-48 overflow-y-auto no-scrollbar">
-                            {permissions.map((perm, idx) => (
-                                <div 
-                                    key={idx} 
-                                    className="flex items-center gap-2 text-gray-600 dark:text-gray-300"
-                                >
-                                    <div className="w-1.5 h-1.5 rounded-full bg-primary/90 shrink-0" />
-                                    <span className="text-[11px] font-medium">{perm.code ? perm.code.replace(/_/g, ' ') : (perm.name || "Permission")}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </TooltipContent>
-                )}
-            </Tooltip>
-        </TooltipProvider>
+                    ))}
+                </div>
+            </PopoverContent>
+        </Popover>
     );
 };
 

@@ -2,11 +2,18 @@ import { deleteCache, deleteCacheByPattern } from "@/services/backend/redis/cach
 
 export const getRestaurantCacheKey = (userId) => `restaurant:user:${userId}`;
 export const getRestaurantDetailsCacheKey = (restaurantId) => `restaurant:details:${restaurantId}`;
+export const getRestaurantSlugCacheKey = (slug) => `restaurant:slug:${slug}`;
 export const getCategoriesCacheKey = (restaurantId) => `restaurant:categories:${restaurantId}`;
 export const getItemsCacheKey = (restaurantId) => `restaurant:items:${restaurantId}`;
 export const getRolesCacheKey = () => `restaurant:roles:all`;
-export const getStaffCacheKey = (restaurantId) => `restaurant:staff:${restaurantId}`;
-export const getUsersCacheKey = (restaurantId) => `restaurant:users:${restaurantId}`;
+export const getStaffCacheKey = (restaurantId, options = {}) => {
+  const { status = "all", search = "", page = "", limit = "" } = options;
+  return `restaurant:staff:${restaurantId}:${status || "all"}:${(search || "").trim().toLowerCase()}:${page || ""}:${limit || ""}`;
+};
+export const getUsersCacheKey = (restaurantId, options = {}) => {
+  const { status = "all", search = "", page = "", limit = "" } = options;
+  return `restaurant:users:${restaurantId}:${status || "all"}:${(search || "").trim().toLowerCase()}:${page || ""}:${limit || ""}`;
+};
 export const getAddonGroupsCacheKey = (restaurantId) => `restaurant:addon-groups:${restaurantId}`;
 export const getTablesCacheKey = (restaurantId) => `restaurant:tables:${restaurantId}`;
 export const getPromotionCacheKey = (restaurantId) => `restaurant:${restaurantId}:promotions`;
@@ -21,9 +28,38 @@ export const invalidateMenuCache = async (restaurantId) => {
     await deleteCacheByPattern("restaurant:slug:*:menu");
 };
 
-export const invalidateRestaurantCache = async (userId, restaurantId) => {
-    if (userId) await deleteCache(getRestaurantCacheKey(userId));
-    if (restaurantId) await deleteCache(getRestaurantDetailsCacheKey(restaurantId));
+export const invalidateRestaurantCache = async (arg1, arg2, arg3) => {
+    let userId, restaurantId, slugs;
+
+    if (typeof arg1 === "object" && arg1 !== null && !Array.isArray(arg1)) {
+        userId = arg1.userId;
+        restaurantId = arg1.restaurantId;
+        slugs = arg1.slugs ?? arg1.slug;
+    } else {
+        userId = arg1;
+        restaurantId = arg2;
+        slugs = arg3;
+    }
+
+    const tasks = [];
+
+    if (userId) {
+        tasks.push(deleteCache(getRestaurantCacheKey(userId)));
+    }
+    if (restaurantId) {
+        tasks.push(deleteCache(getRestaurantDetailsCacheKey(restaurantId)));
+    }
+    if (slugs) {
+        const slugList = Array.isArray(slugs) ? slugs : [slugs];
+        const validSlugs = slugList.filter((s) => typeof s === "string" && s.trim());
+        validSlugs.forEach((s) => {
+            tasks.push(deleteCache(getRestaurantSlugCacheKey(s.trim())));
+        });
+    }
+
+    if (tasks.length > 0) {
+        await Promise.all(tasks);
+    }
 };
 
 export const invalidateCategoryCache = async (restaurantId) => {
@@ -45,11 +81,17 @@ export const invalidateRoleCache = async () => {
 };
 
 export const invalidateStaffCache = async (restaurantId) => {
-    if (restaurantId) await deleteCache(getStaffCacheKey(restaurantId));
+    if (restaurantId) {
+        await deleteCacheByPattern(`restaurant:staff:${restaurantId}:*`);
+        await deleteCache(`restaurant:staff:${restaurantId}`);
+    }
 };
 
 export const invalidateUserCache = async (restaurantId) => {
-    if (restaurantId) await deleteCache(getUsersCacheKey(restaurantId));
+    if (restaurantId) {
+        await deleteCacheByPattern(`restaurant:users:${restaurantId}:*`);
+        await deleteCache(`restaurant:users:${restaurantId}`);
+    }
 };
 
 export const invalidateAddonGroupCache = async (restaurantId) => {
@@ -73,4 +115,3 @@ export const invalidatePromotionCache = async (restaurantId) => {
         await invalidateMenuCache(restaurantId);
     }
 };
-

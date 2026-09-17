@@ -32,7 +32,7 @@ export const APP_SIDEBAR_CONFIG = {
         icon: <ClipboardList />,
       },
       {
-        title: "User",
+        title: "Customers",
         url: "/restaurant/users",
         icon: <User />,
       },

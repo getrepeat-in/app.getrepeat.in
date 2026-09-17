@@ -1,23 +1,50 @@
+import mongoose from "mongoose";
 import dbConnect from "@/lib/db";
 import { Role } from "@/models/Role";
 import { Staff } from "@/models/Staff";
 import ImageAsset from "@/models/Image";
 import Restaurant from "@/models/Restaurant";
-import { getCache, setCache, deleteCache } from "@/services/backend/redis/cache.service";
-import { getRestaurantCacheKey, getRestaurantDetailsCacheKey, invalidateRestaurantCache } from "@/lib/api/helpers/cacheKeys";
-
-const ALLOWED_UPDATE_FIELDS = ["name", "slug", "logo", "address", "phone", "domain", "email", "gstNumber", "currency", "status", "openingHours", "instagram"];
+import { getOrSetCache } from "@/services/backend/redis/cache.service";
+import { normalizeSlug, isDuplicateSlugError } from "@/lib/api/helpers/slug";
+import {  getRestaurantCacheKey,  getRestaurantDetailsCacheKey,  getRestaurantSlugCacheKey,  invalidateRestaurantCache } from "@/lib/api/helpers/cacheKeys";
+import { UnauthorizedError, BadRequestError, ForbiddenError,RestaurantNotFoundError, OutletLimitReachedError, SlugAlreadyInUseError } from "@/lib/api/response-handler";
+import { ALLOWED_UPDATE_FIELDS, DEFAULT_ALLOWED_OUTLETS, RESTAURANT_CACHE_TTL, OWNER_ROLE_DEFINITION, STAFF_STATUS, DEFAULT_OPENING_HOURS } from "./helpers/constants";
 
 export class RestaurantService {
-    static async checkOutletLimit(user) {
-        if (!user || !user.id) {
-            const error = new Error("Please log in first to continue!");
-            error.statusCode = 401;
-            throw error;
+    static async ensureSlugAvailable(slug, restaurantId = null) {
+        const normalized = normalizeSlug(slug);
+        if (!normalized) {
+            throw new BadRequestError("A valid restaurant slug is required.");
         }
 
         await dbConnect();
-        const allowedOutlets = Number(user.publicMetadata?.allowedOutlets ?? 1);
+
+        const query = {
+            slug: normalized,
+        };
+
+        if (restaurantId) {
+            query._id = { $ne: restaurantId };
+        }
+
+        const exists = await Restaurant.exists(query);
+
+        if (exists) {
+            throw new SlugAlreadyInUseError(
+                "This restaurant slug is already taken by another outlet."
+            );
+        }
+
+        return normalized;
+    }
+
+    static async checkOutletLimit(user) {
+        if (!user || !user.id) {
+            throw new UnauthorizedError("Please log in first to continue!");
+        }
+
+        await dbConnect();
+        const allowedOutlets = Number(user.publicMetadata?.allowedOutlets ?? DEFAULT_ALLOWED_OUTLETS);
         const currentCount = await Restaurant.countDocuments({ createdBy: user.id });
 
         return {
@@ -27,240 +54,248 @@ export class RestaurantService {
         };
     }
 
-    static async createRestaurant(user, { name, phone, email, slug, address, logo, openingHours }) {
+    static async createRestaurant(user, data) {
+        if (!data || typeof data !== "object" || Array.isArray(data)) {
+            throw new BadRequestError("Invalid restaurant data provided. Expected an object.");
+        }
+
         await dbConnect();
 
-        if (!user || !user.id) {
-            const error = new Error("Please log in first to continue!");
-            error.statusCode = 401;
-            throw error;
-        }
+        const { name, phone, email, slug, address, logo, openingHours } = data;
+
+        const normalizedSlug = await this.ensureSlugAvailable(slug);
 
         const { allowed, allowedOutlets } = await this.checkOutletLimit(user);
         if (!allowed) {
-            const error = new Error(
-                `Outlet limit reached! You are allowed to create max ${allowedOutlets} outlet(s). Please upgrade your plan to create more.`
-            );
-            error.statusCode = 403;
-            throw error;
-        }
-        
-        const existingRestaurant = await Restaurant.findOne({ slug });
-        if (existingRestaurant) {
-            const error = new Error("Restaurant slug already in use.");
-            error.statusCode = 400;
-            throw error;
+            throw new OutletLimitReachedError(allowedOutlets);
         }
 
-        const defaultOpeningHours = openingHours || {
-            currentlyOpen: false,
-            days: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"].map(day => ({
-                day,
-                isOpen: false,
-                openTime: null,
-                closeTime: null
-            }))
-        };
+        const session = await mongoose.startSession();
+        let createdRestaurantId = null;
 
-        const newRestaurant = new Restaurant({
-            name,
-            phone,
-            email,
-            slug,
-            ...(address ? { address } : {}),
-            ...(logo ? { logo } : {}),
-            createdBy: user.id,
-            openingHours: defaultOpeningHours
-        });
+        try {
+            await session.withTransaction(async () => {
+                const newRestaurant = new Restaurant({
+                    name,
+                    phone,
+                    email,
+                    slug: normalizedSlug,
+                    ...(address ? { address } : {}),
+                    ...(logo ? { logo } : {}),
+                    createdBy: user.id,
+                    openingHours: openingHours ?? DEFAULT_OPENING_HOURS,
+                });
 
-        await newRestaurant.save();
+                await newRestaurant.save({ session });
+                createdRestaurantId = newRestaurant._id;
 
-        let ownerRole = await Role.findOne({ name: "OWNER" });
-        if (!ownerRole) {
-            ownerRole = new Role({
-                name: "OWNER",
-                description: "Restaurant Owner",
-                isSystemRole: true
+                const ownerRole = await Role.findOneAndUpdate(
+                    { name: OWNER_ROLE_DEFINITION.name },
+                    { $setOnInsert: OWNER_ROLE_DEFINITION },
+                    { 
+                        upsert: true, 
+                        new: true, 
+                        setDefaultsOnInsert: true,
+                        session 
+                    }
+                ).select("_id").lean();
+
+                const newStaff = new Staff({
+                    email: user.email,
+                    name: user.name || user.email?.split("@")[0] || "Restaurant Owner",
+                    role: ownerRole._id,
+                    restaurant: newRestaurant._id,
+                    status: STAFF_STATUS.ACTIVE,
+                    clerkUserId: user.id,
+                });
+
+                await newStaff.save({ session });
             });
-            await ownerRole.save();
+
+            await invalidateRestaurantCache({
+                userId: user.id,
+                restaurantId: createdRestaurantId,
+                slugs: normalizedSlug
+            });
+
+            return await Restaurant.findById(createdRestaurantId).populate("logo").lean();
+        } catch (error) {
+            if (isDuplicateSlugError(error)) {
+                throw new SlugAlreadyInUseError();
+            }
+
+            throw error;
+        } finally {
+            await session.endSession();
         }
-
-        const newStaff = new Staff({
-            email: user.email,
-            name: user.name || user.email?.split('@')[0] || "Restaurant Owner",
-            role: ownerRole._id,
-            restaurant: newRestaurant._id,
-            status: "ACTIVE",
-            clerkUserId: user.id
-        });
-        await newStaff.save();
-        await invalidateRestaurantCache(user.id);
-
-        return newRestaurant;
     }
 
     static async getRestaurantsByUser(userId) {
         if (!userId) {
-            const error = new Error("Please log in first to continue!");
-            error.statusCode = 401;
-            throw error;
+            throw new UnauthorizedError("Please log in first to continue!");
         }
 
         await dbConnect();
 
-        const cacheKey = getRestaurantCacheKey(userId);
-        const cachedRestaurants = await getCache(cacheKey);
-        if (cachedRestaurants) {
-            return {
-                restaurants: cachedRestaurants,
-                isCached: true,
-            };
-        }
-
-        const restaurants = await Restaurant.find({
-            createdBy: userId,
-        }).populate("logo").lean();
-
-        await setCache(cacheKey, restaurants, 3600);
+        const { data: restaurants, isCached } = await getOrSetCache(
+            getRestaurantCacheKey(userId),
+            () => Restaurant.find({ createdBy: userId }).populate("logo").lean(),
+            RESTAURANT_CACHE_TTL
+        );
 
         return {
-            restaurants,
-            isCached: false,
+            restaurants: restaurants || [],
+            isCached,
         };
     }
 
     static async getRestaurantById(restaurantId) {
         if (!restaurantId) {
-            const error = new Error("Restaurant ID is required");
-            error.statusCode = 400;
-            throw error;
+            throw new BadRequestError("Restaurant ID is required");
         }
 
         await dbConnect();
 
-        const cacheKey = getRestaurantDetailsCacheKey(restaurantId);
-        const cachedDetails = await getCache(cacheKey);
-        if (cachedDetails) {
-            return {
-                restaurant: cachedDetails,
-                isCached: true,
-            };
-        }
+        const { data: restaurant, isCached } = await getOrSetCache(
+            getRestaurantDetailsCacheKey(restaurantId),
+            () => Restaurant.findById(restaurantId).populate("logo").lean(),
+            RESTAURANT_CACHE_TTL
+        );
 
-        const restaurant = await Restaurant.findById(restaurantId).populate("logo").lean();
         if (!restaurant) {
-            const error = new Error("Restaurant not found.");
-            error.statusCode = 404;
-            throw error;
+            throw new RestaurantNotFoundError();
         }
-
-        await setCache(cacheKey, restaurant, 3600);
 
         return {
             restaurant,
-            isCached: false,
+            isCached,
         };
     }
 
     static async getRestaurantBySlug(slug) {
-        if (!slug) {
-            const error = new Error("Restaurant slug is required");
-            error.statusCode = 400;
-            throw error;
+        const normalizedSlug = normalizeSlug(slug);
+        if (!normalizedSlug) {
+            throw new BadRequestError("Restaurant slug is required");
         }
 
         await dbConnect();
 
-        const cacheKey = `restaurant:slug:${slug}`;
-        const cached = await getCache(cacheKey);
-        if (cached) {
-            return {
-                restaurant: cached,
-                isCached: true,
-            };
-        }
+        const { data: restaurant, isCached } = await getOrSetCache(
+            getRestaurantSlugCacheKey(normalizedSlug),
+            () => Restaurant.findOne({ slug: normalizedSlug }).populate("logo").lean(),
+            RESTAURANT_CACHE_TTL
+        );
 
-        const restaurant = await Restaurant.findOne({ slug }).populate("logo").lean();
         if (!restaurant) {
-            const error = new Error("Restaurant not found.");
-            error.statusCode = 404;
-            throw error;
+            throw new RestaurantNotFoundError("Restaurant not found for the given slug.");
         }
-
-        await setCache(cacheKey, restaurant, 3600);
 
         return {
             restaurant,
-            isCached: false,
+            isCached,
         };
     }
 
-    static async updateRestaurant(restaurantId, userId, data) {
-        await dbConnect();
-
-        if (!restaurantId) {
-            const error = new Error("Restaurant ID is required");
-            error.statusCode = 400;
-            throw error;
+    static buildUpdateData(data) {
+        if (!data || typeof data !== "object" || Array.isArray(data)) {
+            throw new BadRequestError("Invalid update data provided. Expected an object.");
         }
 
         const updateData = {};
-        ALLOWED_UPDATE_FIELDS.forEach(field => {
-            if (data[field] !== undefined) {
-                updateData[field] = data[field];
-            }
-        });
 
-        if (updateData.slug) {
-            const existingRestaurant = await Restaurant.findOne({ slug: updateData.slug });
-            if (existingRestaurant && existingRestaurant._id.toString() !== restaurantId.toString()) {
-                const error = new Error("Restaurant slug already in use by another restaurant.");
-                error.statusCode = 400;
-                throw error;
+        for (const [key, value] of Object.entries(data)) {
+            if (ALLOWED_UPDATE_FIELDS.has(key) && value !== undefined) {
+                updateData[key] = value;
             }
         }
 
-        const updatedRestaurant = await Restaurant.findByIdAndUpdate(
-            restaurantId,
-            { $set: updateData },
-            { new: true, runValidators: true }
-        ).populate("logo");
+        if (updateData.slug !== undefined) {
+            updateData.slug = normalizeSlug(updateData.slug);
 
-        if (!updatedRestaurant) {
-            const error = new Error("Restaurant not found.");
-            error.statusCode = 404;
+            if (!updateData.slug) {
+                throw new BadRequestError("Restaurant slug cannot be empty.");
+            }
+        }
+
+        return updateData;
+    }
+
+    static async updateRestaurant(restaurantId, userId, data) {
+        if (!restaurantId) {
+            throw new BadRequestError("Restaurant ID is required");
+        }
+
+        if (!userId) {
+            throw new UnauthorizedError("Please log in first to continue!");
+        }
+
+        const updateData = this.buildUpdateData(data);
+
+        if (Object.keys(updateData).length === 0) {
+            throw new BadRequestError("No valid fields provided for update.");
+        }
+
+        await dbConnect();
+
+        const existingRestaurant = await Restaurant.findById(restaurantId);
+        if (!existingRestaurant) {
+            throw new RestaurantNotFoundError();
+        }
+
+        const isCreator = String(existingRestaurant.createdBy) === String(userId);
+        if (!isCreator) {
+            const isStaff = await Staff.exists({
+                clerkUserId: userId,
+                restaurant: restaurantId,
+                status: STAFF_STATUS.ACTIVE,
+            });
+
+            if (!isStaff) {
+                throw new ForbiddenError("You do not have permission to modify this restaurant.");
+            }
+        }
+
+        const oldSlug = existingRestaurant.slug;
+        const newSlug = updateData.slug;
+        const slugChanged = newSlug !== undefined && newSlug !== oldSlug;
+
+        if (slugChanged) {
+            await this.ensureSlugAvailable(newSlug, restaurantId);
+        }
+
+        try {
+            Object.assign(existingRestaurant, updateData);
+            await existingRestaurant.save();
+        } catch (error) {
+            if (isDuplicateSlugError(error)) {
+                throw new SlugAlreadyInUseError("This restaurant slug is already taken by another outlet.");
+            }
             throw error;
         }
 
-        if (userId) {
-            await invalidateRestaurantCache(userId, restaurantId);
-        }
-        if (updatedRestaurant.slug) {
-            await deleteCache(`restaurant:slug:${updatedRestaurant.slug}`);
-        }
+        await invalidateRestaurantCache({
+            userId, 
+            restaurantId, 
+            slugs: slugChanged ? [oldSlug, newSlug] : [oldSlug]
+        });
 
-        return updatedRestaurant;
+        return Restaurant.findById(restaurantId).populate("logo").lean();
     }
 
     static async deleteRestaurant(restaurantId, userId) {
         await dbConnect();
 
-        const restaurant = await Restaurant.findOne({ _id: restaurantId, createdBy: userId });
+        const restaurant = await Restaurant.findOne({ _id: restaurantId, createdBy: userId }).select("_id slug").lean();
         if (!restaurant) {
-            const error = new Error("Restaurant not found or unauthorized.");
-            error.statusCode = 404;
-            throw error;
+            throw new RestaurantNotFoundError("Restaurant not found or you don't have permission to delete it.");
         }
 
         await Restaurant.deleteOne({ _id: restaurantId });
-
-        if (userId) {
-            await invalidateRestaurantCache(userId, restaurantId);
-        }
-        if (restaurant.slug) {
-            await deleteCache(`restaurant:slug:${restaurant.slug}`);
-        }
-
+        await invalidateRestaurantCache({
+            userId, 
+            restaurantId, 
+            slugs: restaurant.slug
+        });
         return { success: true };
     }
 }

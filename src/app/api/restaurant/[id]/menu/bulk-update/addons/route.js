@@ -1,63 +1,52 @@
 import dbConnect from "@/lib/db";
 import MenuItem from "@/models/Item";
-import Restaurant from "@/models/Restaurant";
-import { getUser } from "@/lib/api/hooks/getUser";
-import { JsonResponse } from "@/lib/api/responseHandler";
+import { getRestaurant } from "@/lib/api/hooks/getRestaurant";
 import { invalidateItemCache } from "@/lib/api/helpers/cacheKeys";
+import { 
+  withErrorHandler, 
+  successResponse, 
+  BadRequestError 
+} from "@/lib/api/response-handler";
 
-export const PUT = async (req, { params }) => {
-    try {
-        const { id: restaurantId } = await params;
-        if (!restaurantId) return JsonResponse.error("Restaurant ID is required!", 400);
+export const PUT = withErrorHandler(async (req, { params }) => {
+  const { id: restaurantId } = await params;
+  if (!restaurantId) throw new BadRequestError("Restaurant ID is required!");
 
-        await dbConnect();
-        const user = await getUser();
+  await getRestaurant({ restaurantId });
+  await dbConnect();
 
-        if (!user?.id) return JsonResponse.error("Please log in first to continue!", 401);
+  const data = await req.json();
+  const { itemIds, addonGroupIds, action } = data;
 
-        const restaurant = await Restaurant.findOne({ _id: restaurantId, createdBy: user.id });
-        if (!restaurant) return JsonResponse.error("Restaurant not found or unauthorized", 404);
+  if (!Array.isArray(itemIds) || !Array.isArray(addonGroupIds)) {
+    throw new BadRequestError("itemIds and addonGroupIds must be arrays.");
+  }
 
-        const data = await req.json();
-        const { itemIds, addonGroupIds, action } = data;
+  let resultData = null;
 
-        if (!Array.isArray(itemIds) || !Array.isArray(addonGroupIds)) {
-            return JsonResponse.error("itemIds and addonGroupIds must be arrays.", 400);
-        }
+  if (action === "add") {
+    const updateResult = await MenuItem.updateMany(
+      { _id: { $in: itemIds }, restaurant: restaurantId },
+      { $addToSet: { addonGroups: { $each: addonGroupIds } } }
+    );
+    resultData = { matched: updateResult.matchedCount, modified: updateResult.modifiedCount };
+  } else if (action === "remove") {
+    const updateResult = await MenuItem.updateMany(
+      { _id: { $in: itemIds }, restaurant: restaurantId },
+      { $pullAll: { addonGroups: addonGroupIds } }
+    );
+    resultData = { matched: updateResult.matchedCount, modified: updateResult.modifiedCount };
+  } else if (action === "set") {
+    const updateResult = await MenuItem.updateMany(
+      { _id: { $in: itemIds }, restaurant: restaurantId },
+      { $set: { addonGroups: addonGroupIds } }
+    );
+    resultData = { matched: updateResult.matchedCount, modified: updateResult.modifiedCount };
+  } else {
+    throw new BadRequestError("Invalid action. Must be add, remove, or set.");
+  }
 
-        let resultData = null;
+  await invalidateItemCache(restaurantId);
 
-        if (action === "add") {
-            const updateResult = await MenuItem.updateMany(
-                { _id: { $in: itemIds }, restaurant: restaurantId },
-                { $addToSet: { addonGroups: { $each: addonGroupIds } } }
-            );
-            resultData = { matched: updateResult.matchedCount, modified: updateResult.modifiedCount };
-        } 
-        else if (action === "remove") {
-            const updateResult = await MenuItem.updateMany(
-                { _id: { $in: itemIds }, restaurant: restaurantId },
-                { $pullAll: { addonGroups: addonGroupIds } }
-            );
-            resultData = { matched: updateResult.matchedCount, modified: updateResult.modifiedCount };
-        }
-        else if (action === "set") {
-            const updateResult = await MenuItem.updateMany(
-                { _id: { $in: itemIds }, restaurant: restaurantId },
-                { $set: { addonGroups: addonGroupIds } }
-            );
-            resultData = { matched: updateResult.matchedCount, modified: updateResult.modifiedCount };
-        }
-        else {
-            return JsonResponse.error("Invalid action. Must be add, remove, or set.", 400);
-        }
-
-        await invalidateItemCache(restaurantId);
-
-        return JsonResponse.success(resultData, "Addons updated successfully", 200);
-
-    } catch (err) {
-        console.error("Bulk Addons Update Error:", err);
-        return JsonResponse.error(err?.message || "Internal Server Error!", 500);
-    }
-};
+  return successResponse(resultData, "Addons updated successfully");
+});
