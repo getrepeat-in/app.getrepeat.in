@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { useState, useMemo } from "react";
-import { ChevronRight, ChevronDown, Check, Layers } from "lucide-react";
+import { ChevronRight, ChevronDown, Check, Minus, Layers } from "lucide-react";
 
 export const NestedItemSelection = ({ items, categories, selectedItems, onToggleItem, onToggleCategory }) => {
     const [expandedCats, setExpandedCats] = useState({});
@@ -11,18 +11,18 @@ export const NestedItemSelection = ({ items, categories, selectedItems, onToggle
         
         const catMap = {};
         categories.forEach(c => {
+            const id = String(c._id || c.id);
             if (!c.parentCategory) {
-                const id = String(c._id);
-                catMap[id] = { ...c, _id: id, subCategories: {}, items: [] };
+                catMap[id] = { ...c, _id: id, id, subCategories: {}, items: [] };
             }
         });
 
         categories.forEach(c => {
             if (c.parentCategory) {
-                const id = String(c._id);
-                const parentId = String(typeof c.parentCategory === 'object' ? c.parentCategory._id || c.parentCategory : c.parentCategory);
+                const id = String(c._id || c.id);
+                const parentId = String(typeof c.parentCategory === 'object' ? c.parentCategory._id || c.parentCategory.id || c.parentCategory : c.parentCategory);
                 if (catMap[parentId]) {
-                    catMap[parentId].subCategories[id] = { ...c, _id: id, items: [] };
+                    catMap[parentId].subCategories[id] = { ...c, _id: id, id, items: [] };
                 }
             }
         });
@@ -30,10 +30,10 @@ export const NestedItemSelection = ({ items, categories, selectedItems, onToggle
         let hasUncategorized = false;
         
         items.forEach(item => {
-            const rawCatId = item.category?._id || item.category;
+            const rawCatId = item.category?._id || item.category?.id || item.category;
             const catId = rawCatId ? String(rawCatId) : null;
             
-            const rawSubCatId = item.subCategory?._id || item.subCategory;
+            const rawSubCatId = item.subCategory?._id || item.subCategory?.id || item.subCategory;
             const subCatId = rawSubCatId ? String(rawSubCatId) : null;
 
             if (catId && catMap[catId]) {
@@ -41,7 +41,7 @@ export const NestedItemSelection = ({ items, categories, selectedItems, onToggle
                     catMap[catId].subCategories[subCatId].items.push(item);
                 } else if (subCatId) {
                     if (!catMap[catId].subCategories[subCatId]) {
-                        catMap[catId].subCategories[subCatId] = { _id: subCatId, name: item.subCategory?.name || "Subcategory", items: [] };
+                        catMap[catId].subCategories[subCatId] = { _id: subCatId, id: subCatId, name: item.subCategory?.name || "Subcategory", items: [] };
                     }
                     catMap[catId].subCategories[subCatId].items.push(item);
                 } else {
@@ -49,7 +49,7 @@ export const NestedItemSelection = ({ items, categories, selectedItems, onToggle
                 }
             } else {
                 if (!catMap['uncategorized']) {
-                    catMap['uncategorized'] = { _id: 'uncategorized', name: 'Uncategorized Items', subCategories: {}, items: [] };
+                    catMap['uncategorized'] = { _id: 'uncategorized', id: 'uncategorized', name: 'Uncategorized Items', subCategories: {}, items: [] };
                 }
                 catMap['uncategorized'].items.push(item);
                 hasUncategorized = true;
@@ -64,35 +64,37 @@ export const NestedItemSelection = ({ items, categories, selectedItems, onToggle
 
     const renderCheckbox = (isSelected, isIndeterminate) => (
         <div className={cn(
-            "w-[16px] h-[16px] rounded-[3px] border flex items-center justify-center shrink-0 transition-colors cursor-pointer",
-            isSelected ? "border-white bg-green-600 text-white dark:border-gray-200 dark:text-gray-200" : 
-            isIndeterminate ? "border-slate-800 bg-transparent text-slate-800 dark:border-gray-200 dark:text-gray-200" : "border-slate-300 bg-transparent dark:border-zinc-700"
+            "w-[18px] h-[18px] rounded-[5px] border-[1.5px] flex items-center justify-center shrink-0 transition-all duration-150 cursor-pointer",
+            isSelected || isIndeterminate
+                ? "border-primary bg-primary shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]"
+                : "border-border/70 bg-background hover:border-primary/50 hover:shadow-[0_0_0_3px_hsl(var(--primary)/0.08)]"
         )}>
-            {isSelected && !isIndeterminate && <Check className="w-3 h-3" strokeWidth={3} />}
-            {isIndeterminate && <div className="w-2 h-[2px] bg-slate-800 dark:bg-gray-200 rounded-full" />}
+            {isSelected && !isIndeterminate && <Check className="w-2.5 h-2.5 text-primary-foreground" strokeWidth={3} />}
+            {isIndeterminate && <Minus className="w-2.5 h-2.5 text-primary-foreground" strokeWidth={3} />}
         </div>
     );
 
     return (
         <div className="border border-slate-200 dark:border-zinc-800 rounded-xl overflow-hidden bg-white dark:bg-zinc-950">
             {hierarchy.map(cat => {
-                const isCatExpanded = expandedCats[cat._id];
+                const catId = cat._id || cat.id;
+                const isCatExpanded = expandedCats[catId];
                 const subCats = Object.values(cat.subCategories);
                 
                 const allItemsUnderCat = [
-                    ...cat.items.map(i => i._id),
-                    ...subCats.flatMap(sc => sc.items.map(i => i._id))
+                    ...cat.items.map(i => i._id || i.id),
+                    ...subCats.flatMap(sc => sc.items.map(i => i._id || i.id))
                 ];
                 const isCatFullySelected = allItemsUnderCat.length > 0 && allItemsUnderCat.every(id => selectedItems.includes(id));
                 const isCatPartiallySelected = !isCatFullySelected && allItemsUnderCat.some(id => selectedItems.includes(id));
 
                 return (
-                    <div key={cat._id} className="border-b border-slate-200 dark:border-zinc-800 last:border-0 bg-white dark:bg-zinc-950 transition-all">
+                    <div key={catId} className="border-b border-slate-200 dark:border-zinc-800 last:border-0 bg-white dark:bg-zinc-950 transition-all">
                         <div className="flex items-center gap-3 p-3.5 hover:bg-slate-50 dark:hover:bg-zinc-900 transition-colors">
                             <div onClick={() => onToggleCategory(allItemsUnderCat, isCatFullySelected)}>
                                 {renderCheckbox(isCatFullySelected, isCatPartiallySelected)}
                             </div>
-                            <button type="button" onClick={() => toggleCat(cat._id)} className="flex items-center gap-2 flex-1 text-left focus:outline-none group">
+                            <button type="button" onClick={() => toggleCat(catId)} className="flex items-center gap-2 flex-1 text-left focus:outline-none group">
                                 <div className="text-slate-400 group-hover:text-slate-600 transition-colors">
                                     {isCatExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                                 </div>
@@ -104,18 +106,19 @@ export const NestedItemSelection = ({ items, categories, selectedItems, onToggle
                         {isCatExpanded && (
                             <div className="bg-white dark:bg-zinc-950">
                                 {subCats.map(subCat => {
-                                    const isSubCatExpanded = expandedSubCats[subCat._id];
-                                    const subCatItems = subCat.items.map(i => i._id);
+                                    const subCatId = subCat._id || subCat.id;
+                                    const isSubCatExpanded = expandedSubCats[subCatId];
+                                    const subCatItems = subCat.items.map(i => i._id || i.id);
                                     const isSubCatFullySelected = subCatItems.length > 0 && subCatItems.every(id => selectedItems.includes(id));
                                     const isSubCatPartiallySelected = !isSubCatFullySelected && subCatItems.some(id => selectedItems.includes(id));
 
                                     return (
-                                        <div key={subCat._id} className="border-t border-slate-100 dark:border-zinc-800/50">
+                                        <div key={subCatId} className="border-t border-slate-100 dark:border-zinc-800/50">
                                             <div className="flex items-center gap-3 py-3 pl-10 pr-4 hover:bg-slate-50 dark:hover:bg-zinc-900 transition-colors">
                                                 <div onClick={() => onToggleCategory(subCatItems, isSubCatFullySelected)}>
                                                     {renderCheckbox(isSubCatFullySelected, isSubCatPartiallySelected)}
                                                 </div>
-                                                <button type="button" onClick={() => toggleSubCat(subCat._id)} className="flex items-center gap-2 flex-1 text-left focus:outline-none group">
+                                                <button type="button" onClick={() => toggleSubCat(subCatId)} className="flex items-center gap-2 flex-1 text-left focus:outline-none group">
                                                     <div className="text-slate-400 group-hover:text-slate-600 transition-colors">
                                                         {isSubCatExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                                                     </div>
@@ -126,11 +129,12 @@ export const NestedItemSelection = ({ items, categories, selectedItems, onToggle
                                             {isSubCatExpanded && (
                                                 <div className="pb-2 pt-1">
                                                     {subCat.items.map(item => {
-                                                        const isSelected = selectedItems.includes(item._id);
+                                                        const itemId = item._id || item.id;
+                                                        const isSelected = selectedItems.includes(itemId);
                                                         return (
-                                                            <div className="pl-14 pr-4 py-1.5" key={item._id}>
+                                                            <div className="pl-14 pr-4 py-1.5" key={itemId}>
                                                                 <div 
-                                                                    onClick={() => onToggleItem(item._id)}
+                                                                    onClick={() => onToggleItem(itemId)}
                                                                     className={cn(
                                                                         "flex items-center gap-3 py-2 px-3 rounded-lg cursor-pointer transition-colors group",
                                                                         isSelected ? "bg-slate-100 dark:bg-zinc-800" : "hover:bg-slate-50 dark:hover:bg-zinc-900/50"
@@ -151,11 +155,12 @@ export const NestedItemSelection = ({ items, categories, selectedItems, onToggle
                                 {cat.items.length > 0 && (
                                     <div className="pb-2 pt-1 border-t border-slate-100 dark:border-zinc-800/50">
                                         {cat.items.map(item => {
-                                            const isSelected = selectedItems.includes(item._id);
+                                            const itemId = item._id || item.id;
+                                            const isSelected = selectedItems.includes(itemId);
                                             return (
-                                                <div className="pl-14 pr-4 py-1.5" key={item._id}>
+                                                <div className="pl-14 pr-4 py-1.5" key={itemId}>
                                                     <div 
-                                                        onClick={() => onToggleItem(item._id)}
+                                                        onClick={() => onToggleItem(itemId)}
                                                         className={cn(
                                                             "flex items-center gap-3 py-2 px-3 rounded-lg cursor-pointer transition-colors group",
                                                             isSelected ? "bg-slate-100 dark:bg-zinc-800" : "hover:bg-slate-50 dark:hover:bg-zinc-900/50"

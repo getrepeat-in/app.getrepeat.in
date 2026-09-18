@@ -15,6 +15,7 @@ export const TYPE_OPTIONS = [
 
 export const ROUNDING_OPTIONS = [
   { value: "none", label: "No Rounding" },
-  { value: "round_to_9", label: "Simply Round to 9 (e.g. ₹300 → ₹299)" },
-  { value: "round_to_10", label: "Round to nearest 10 (e.g. ₹294 → ₹290)" },
+  { value: "round_to_integer", label: "Round to Integer (e.g. ₹299.5 → ₹300)" },
+  { value: "nearest_9", label: "Nearest 9 (e.g. ₹305 → ₹309, ₹302 → ₹299)" },
+  { value: "next_9", label: "Next 9 (e.g. ₹300 → ₹309, ₹291 → ₹299)" },
 ];

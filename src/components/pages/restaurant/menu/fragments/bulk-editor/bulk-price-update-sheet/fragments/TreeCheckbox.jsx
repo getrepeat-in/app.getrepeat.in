@@ -1,20 +1,28 @@
-import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Check, Minus } from "lucide-react";
 
 export function TreeCheckbox({ checked, onChange, indeterminate }) {
   return (
     <button
       type="button"
-      onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(!checked); }}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onChange(!checked);
+      }}
       className={cn(
-        "flex shrink-0 items-center justify-center w-5 h-5 rounded-[4px] border transition-all duration-200",
+        "flex shrink-0 items-center justify-center size-[18px] rounded-[5px] border-[1.5px] transition-all duration-150 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
         checked || indeterminate
-          ? "bg-[#212121] border-[#212121]"
-          : "border-slate-300 bg-white hover:border-slate-400"
+          ? "bg-primary border-primary shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]"
+          : "border-border/70 bg-background hover:border-primary/50 hover:shadow-[0_0_0_3px_hsl(var(--primary)/0.08)]"
       )}
     >
-      {checked && <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />}
-      {indeterminate && !checked && <div className="w-2.5 h-0.5 bg-white rounded-full" />}
-    </button>
+      {checked && !indeterminate && (
+        <Check className="size-2.5 text-primary-foreground" strokeWidth={3} />
+      )}
+      {indeterminate && (
+        <Minus className="size-2.5 text-primary-foreground" strokeWidth={3} />
+      )}
+    </button> 
   );
 }

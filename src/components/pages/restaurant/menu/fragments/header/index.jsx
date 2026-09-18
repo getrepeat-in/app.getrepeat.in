@@ -1,84 +1,180 @@
 "use client";
-import { useState, useEffect } from "react";
-import { useItem } from "@/store/hooks/useItem";
+import { useState } from "react";
+import { Plus, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { DownloadCloud, Loader2 } from "lucide-react";
-import { MenuService } from "@/services/frontend/menu";
+import { useItem } from "@/store/hooks/useItem";
+import { exportMenuToCSV } from "./helpers/csvExport";
 import { useQueryClient } from "@tanstack/react-query";
-import useNotification from "@/store/hooks/useNotification";
+import { useCategory } from "@/store/hooks/useCategory";
+import { MoreVertical, Download, X } from "lucide-react";
+import { DEFAULT_FILTER_TABS } from "./helpers/constants";
 import { useRestaurant } from "@/store/hooks/useRestaurant";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import useNotification from "@/store/hooks/useNotification";
+import { BULK_EDIT_MODES } from "../bulk-editor/helpers/constants";
+import { TableToolbar } from "@/components/global/table/fragments/table-toolbar";
+import { CategoryFormPopover } from "../category-sidebar/fragments/category-form-popover";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel, DropdownMenuGroup } from "@/components/ui/dropdown-menu";
 
-
-export default function MenuHeader() {
+export default function MenuHeader({
+    title = "Menu Management",
+    subtitle = "Create and manage your restaurant categories, menu items, and pricing",
+    totalCount,
+    actions,
+    onAddItem,
+    onRefresh,
+    filterTabs = DEFAULT_FILTER_TABS,
+    activeFilterTab,
+    onFilterTabChange,
+    searchable = true,
+    searchPlaceholder = "Search menu items by name or code...",
+    searchQuery,
+    onSearchChange,
+    onOpenBulkMode,
+    activeView = "MENU",
+    onBackToMenu,
+    className,
+}) {
     const { restaurantId } = useRestaurant();
-    const { items, isLoading: itemsLoading } = useItem(restaurantId, {});
-    
-    const notification = useNotification();
+    const { rawCategories, addCategory } = useCategory(restaurantId);
+    const { items } = useItem(restaurantId, {});
     const queryClient = useQueryClient();
+    const notification = useNotification();
 
-    const [isImporting, setIsImporting] = useState(false);
-    const [popoverOpen, setPopoverOpen] = useState(false);
+    const [internalFilter, setInternalFilter] = useState("all");
+    const [internalSearch, setInternalSearch] = useState("");
+    const currentFilter = activeFilterTab !== undefined ? activeFilterTab : internalFilter;
+    const handleFilterChange = onFilterTabChange || setInternalFilter;
+    const currentSearch = searchQuery !== undefined ? searchQuery : internalSearch;
+    const handleSearchChange = onSearchChange || setInternalSearch;
 
-    const [zomatoUrl, setZomatoUrl] = useState("");
-
-    const [mounted, setMounted] = useState(false);
-
-    useEffect(() => {
-        setMounted(true);
-    }, []);
-
-    const handleZomatoImport = async () => {
-        if (!zomatoUrl.trim()) {
-            notification.error("Please enter a Zomato menu URL");
-            return;
-        }
-
-        setIsImporting(true);
-        try {
-            const data = await MenuService.importZomato(restaurantId, zomatoUrl);
-            if (data.success) {
-                notification.success(`Successfully imported ${data.total_items || data.stats?.itemsImported || 0} items!`);
-                setPopoverOpen(false);
-                setZomatoUrl("");
-                queryClient.invalidateQueries({ queryKey: ["items", restaurantId] });
-                queryClient.invalidateQueries({ queryKey: ["categories", restaurantId] });
-            } else {
-                notification.error(data.message || "Failed to import Zomato menu");
-            }
-        } catch (e) {
-            notification.error(e.response?.data?.message || e.message || "Failed to import Zomato menu");
-        } finally {
-            setIsImporting(false);
+    const handleRefresh = () => {
+        if (onRefresh) {
+            onRefresh();
+        } else if (restaurantId) {
+            queryClient.invalidateQueries({ queryKey: ["items", restaurantId] });
+            queryClient.invalidateQueries({ queryKey: ["categories", restaurantId] });
         }
     };
 
-    const total = items?.length || 0;
-    const media = items?.filter(item => item?.image || (item?.media && item?.media.length > 0))?.length || 0;
-    const noMedia = total - media;
+    const handleExportCSV = () => {
+        exportMenuToCSV(items, rawCategories, notification);
+    };
 
-    const isLoading = !mounted || itemsLoading;
+    const defaultActions = (
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto">
+            {activeView === "BULK" ? (
+                <Button
+                    onClick={onBackToMenu}
+                    size="sm"
+                    className="h-8.5 rounded-md bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-foreground shadow-2xs gap-1.5 font-semibold text-xs shrink-0"
+                >
+                    <X size={14} strokeWidth={2.5} />
+                    <span>Close Editor</span>
+                </Button>
+            ) : (
+                onAddItem ? (
+                    <Button
+                        onClick={onAddItem}
+                        size="sm"
+                        className="h-8.5 rounded-md bg-primary hover:bg-primary/90 text-white shadow-2xs gap-1.5 font-semibold text-xs shrink-0"
+                    >
+                        <Plus size={14} strokeWidth={2.5} />
+                        <span>Create Item</span>
+                    </Button>
+                ) : (
+                    <CategoryFormPopover onSubmit={addCategory}>
+                        <Button
+                            size="sm"
+                            className="h-8.5 rounded-md bg-primary hover:bg-primary/90 text-white shadow-2xs gap-1.5 font-semibold text-xs shrink-0"
+                        >
+                            <Plus size={14} strokeWidth={2.5} />
+                            <span>Create Category</span>
+                        </Button>
+                    </CategoryFormPopover>
+                )
+            )}
+
+            <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefresh}
+                className="h-8.5 rounded-md border-gray-200 dark:border-zinc-800 shadow-2xs gap-1.5 shrink-0"
+                title="Refresh menu"
+            >
+                <RefreshCw className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline text-xs">Refresh</span>
+            </Button>
+
+            <DropdownMenu>
+                <DropdownMenuTrigger render={
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8.5 w-8.5 p-0 rounded-md border-gray-200 dark:border-zinc-800 shadow-2xs shrink-0"
+                        title="Actions"
+                    >
+                        <MoreVertical className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                } />
+                <DropdownMenuContent align="end" className="w-56 font-sans">
+                    <DropdownMenuGroup>
+                        <DropdownMenuLabel className="text-[11px] uppercase tracking-wider text-muted-foreground/70 font-bold px-2 py-1.5">Data & Sync</DropdownMenuLabel>
+                        <DropdownMenuItem onClick={handleExportCSV} className="cursor-pointer gap-2.5 font-medium py-2">
+                            <Download className="h-4 w-4 text-muted-foreground" />
+                            Export Menu to CSV
+                        </DropdownMenuItem>
+                        {BULK_EDIT_MODES.filter(m => m.category === "DATA").map(mode => {
+                            const Icon = mode.icon;
+                            return (
+                                <DropdownMenuItem 
+                                    key={mode.id} 
+                                    onClick={() => onOpenBulkMode?.(mode.id)} 
+                                    className="cursor-pointer gap-2.5 font-medium py-2"
+                                >
+                                    <Icon className="h-4 w-4 text-muted-foreground" />
+                                    {mode.label}
+                                </DropdownMenuItem>
+                            );
+                        })}
+                    </DropdownMenuGroup>
+                    
+                    <DropdownMenuSeparator />
+                    
+                    <DropdownMenuGroup>
+                        <DropdownMenuLabel className="text-[11px] uppercase tracking-wider text-muted-foreground/70 font-bold px-2 py-1.5">Batch Editors</DropdownMenuLabel>
+                        {BULK_EDIT_MODES.filter(m => m.category === "EDITORS" || !m.category).map(mode => {
+                            const Icon = mode.icon;
+                            return (
+                                <DropdownMenuItem 
+                                    key={mode.id} 
+                                    onClick={() => onOpenBulkMode?.(mode.id)} 
+                                    className="cursor-pointer gap-2.5 font-medium py-2"
+                                >
+                                    <Icon className="h-4 w-4 text-muted-foreground" />
+                                    {mode.label}
+                                </DropdownMenuItem>
+                            );
+                        })}
+                    </DropdownMenuGroup>
+                </DropdownMenuContent>
+            </DropdownMenu>
+        </div>
+    );
 
     return (
-        <div className="flex items-center justify-between px-6 py-4 border-b bg-white z-30">
-            <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1.5 bg-gray-50/80 border border-gray-100 px-3 py-1.5 rounded-md text-[13px] font-semibold text-gray-700 shadow-sm">
-                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-                    Total: {isLoading ? <Loader2 className="h-3 w-3 animate-spin inline ml-1" /> : total}
-                </div>
-                <div className="flex items-center gap-1.5 bg-emerald-50/50 border border-emerald-100/50 px-3 py-1.5 rounded-md text-[13px] font-semibold text-emerald-700 shadow-sm">
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
-                    Media: {isLoading ? <Loader2 className="h-3 w-3 animate-spin inline ml-1" /> : media}
-                </div>
-                <div className="flex items-center gap-1.5 bg-primary/10/50 border border-orange-100/50 px-3 py-1.5 rounded-md text-[13px] font-semibold text-primary shadow-sm">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary/90"></div>
-                    No Media: {isLoading ? <Loader2 className="h-3 w-3 animate-spin inline ml-1" /> : noMedia}
-                </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-                {/* Actions can go here in the future */}
-            </div>
-        </div>
+        <TableToolbar
+            title={title}
+            subtitle={subtitle}
+            totalCount={totalCount}
+            actions={actions !== undefined ? actions : defaultActions}
+            filterTabs={filterTabs}
+            activeFilterTab={currentFilter}
+            onFilterTabChange={handleFilterChange}
+            searchable={searchable}
+            searchPlaceholder={searchPlaceholder}
+            searchQuery={currentSearch}
+            onSearchChange={handleSearchChange}
+            className={className}
+        />
     );
 }

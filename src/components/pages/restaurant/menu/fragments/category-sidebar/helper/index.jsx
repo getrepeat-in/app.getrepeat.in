@@ -1,5 +1,5 @@
 import CategoryView from "../category-view";
-import { BULK_EDIT_MODES } from "../../bulk-editor/helper/constant";
+import { BULK_EDIT_MODES } from "../../bulk-editor/helpers/constants";
 import { ChevronRight, SlidersHorizontal, DatabaseZap } from "lucide-react";
 
 export const renderViewContent = (props) => {

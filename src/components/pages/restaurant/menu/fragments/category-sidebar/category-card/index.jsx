@@ -5,7 +5,7 @@ import ActionMenu from "../action-menu";
 import { Button } from "@/components/ui/button";
 import SubCategoryList from "../sub-category-list";
 import InlineInput from "@/components/ui/inline-input";
-import { CategoryFormPopover } from "../category-form-popover";
+import { CategoryFormPopover } from "../fragments/category-form-popover";
 import { ChevronDown, ChevronRight, FolderKanban, Plus } from "lucide-react";
 
 export default function CategoryCard({

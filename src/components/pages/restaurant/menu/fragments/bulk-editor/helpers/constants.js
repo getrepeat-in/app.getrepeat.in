@@ -1,4 +1,4 @@
-import { AlignLeft, DollarSign, FileUp, ImageIcon, Layers, PlusCircle, Table } from "lucide-react";
+import { AlignLeft, DollarSign, FileUp, ImageIcon, Layers, PlusCircle } from "lucide-react";
 
 export const BULK_EDIT_MODES = [
     { 
@@ -37,12 +37,4 @@ export const BULK_EDIT_MODES = [
         label: "Import Menu", 
         category: "DATA"
     },
-    { 
-        id: "EXPORT_CSV", 
-        icon: Table, 
-        label: "Export CSV", 
-        category: "DATA"
-    },
 ];
-
-

@@ -1,6 +1,7 @@
-import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { ImageIcon } from "lucide-react";
+import { useState, useMemo } from "react";
 import { useItem } from "@/store/hooks/useItem";
+import DataTable from "@/components/global/table";
 import { ImageSidebar } from "./fragments/ImageSidebar";
 import { useCategory } from "@/store/hooks/useCategory";
 import { useRestaurant } from "@/store/hooks/useRestaurant";
@@ -13,10 +14,12 @@ export function ImageEditor() {
     
     const [selectedItemForSidebar, setSelectedItemForSidebar] = useState(null);
 
-    const categoryNameMap = categories.reduce((acc, cat) => {
-        acc[cat._id] = cat.name;
-        return acc;
-    }, {});
+    const categoryNameMap = useMemo(() => {
+        return categories.reduce((acc, cat) => {
+            acc[cat._id] = cat.name;
+            return acc;
+        }, {});
+    }, [categories]);
 
     const getCategoryPath = (item) => {
         const catName = categoryNameMap[item.category];
@@ -31,36 +34,40 @@ export function ImageEditor() {
         await updateItem({ itemId, data: { image: imageId } });
     };
 
-    if (isLoadingCats || isLoadingItems) {
-        return (
-            <div className="flex-1 flex items-center justify-center bg-gray-50 text-gray-500 font-medium font-sans">
-                <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading Items...
-            </div>
-        );
-    }
+    const totalCount = items.length;
+
 
     return (
-        <div className="flex-1 flex flex-col bg-gray-50 overflow-hidden font-poppins">
-            <div className="flex-1 overflow-y-auto p-3">
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-6 gap-4 max-w-[1600px] mx-auto">
-                    {items.map(item => (
-                        <ImageUploadCard 
-                            key={item._id}
-                            item={item}
-                            updateItem={updateItem}
-                            restaurantId={restaurantId}
-                            onCardClick={() => setSelectedItemForSidebar(item)}
-                        />
-                    ))}
-                    {items.length === 0 && (
-                        <div className="col-span-full py-20 text-center text-slate-400 font-medium">
-                            No items found in your menu.
-                        </div>
-                    )}
-                </div>
-            </div>
+        <div className="flex-1 flex flex-col bg-white h-full overflow-y-auto p-4 md:p-5">
+            <DataTable
+                containerClassName="flex-1 flex flex-col min-h-0"
+                title="Dish Image Manager"
+                subtitle="Easily manage and upload photos for all menu dishes"
+                data={items}
+                isLoading={isLoadingCats || isLoadingItems}
+                renderGrid={(paginatedItems) => (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                        {paginatedItems.map((item) => (
+                            <ImageUploadCard
+                                key={item._id}
+                                item={item}
+                                categoryPath={getCategoryPath(item)}
+                                updateItem={updateItem}
+                                restaurantId={restaurantId}
+                                onCardClick={() => setSelectedItemForSidebar(item)}
+                            />
+                        ))}
+                    </div>
+                )}
 
-            <ImageSidebar 
+                emptyState={{
+                    icon: <ImageIcon size={28} className="text-gray-400 dark:text-zinc-600" />,
+                    title: "No Dishes Found",
+                    description: "No menu items match your search or filter criteria."
+                }}
+            />
+
+            <ImageSidebar
                 item={selectedItemForSidebar}
                 isOpen={!!selectedItemForSidebar}
                 onClose={() => setSelectedItemForSidebar(null)}

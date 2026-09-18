@@ -1,8 +1,12 @@
 import { useState, useEffect } from "react";
 import CategoryCard from "../category-card";
 import Loader from "@/components/global/loader";
+import { Button } from "@/components/ui/button";
+import { FolderPlus, Plus } from "lucide-react";
 import { useCategory } from "@/store/hooks/useCategory";
+import EmptyState from "@/components/global/empty-state";
 import { useRestaurant } from "@/store/hooks/useRestaurant";
+import { CategoryFormPopover } from "../fragments/category-form-popover";
 
 const CategoryView = ({ activeCategory, setActiveCategory, activeSubCategory, setActiveSubCategory }) => {
     const { restaurantId } = useRestaurant();
@@ -34,6 +38,27 @@ const CategoryView = ({ activeCategory, setActiveCategory, activeSubCategory, se
         );
     }
 
+    if (!categories || categories.length === 0) {
+        return (
+            <div className="p-2">
+                <EmptyState
+                    icon={FolderPlus}
+                    title="No Categories"
+                    description="Add categories to structure your menu items."
+                    size="sm"
+                    action={
+                        <CategoryFormPopover onSubmit={addCategory}>
+                            <Button size="sm" className="h-8 text-xs font-medium rounded-md gap-1.5 w-full">
+                                <Plus className="size-3.5" />
+                                Create Category
+                            </Button>
+                        </CategoryFormPopover>
+                    }
+                />
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-2">
             {categories?.map((category, index) => (
@@ -57,7 +82,7 @@ const CategoryView = ({ activeCategory, setActiveCategory, activeSubCategory, se
                 />
             ))}
         </div>
-    )
-}
+    );
+};
 
 export default CategoryView;

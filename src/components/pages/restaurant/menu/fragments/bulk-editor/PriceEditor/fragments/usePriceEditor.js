@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQueryClient } from "@tanstack/react-query";
-import useNotification from "@/store/hooks/useNotification";
 import { MenuService } from "@/services/frontend/menu";
+import useNotification from "@/store/hooks/useNotification";
 
 export function usePriceEditor(restaurantId) {
     const [editedItems, setEditedItems] = useState({});
@@ -150,13 +150,22 @@ export function usePriceEditor(restaurantId) {
         if (isNaN(val) || val <= 0) return;
 
         const roundPrice = (price, option) => {
-            if (option === "round_to_9") {
-                return Math.max(0, Math.round(price / 10) * 10 - 1);
+            const p = Math.max(0, price);
+            if (option === "round_to_integer") {
+                return Math.round(p);
             }
-            if (option === "round_to_10") {
-                return Math.max(0, Math.round(price / 10) * 10);
+            if (option === "nearest_9") {
+                const lower = Math.floor(p / 10) * 10 - 1;
+                const upper = Math.floor(p / 10) * 10 + 9; 
+                return Math.abs(p - lower) <= Math.abs(upper - p) ? Math.max(0, lower) : upper;
             }
-            return Math.max(0, Number(price.toFixed(2))); 
+            if (option === "next_9") {
+                const remainder = Math.round(p) % 10;
+                if (remainder === 9) return Math.round(p);
+                const distToNext = (9 - remainder + 10) % 10 || 10;
+                return Math.round(p) + distToNext;
+            }
+            return Math.max(0, Number(p.toFixed(2)));
         };
 
         const calculateNewPrice = (oldPrice) => {
@@ -173,9 +182,10 @@ export function usePriceEditor(restaurantId) {
             const nextEdited = { ...prev };
 
             items.forEach(item => {
+                const itemId = String(item.id || item._id);
                 const isSelected = applyTo === "entire_menu" || 
-                    selectedItems[item.id] || 
-                    selectedCats[item.category];
+                    (Array.isArray(selectedItems) ? selectedItems.map(String).includes(itemId) : selectedItems?.[itemId]) || 
+                    (selectedCats && (selectedCats[item.category] || selectedCats[item.category?._id]));
 
                 if (!isSelected) return;
 

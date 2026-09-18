@@ -75,7 +75,6 @@ export default function DataTable({
   onRowDoubleClick,
   rowProps,
   rowKey = "_id",
-  className,
   containerClassName,
   tableClassName,
   headerClassName,
@@ -254,7 +253,7 @@ export default function DataTable({
               </div>
             )
           ) : paginatedData.length === 0 ? (
-            <div className="p-6">
+            <div className="w-full flex-1 flex flex-col">
               {React.isValidElement(emptyState) ? emptyState : <TableEmpty {...emptyState} />}
             </div>
           ) : (
@@ -264,7 +263,6 @@ export default function DataTable({
           )
         ) : (
           <>
-            {/* Desktop Table View */}
             <div className={cn(enableMobileCards && "hidden md:block")}>
               <TableScrollArea maxHeight={maxHeight}>
                 <Table

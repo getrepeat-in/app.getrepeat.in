@@ -5,7 +5,7 @@ export function TableContainer({ children, className, ...props }) {
   return (
     <div
       className={cn(
-        "relative w-full min-w-0 overflow-hidden rounded-md border border-gray-200 dark:border-zinc-800/90 bg-white dark:bg-zinc-950 shadow-xs transition-all",
+        "relative w-full min-w-0 overflow-hidden flex flex-col rounded-md border border-gray-200 dark:border-zinc-800/90 bg-white dark:bg-zinc-950 shadow-xs transition-all",
         className
       )}
       {...props}

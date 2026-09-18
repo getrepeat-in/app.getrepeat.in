@@ -3,14 +3,14 @@ import { useFormik } from "formik";
 import { Button } from "@/components/ui/button";
 import { useItem } from "@/store/hooks/useItem";
 import React, { useState, useMemo } from "react";
-import { getCategoryName } from "../helper/utils";
-import { BulkTable } from "../components/BulkTable";
+import { BulkTable } from "../shared/bulk-table";
+import { Loader2, Undo2, Save } from "lucide-react";
 import { MenuService } from "@/services/frontend/menu";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCategory } from "@/store/hooks/useCategory";
 import { useRestaurant } from "@/store/hooks/useRestaurant";
 import useNotification from "@/store/hooks/useNotification";
-import { Loader2, Undo2, AlertCircle, Save } from "lucide-react";
+import { getDescriptionColumns } from "./fragments/description-columns";
 
 export function DescriptionEditor() {
   const { restaurantId } = useRestaurant();
@@ -86,83 +86,34 @@ export function DescriptionEditor() {
     );
   }
 
-  const columns = [
-    {
-      header: "Item Name",
-      width: "30%",
-      render: (item) => {
-        const catName = item.category ? getCategoryName(item.category, rawCategories) : "";
-        const subCatName = item.subCategory ? getCategoryName(item.subCategory, rawCategories) : "";
-        const breadcrumb = catName && subCatName ? `${catName} > ${subCatName}` : catName || subCatName || "Uncategorized";
-
-        return (
-          <div className="flex flex-col pt-1">
-            <span className="font-semibold font-sans text-[14px] text-gray-800 tracking-tight leading-tight">{item.name}</span>
-            <span className="text-[11px] font-medium font-sans text-gray-400 mt-0.5 uppercase tracking-wide">{breadcrumb}</span>
-          </div>
-        );
-      }
-    },
-    {
-      header: "Description",
-      className: "pl-4",
-      render: (item) => {
-        const isEdited = formik.values[item.id] !== formik.initialValues[item.id];
-        const currentDesc = formik.values[item.id] || "";
-
-        return (
-          <div className="flex items-center gap-3 pt-1 pb-1 w-full max-w-2xl pr-4">
-            <textarea
-              value={currentDesc}
-              onChange={(e) => handleDescriptionChange(item.id, e.target.value)}
-              placeholder="Add a delicious description..."
-              rows={2}
-              className={`w-full text-[14px] font-medium text-slate-700 bg-white border rounded-md p-3 outline-none resize-none shadow-none transition-all duration-200 ${
-                isEdited 
-                  ? "border-amber-400 focus:border-amber-500 focus:ring-1 focus:ring-amber-400" 
-                  : "border-gray-200 hover:border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
-              }`}
-            />
-            {isEdited && (
-              <button
-                onClick={() => handleUndoItem(item.id)}
-                className="text-amber-500 hover:text-amber-600 p-2 rounded-md hover:bg-amber-50 transition-colors shrink-0 cursor-pointer"
-                title="Revert changes"
-              >
-                <Undo2 className="w-4 h-4 stroke-[2.5]" />
-              </button>
-            )}
-          </div>
-        );
-      }
-    }
-  ];
-
-  if (!items || items.length === 0) {
-    return (
-      <div className="flex-1 flex items-center justify-center bg-white text-gray-450 font-medium font-sans">
-        No menu items found.
-      </div>
-    );
-  }
+  const columns = useMemo(() => getDescriptionColumns({
+    rawCategories,
+    formik,
+    handleDescriptionChange,
+    handleUndoItem
+  }), [rawCategories, formik.values]);
 
   return (
-    <div className="flex-1 overflow-y-auto bg-white flex flex-col relative h-full font-sans">
+    <div className="flex-1 overflow-y-auto bg-white m-2 flex flex-col relative h-full font-sans">
       
-      <div className="sticky top-0 z-10 bg-white flex flex-col">
-        <div className="flex items-center justify-end px-8 py-4 border-b border-gray-200 bg-white">
+      <div className="sticky top-0 z-10 bg-white flex flex-col border-b border-gray-200">
+        <div className="flex items-center justify-between px-5 py-4 bg-white">
+          <div>
+            <h2 className="text-[16px] font-bold text-slate-800 tracking-tight">Dish Description Editor</h2>
+            <p className="text-[13px] text-slate-500 mt-0.5">Add or modify delicious descriptions for your menu items</p>
+          </div>
           <Button 
             onClick={formik.handleSubmit} 
             disabled={isSaving || unsavedCount === 0}
-            className="h-10 px-6 rounded-md bg-primary hover:bg-primary/90 text-white font-semibold font-sans shadow-none flex items-center gap-2 transition-all"
+            className="h-8 px-4 rounded-md bg-primary hover:bg-primary/90 text-white text-xs font-semibold font-sans shadow-none flex items-center gap-1.5 transition-all"
           >
-            {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            Save Changes
+            {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+            Save Changes {unsavedCount > 0 && `(${unsavedCount})`}
           </Button>
         </div>
       </div>
       
-      <div className="flex-1 p-6">
+      <div className="flex-1 flex flex-col min-h-0">
         <BulkTable 
           columns={columns} 
           data={filteredItems} 
