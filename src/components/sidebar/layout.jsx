@@ -6,6 +6,8 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/s
 
 const HIDE_SIDEBAR_ROUTES = [
   "/restaurant/onboarding",
+  "/sign-in",
+  "/sign-up",
 ];
 
 export function SidebarLayout({ children }) {
