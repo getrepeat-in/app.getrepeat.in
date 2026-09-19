@@ -12,10 +12,10 @@ export class AuthService {
     static async register(slug, { name, phone, password }) {
         await dbConnect();
         
-        const { restaurant, error } = await getRestaurantFromSlug(slug);
+        const restaurant = await getRestaurantFromSlug(slug);
         
-        if (error || !restaurant) {
-            throw new Error(error || "Restaurant not found!");
+        if (!restaurant) {
+            throw new Error("Restaurant not found!");
         }
 
         const existingUser = await User.findOne({ phone, restaurant: restaurant._id });
@@ -50,10 +50,10 @@ export class AuthService {
     static async login(slug, { phone, password }) {
         await dbConnect();
 
-        const { restaurant, error } = await getRestaurantFromSlug(slug);
+        const restaurant = await getRestaurantFromSlug(slug);
         
-        if (error || !restaurant) {
-            throw new Error(error || "Restaurant not found!");
+        if (!restaurant) {
+            throw new Error("Restaurant not found!");
         }
 
         const user = await User.findOne({ phone, restaurant: restaurant._id }).select("+passwordHash");
@@ -85,9 +85,9 @@ export class AuthService {
         }
         await dbConnect();
 
-        const { restaurant, error } = await getRestaurantFromSlug(slug);
-        if (error || !restaurant) {
-            throw new Error(error || "Restaurant not found!");
+        const restaurant = await getRestaurantFromSlug(slug);
+        if (!restaurant) {
+            throw new Error("Restaurant not found!");
         }
 
         let decoded;
@@ -124,9 +124,9 @@ export class AuthService {
         }
         await dbConnect();
 
-        const { restaurant, error } = await getRestaurantFromSlug(slug);
-        if (error || !restaurant) {
-            throw new Error(error || "Restaurant not found!");
+        const restaurant = await getRestaurantFromSlug(slug);
+        if (!restaurant) {
+            throw new Error("Restaurant not found!");
         }
 
         let decoded;

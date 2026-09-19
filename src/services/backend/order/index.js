@@ -1,28 +1,20 @@
 import crypto from "crypto";
 import mongoose from "mongoose";
 import dbConnect from "@/lib/db";
-import Order, { OrderStatus } from "@/models/Order";
-import Table from "@/models/Table";
-import MenuItem from "@/models/Item";
-import Restaurant from "@/models/Restaurant";
 import { User } from "@/models/User";
-import { Staff } from "@/models/Staff";
+import Restaurant from "@/models/Restaurant";
 import { ImageService } from "@/services/backend/images";
 import { invalidateOrderCache } from "@/lib/api/helpers/cacheKeys";
+import { getOrSetCache } from "@/services/backend/redis/cache.service";
+import { resolveTable, validateAndCalculateItems, resolveCustomer } from "./helpers";
+import Order, { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/models/Order";
 
-/**
- * Generate a unique, human-friendly order number
- * Format: ORD-XXXXXX-XXXX (e.g. ORD-982341-7A2F)
- */
 const generateOrderNumber = () => {
   const timestampPart = Date.now().toString().slice(-6);
   const randomPart = crypto.randomBytes(2).toString("hex").toUpperCase();
   return `ORD-${timestampPart}-${randomPart}`;
 };
 
-/**
- * Format order document for clean API response
- */
 export const formatOrderResponse = (orderDoc) => {
   if (!orderDoc) return null;
   const order = orderDoc.toObject ? orderDoc.toObject() : { ...orderDoc };
@@ -47,9 +39,6 @@ export const formatOrderResponse = (orderDoc) => {
 };
 
 export const OrderService = {
-  /**
-   * Create a new order (Storefront / POS)
-   */
   createOrder: async ({
     restaurantId,
     orderType,
@@ -57,10 +46,8 @@ export const OrderService = {
     customer,
     customerInfo,
     items,
-    subtotal: rawSubtotal,
     tax: rawTax = 0,
     discount: rawDiscount = 0,
-    totalAmount: rawTotalAmount,
     paymentMethod = "cash",
     paymentStatus = "pending",
     specialInstructions = "",
@@ -69,149 +56,33 @@ export const OrderService = {
   }) => {
     await dbConnect();
 
-    // 1. Verify restaurant
     const restaurant = await Restaurant.findById(restaurantId).select("_id name").lean();
     if (!restaurant) {
       throw new Error("Restaurant not found");
     }
 
-    // 2. Validate Order Type
-    const validOrderTypes = ["dine-in", "takeaway", "online"];
+    const validOrderTypes = ["dine-in", "takeaway", "delivery"];
     if (!validOrderTypes.includes(orderType)) {
       throw new Error(`Invalid order type. Must be one of: ${validOrderTypes.join(", ")}`);
     }
 
-    // 3. Validate and resolve Table for dine-in orders
-    let resolvedTableId = null;
-    if (orderType === "dine-in") {
-      if (!table) {
-        throw new Error("Table is required for dine-in orders");
-      }
+    const resolvedTableId = await resolveTable(restaurantId, orderType, table);
+    const { validatedItems, calculatedSubtotal } = await validateAndCalculateItems(restaurantId, items);
 
-      let tableDoc = null;
-      if (mongoose.Types.ObjectId.isValid(table)) {
-        tableDoc = await Table.findOne({ _id: table, restaurant: restaurantId });
-      }
-      if (!tableDoc && typeof table === "string") {
-        tableDoc = await Table.findOne({ qrToken: table, restaurant: restaurantId });
-      }
-      if (!tableDoc && !isNaN(Number(table))) {
-        tableDoc = await Table.findOne({ tableNumber: Number(table), restaurant: restaurantId });
-      }
-
-      if (!tableDoc) {
-        throw new Error("Specified table not found for this restaurant");
-      }
-
-      resolvedTableId = tableDoc._id;
-    }
-
-    // 4. Validate and sanitize items
-    if (!Array.isArray(items) || items.length === 0) {
-      throw new Error("Order must contain at least one item");
-    }
-
-    const itemIds = items.map((i) => i.menuItem || i._id).filter(Boolean);
-    const dbMenuItems = await MenuItem.find({
-      _id: { $in: itemIds },
-      restaurant: restaurantId,
-    })
-      .select("name base_price isAvailable dietaryType variants")
-      .lean();
-
-    const dbMenuItemMap = new Map(dbMenuItems.map((i) => [i._id.toString(), i]));
-
-    let calculatedSubtotal = 0;
-    const validatedItems = [];
-
-    for (const rawItem of items) {
-      const menuItemId = (rawItem.menuItem || rawItem._id || "").toString();
-      const dbItem = dbMenuItemMap.get(menuItemId);
-
-      if (!dbItem) {
-        throw new Error(`Menu item '${rawItem.name || menuItemId}' is invalid or no longer available`);
-      }
-
-      const quantity = Math.max(1, parseInt(rawItem.quantity || 1, 10));
-      let unitPrice = Number(rawItem.unitPrice ?? dbItem.base_price);
-
-      // Validate variant if provided
-      let validatedVariant = undefined;
-      if (rawItem.variant && rawItem.variant.name) {
-        validatedVariant = {
-          name: String(rawItem.variant.name),
-          price: Number(rawItem.variant.price) || 0,
-        };
-        if (validatedVariant.price > 0) {
-          unitPrice = validatedVariant.price;
-        }
-      }
-
-      // Validate addons if provided
-      const validatedAddons = [];
-      let addonsTotal = 0;
-      if (Array.isArray(rawItem.addons)) {
-        for (const addon of rawItem.addons) {
-          if (addon && addon.name) {
-            const addonPrice = Math.max(0, Number(addon.price) || 0);
-            validatedAddons.push({
-              name: String(addon.name),
-              price: addonPrice,
-            });
-            addonsTotal += addonPrice;
-          }
-        }
-      }
-
-      const lineTotalPrice = (unitPrice + addonsTotal) * quantity;
-      calculatedSubtotal += lineTotalPrice;
-
-      validatedItems.push({
-        menuItem: dbItem._id,
-        name: rawItem.name || dbItem.name,
-        quantity,
-        unitPrice,
-        variant: validatedVariant,
-        addons: validatedAddons,
-        specialInstructions: rawItem.specialInstructions || "",
-        totalPrice: lineTotalPrice,
-      });
-    }
-
-    // 5. Calculate taxes, discounts, and total
     const subtotal = calculatedSubtotal;
     const discount = Math.max(0, Number(rawDiscount) || 0);
     const tax = Math.max(0, Number(rawTax) || 0);
     const totalAmount = Math.max(0, subtotal + tax - discount);
 
-    // 6. Determine initial status
-    let status = initialStatus;
-    if (!status) {
-      if (paymentMethod === "online" && paymentStatus !== "completed") {
-        status = OrderStatus.PENDING_PAYMENT;
-      } else {
-        status = OrderStatus.PLACED;
-      }
+    let orderStatus = initialStatus || OrderStatus.PLACED;
+    let resolvedPaymentStatus = paymentStatus === "pending" ? PaymentStatus.PENDING : paymentStatus.toUpperCase();
+    let fulfillmentStatus = FulfillmentStatus.PENDING;
+
+    if (paymentMethod === "online" && resolvedPaymentStatus !== PaymentStatus.PAID) {
+      orderStatus = OrderStatus.PLACED;
     }
 
-    // 7. Resolve Customer
-    let resolvedCustomerId = customer || null;
-    if (!resolvedCustomerId && customerInfo?.phone) {
-      try {
-        let user = await User.findOne({ phone: customerInfo.phone });
-        if (!user) {
-          user = await User.create({
-            phone: customerInfo.phone,
-            name: customerInfo.name || "Guest Customer",
-            email: customerInfo.email || undefined,
-          });
-        }
-        resolvedCustomerId = user._id;
-      } catch (err) {
-        console.warn("Could not auto-create customer record:", err?.message);
-      }
-    }
-
+    const resolvedCustomerId = await resolveCustomer(customer, customerInfo);
     const orderNumber = generateOrderNumber();
 
     const newOrder = await Order.create({
@@ -226,19 +97,20 @@ export const OrderService = {
       discount,
       totalAmount,
       paymentMethod,
-      paymentStatus,
+      paymentStatus: resolvedPaymentStatus,
+      fulfillmentStatus,
       specialInstructions: specialInstructions || "",
-      status,
+      orderStatus,
       statusHistory: [
         {
-          status,
+          statusType: "ORDER",
+          status: orderStatus,
           timestamp: new Date(),
           updatedBy: updatedBy || null,
         },
       ],
     });
 
-    // 8. Invalidate restaurant order cache
     await invalidateOrderCache(restaurantId);
 
     const populatedOrder = await Order.findById(newOrder._id)
@@ -250,7 +122,11 @@ export const OrderService = {
       .populate("table", "tableNumber label zone")
       .populate("customer", "name phone email");
 
-    return formatOrderResponse(populatedOrder);
+    const formattedOrder = formatOrderResponse(populatedOrder);
+    
+
+
+    return formattedOrder;
   },
 
   /**
@@ -306,9 +182,6 @@ export const OrderService = {
     return formatOrderResponse(order);
   },
 
-  /**
-   * List orders with filtering and pagination
-   */
   listOrders: async ({
     restaurantId,
     customerId,
@@ -323,101 +196,105 @@ export const OrderService = {
   }) => {
     await dbConnect();
 
-    const query = {};
-    if (restaurantId) query.restaurant = restaurantId;
-    if (customerId) query.customer = customerId;
+    const cacheKey = `restaurant:${restaurantId}:orders:page:${page}:limit:${limit}:status:${status || "all"}:type:${orderType || "all"}:search:${search || "none"}:start:${startDate || "all"}:end:${endDate || "all"}:summary:${summary}:customer:${customerId || "all"}`;
 
-    if (status) {
-      if (status.includes(",")) {
-        query.status = { $in: status.split(",").map((s) => s.trim()) };
-      } else {
-        query.status = status;
-      }
-    }
+    const { data: cachedOrFetchedData, isCached } = await getOrSetCache(
+      cacheKey,
+      async () => {
+        const query = {};
+        if (restaurantId) query.restaurant = restaurantId;
+        if (customerId) query.customer = customerId;
 
-    if (orderType) query.orderType = orderType;
+        if (status) {
+          if (status.includes(",")) {
+            query.orderStatus = { $in: status.split(",").map((s) => s.trim()) };
+          } else {
+            query.orderStatus = status;
+          }
+        }
 
-    if (startDate || endDate) {
-      query.createdAt = {};
-      if (startDate) query.createdAt.$gte = new Date(startDate);
-      if (endDate) query.createdAt.$lte = new Date(endDate);
-    }
+        if (orderType) query.orderType = orderType;
 
-    // Summary count mode for dashboard tabs
-    if (summary && restaurantId) {
-      const counts = await Order.aggregate([
-        {
-          $match: {
-            restaurant: mongoose.Types.ObjectId.isValid(restaurantId)
-              ? new mongoose.Types.ObjectId(restaurantId)
-              : restaurantId,
-            status: {
-              $in: [
-                "PENDING_PAYMENT",
-                "PLACED",
-                "ACCEPTED",
-                "PREPARING",
-                "READY_FOR_PICKUP",
-                "OUT_FOR_DELIVERY",
-                "PICKED_UP",
-              ],
+        if (startDate || endDate) {
+          query.createdAt = {};
+          if (startDate) query.createdAt.$gte = new Date(startDate);
+          if (endDate) query.createdAt.$lte = new Date(endDate);
+        }
+
+        if (summary && restaurantId) {
+          const counts = await Order.aggregate([
+            {
+              $match: {
+                restaurant: mongoose.Types.ObjectId.isValid(restaurantId)
+                  ? new mongoose.Types.ObjectId(restaurantId)
+                  : restaurantId,
+                orderStatus: {
+                  $in: [
+                    "PLACED",
+                    "ACCEPTED",
+                    "PREPARING",
+                    "READY",
+                    "COMPLETED",
+                  ],
+                },
+              },
             },
-          },
-        },
-        { $group: { _id: "$status", count: { $sum: 1 } } },
-      ]);
+            { $group: { _id: "$orderStatus", count: { $sum: 1 } } },
+          ]);
 
-      return counts.reduce((acc, curr) => {
-        acc[curr._id] = curr.count;
-        return acc;
-      }, {});
-    }
+          return counts.reduce((acc, curr) => {
+            acc[curr._id] = curr.count;
+            return acc;
+          }, {});
+        }
 
-    if (search) {
-      const matchingCustomers = await User.find({
-        $or: [
-          { name: { $regex: search, $options: "i" } },
-          { phone: { $regex: search, $options: "i" } },
-        ],
-      }).select("_id");
+        if (search) {
+          const matchingCustomers = await User.find({
+            $or: [
+              { name: { $regex: search, $options: "i" } },
+              { phone: { $regex: search, $options: "i" } },
+            ],
+          }).select("_id");
 
-      const customerIds = matchingCustomers.map((c) => c._id);
+          const customerIds = matchingCustomers.map((c) => c._id);
 
-      query.$or = [
-        { orderNumber: { $regex: search, $options: "i" } },
-        { customer: { $in: customerIds } },
-      ];
-    }
+          query.$or = [
+            { orderNumber: { $regex: search, $options: "i" } },
+            { customer: { $in: customerIds } },
+          ];
+        }
 
-    const skip = (Math.max(1, page) - 1) * limit;
+        const skip = (Math.max(1, page) - 1) * limit;
 
-    const [orders, total] = await Promise.all([
-      Order.find(query)
-        .populate({
-          path: "items.menuItem",
-          select: "name base_price dietaryType image",
-          populate: { path: "image", select: "original variants key" },
-        })
-        .populate("table", "tableNumber label zone")
-        .populate("customer", "name phone email profileImageUrl")
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit),
-      Order.countDocuments(query),
-    ]);
+        const [orders, total] = await Promise.all([
+          Order.find(query)
+            .populate({
+              path: "items.menuItem",
+              select: "name base_price dietaryType image",
+              populate: { path: "image", select: "original variants key" },
+            })
+            .populate("table", "tableNumber label zone")
+            .populate("customer", "name phone email profileImageUrl")
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit),
+          Order.countDocuments(query),
+        ]);
 
-    return {
-      orders: orders.map(formatOrderResponse),
-      total,
-      page: Number(page),
-      limit: Number(limit),
-      totalPages: Math.ceil(total / limit),
-    };
+        return {
+          orders: orders.map(formatOrderResponse),
+          total,
+          page: Number(page),
+          limit: Number(limit),
+          totalPages: Math.ceil(total / limit),
+        };
+      },
+      120 
+    );
+
+    return { ...cachedOrFetchedData, isCached };
   },
 
-  /**
-   * Get orders for a specific customer (by customer ID or phone)
-   */
   getCustomerOrders: async ({
     restaurantId = null,
     customerId = null,
@@ -460,9 +337,9 @@ export const OrderService = {
 
     if (status) {
       if (status.includes(",")) {
-        query.status = { $in: status.split(",").map((s) => s.trim()) };
+        query.orderStatus = { $in: status.split(",").map((s) => s.trim()) };
       } else {
-        query.status = status;
+        query.orderStatus = status;
       }
     }
 
@@ -490,16 +367,9 @@ export const OrderService = {
       totalPages: Math.ceil(total / limit),
     };
   },
-
-  /**
-   * Update order status
-   */
-  updateOrderStatus: async (orderId, { status, updatedBy = null, restaurantId = null }) => {
+  
+  advanceOrderState: async (orderId, { updatedBy = null, restaurantId = null }) => {
     await dbConnect();
-
-    if (!Object.values(OrderStatus).includes(status)) {
-      throw new Error(`Invalid status: ${status}`);
-    }
 
     const query = { _id: orderId };
     if (restaurantId) query.restaurant = restaurantId;
@@ -509,22 +379,58 @@ export const OrderService = {
       throw new Error("Order not found");
     }
 
-    order.status = status;
-    order.statusHistory.push({
-      status,
-      timestamp: new Date(),
-      updatedBy,
-    });
+    const { orderStatus, orderType, fulfillmentStatus } = order;
+
+    const transitionMap = {
+      [OrderStatus.PLACED]: { order: OrderStatus.ACCEPTED },
+      [OrderStatus.ACCEPTED]: { order: OrderStatus.PREPARING },
+      [OrderStatus.PREPARING]: { order: OrderStatus.READY, fulfillment: FulfillmentStatus.READY },
+      [OrderStatus.READY]: {
+        "dine-in": { order: OrderStatus.COMPLETED, fulfillment: FulfillmentStatus.FULFILLED },
+        "takeaway": { order: OrderStatus.COMPLETED, fulfillment: FulfillmentStatus.FULFILLED },
+        "delivery": {
+          [FulfillmentStatus.READY]: { fulfillment: FulfillmentStatus.IN_TRANSIT },
+          [FulfillmentStatus.IN_TRANSIT]: { order: OrderStatus.COMPLETED, fulfillment: FulfillmentStatus.FULFILLED }
+        }[fulfillmentStatus]
+      }[orderType]
+    };
+
+    const nextState = transitionMap[orderStatus] || {};
+    const nextOrderStatus = nextState.order || orderStatus;
+    const nextFulfillmentStatus = nextState.fulfillment || fulfillmentStatus;
+
+    if (nextOrderStatus === orderStatus && nextFulfillmentStatus === fulfillmentStatus) {
+      throw new Error("Order cannot be advanced further or is in an invalid state.");
+    }
+
+    if (nextOrderStatus !== orderStatus) {
+      order.orderStatus = nextOrderStatus;
+      order.statusHistory.push({
+        statusType: "ORDER",
+        status: nextOrderStatus,
+        timestamp: new Date(),
+        updatedBy,
+      });
+    }
+
+    if (nextFulfillmentStatus !== fulfillmentStatus) {
+      order.fulfillmentStatus = nextFulfillmentStatus;
+      order.statusHistory.push({
+        statusType: "FULFILLMENT",
+        status: nextFulfillmentStatus,
+        timestamp: new Date(),
+        updatedBy,
+      });
+    }
 
     await order.save();
     await invalidateOrderCache(order.restaurant);
 
-    return OrderService.getOrderById(order._id);
+    const updatedOrder = await OrderService.getOrderById(order._id);
+
+    return updatedOrder;
   },
 
-  /**
-   * Update order payment status / method
-   */
   updateOrderPayment: async (
     orderId,
     { paymentStatus, paymentMethod, restaurantId = null, updatedBy = null }
@@ -541,10 +447,10 @@ export const OrderService = {
 
     if (paymentStatus) {
       order.paymentStatus = paymentStatus;
-      // Auto-advance status if paid online from PENDING_PAYMENT to PLACED
-      if (paymentStatus === "completed" && order.status === OrderStatus.PENDING_PAYMENT) {
-        order.status = OrderStatus.PLACED;
+      if (paymentStatus === "completed" && order.orderStatus === OrderStatus.PENDING_PAYMENT) {
+        order.orderStatus = OrderStatus.PLACED;
         order.statusHistory.push({
+          statusType: "ORDER",
           status: OrderStatus.PLACED,
           timestamp: new Date(),
           updatedBy,
@@ -559,13 +465,12 @@ export const OrderService = {
     await order.save();
     await invalidateOrderCache(order.restaurant);
 
-    return OrderService.getOrderById(order._id);
+    const updatedOrder = await OrderService.getOrderById(order._id);
+
+    return updatedOrder;
   },
 
-  /**
-   * Cancel an order
-   */
-  cancelOrder: async (orderId, { reason = "", cancelledBy = null, restaurantId = null }) => {
+  cancelOrder: async (orderId, { cancelledBy = null, restaurantId = null }) => {
     await dbConnect();
 
     const query = { _id: orderId };
@@ -577,15 +482,16 @@ export const OrderService = {
     }
 
     if (
-      [OrderStatus.DELIVERED, OrderStatus.PICKED_UP, OrderStatus.CANCELLED].includes(
-        order.status
+      [OrderStatus.COMPLETED, OrderStatus.CANCELLED].includes(
+        order.orderStatus
       )
     ) {
-      throw new Error(`Cannot cancel order in status ${order.status}`);
+      throw new Error(`Cannot cancel order in status ${order.orderStatus}`);
     }
 
-    order.status = OrderStatus.CANCELLED;
+    order.orderStatus = OrderStatus.CANCELLED;
     order.statusHistory.push({
+      statusType: "ORDER",
       status: OrderStatus.CANCELLED,
       timestamp: new Date(),
       updatedBy: cancelledBy,
@@ -597,9 +503,6 @@ export const OrderService = {
     return OrderService.getOrderById(order._id);
   },
 
-  /**
-   * Delete an order
-   */
   deleteOrder: async (orderId, { restaurantId = null }) => {
     await dbConnect();
 

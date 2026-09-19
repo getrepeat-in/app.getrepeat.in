@@ -86,7 +86,7 @@ export function ImageUploadCard({ item, categoryPath, updateItem, restaurantId, 
 
     return (
         <div 
-            className="group relative flex flex-col bg-card border border-border/80 rounded-xl overflow-hidden shadow-2xs hover:shadow-md hover:border-primary/40 transition-all duration-200"
+            className="group relative flex flex-col bg-card border border-border/80 rounded-md overflow-hidden shadow-2xs hover:shadow-md hover:border-primary/40 transition-all duration-200"
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
@@ -99,7 +99,6 @@ export function ImageUploadCard({ item, categoryPath, updateItem, restaurantId, 
                 onChange={handleFileInput} 
             />
 
-            {/* Media Area */}
             <div className="relative w-full aspect-[4/3] bg-muted/40 flex items-center justify-center overflow-hidden">
                 {hasImage ? (
                     <ItemImage 
@@ -114,9 +113,7 @@ export function ImageUploadCard({ item, categoryPath, updateItem, restaurantId, 
                     </div>
                 )}
 
-                {/* Badges Top Bar */}
                 <div className="absolute top-2.5 left-2.5 pointer-events-none z-10">
-                    {/* Dietary indicator badge */}
                     <div 
                         className={`size-4 rounded-[3px] border bg-background/90 backdrop-blur-md shadow-2xs flex items-center justify-center ${
                             dietary === "veg" ? "border-emerald-600" :
@@ -133,7 +130,6 @@ export function ImageUploadCard({ item, categoryPath, updateItem, restaurantId, 
                     </div>
                 </div>
 
-                {/* Drag Overlay */}
                 <div className={cn(
                     "absolute inset-0 bg-primary/90 text-primary-foreground backdrop-blur-xs flex flex-col items-center justify-center transition-all duration-150 z-20",
                     isDragging ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
@@ -142,7 +138,6 @@ export function ImageUploadCard({ item, categoryPath, updateItem, restaurantId, 
                     <span className="font-semibold text-xs">Drop to upload</span>
                 </div>
 
-                {/* Hover Quick Action Overlay */}
                 <div 
                     onClick={onCardClick}
                     className="absolute inset-0 bg-slate-950/50 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center justify-center gap-2 z-10 p-2 cursor-pointer"
@@ -183,12 +178,9 @@ export function ImageUploadCard({ item, categoryPath, updateItem, restaurantId, 
                 <h3 className="text-[13px] font-semibold text-foreground truncate group-hover:text-primary transition-colors leading-tight" title={item.name}>
                     {item.name}
                 </h3>
-                <div className="flex items-center justify-between gap-2 mt-1">
+                <div className="flex items-center gap-2 mt-1">
                     <span className="text-[11px] text-muted-foreground truncate" title={categoryPath}>
                         {categoryPath || "Menu Item"}
-                    </span>
-                    <span className="font-bold text-foreground shrink-0 text-xs">
-                        ₹{item.base_price || item.price || 0}
                     </span>
                 </div>
             </div>

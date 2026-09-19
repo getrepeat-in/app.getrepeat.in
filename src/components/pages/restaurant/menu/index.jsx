@@ -18,6 +18,7 @@ const Menu = () => {
         <div className="flex flex-col bg-white dark:bg-zinc-900 m-2 sm:m-4 p-3 sm:p-4 space-y-3 rounded-md border border-border/40 shadow-xs min-w-0 h-[calc(100vh-60px)]">
             <MenuHeader 
                 activeView={activeView}
+                activeBulkMode={activeBulkMode}
                 onBackToMenu={() => setActiveView("MENU")}
                 onOpenBulkMode={(modeId) => {
                     setActiveView("BULK");
@@ -25,18 +26,16 @@ const Menu = () => {
                 }}
             />
             <div className="flex flex-1 bg-white overflow-hidden border border-border/60 rounded-md min-h-0 bg-background">
-                {activeView === "MENU" && (
-                    <CategorySidebar 
-                        activeCategory={activeCategory} 
-                        setActiveCategory={setActiveCategory}
-                        activeSubCategory={activeSubCategory}
-                        setActiveSubCategory={setActiveSubCategory}
-                        activeView={activeView}
-                        setActiveView={setActiveView}
-                        activeBulkMode={activeBulkMode}
-                        setActiveBulkMode={setActiveBulkMode}
-                    />
-                )}
+                <CategorySidebar 
+                    activeCategory={activeCategory} 
+                    setActiveCategory={setActiveCategory}
+                    activeSubCategory={activeSubCategory}
+                    setActiveSubCategory={setActiveSubCategory}
+                    activeView={activeView}
+                    setActiveView={setActiveView}
+                    activeBulkMode={activeBulkMode}
+                    setActiveBulkMode={setActiveBulkMode}
+                />
                 
                 <div className="bg-background flex-1 flex flex-col p-3 min-w-0 min-h-0 overflow-hidden">
                     <div className="bg-white flex-1 flex flex-col min-h-0 overflow-hidden rounded-md">

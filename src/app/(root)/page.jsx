@@ -1,7 +1,9 @@
+import LiveOrders from "@/components/pages/restaurant/live-orders";
+
 const Page = () => {
   return (
-    <div>
-      <h1>Page</h1>
+    <div className="min-h-screen bg-gray-50">
+      <LiveOrders />
     </div>
   )
 }

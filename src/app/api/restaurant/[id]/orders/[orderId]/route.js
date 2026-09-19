@@ -1,12 +1,8 @@
 import dbConnect from "@/lib/db";
 import { Staff } from "@/models/Staff";
-import { getRestaurant } from "@/lib/api/hooks/getRestaurant";
 import { OrderService } from "@/services/backend/order";
-import { 
-  withErrorHandler, 
-  successResponse, 
-  BadRequestError 
-} from "@/lib/api/response-handler";
+import { getRestaurant } from "@/lib/api/hooks/getRestaurant";
+import { withErrorHandler, successResponse, BadRequestError } from "@/lib/api/response-handler";
 
 export const GET = withErrorHandler(async (req, { params }) => {
   const { id, orderId } = await params;
@@ -16,7 +12,6 @@ export const GET = withErrorHandler(async (req, { params }) => {
 
   await getRestaurant({ restaurantId: id });
   await dbConnect();
-
   const order = await OrderService.getOrderById(orderId, { restaurantId: id });
   return successResponse(order, "Order fetched successfully");
 });
@@ -36,9 +31,13 @@ export const PATCH = withErrorHandler(async (req, { params }) => {
   const data = await req.json();
   let updatedOrder;
 
-  if (data.status) {
-    updatedOrder = await OrderService.updateOrderStatus(orderId, {
-      status: data.status,
+  if (data.action === "advance") {
+    updatedOrder = await OrderService.advanceOrderState(orderId, {
+      updatedBy,
+      restaurantId: id,
+    });
+  } else if (data.orderStatus) {
+    updatedOrder = await OrderService.advanceOrderState(orderId, { 
       updatedBy,
       restaurantId: id,
     });
@@ -56,7 +55,6 @@ export const PATCH = withErrorHandler(async (req, { params }) => {
   if (!updatedOrder) {
     throw new BadRequestError("No valid update fields provided");
   }
-
   return successResponse(updatedOrder, "Order updated successfully");
 });
 
@@ -68,7 +66,6 @@ export const DELETE = withErrorHandler(async (req, { params }) => {
 
   await getRestaurant({ restaurantId: id });
   await dbConnect();
-
   await OrderService.deleteOrder(orderId, { restaurantId: id });
   return successResponse(null, "Order deleted successfully");
 });

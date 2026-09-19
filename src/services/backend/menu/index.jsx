@@ -5,8 +5,12 @@ import mongoose from "mongoose";
 import MenuItem from "@/models/Item";
 import Category from "@/models/Category";
 import Restaurant from "@/models/Restaurant";
-import { applyPromotionsToItems } from "./promotion.helper";
+import { ItemService } from "./item.service";
+import { BulkService } from "./bulk.service";
+import { CategoryService } from "./category.service";
 import { ImageService } from "@/services/backend/images";
+import { AddonGroupService } from "./addon-group.service";
+import { applyPromotionsToItems } from "./promotion.helper";
 
 const formatItem = (item) => {
   const formatted = {
@@ -308,4 +312,28 @@ export const MenuService = {
     }
     return MenuService.getMenu(restaurant._id, options);
   },
+
+  bulkUpdatePrices: async (restaurantId, items) => {
+    const { PriceService } = await import("./price.service");
+    return PriceService.bulkUpdatePrices(restaurantId, items);
+  },
+
+  getItems: (restaurantId, query) => ItemService.getItems(restaurantId, query),
+  createItem: (restaurantId, data) => ItemService.createItem(restaurantId, data),
+  updateItem: (restaurantId, itemId, data) => ItemService.updateItem(restaurantId, itemId, data),
+  deleteItem: (restaurantId, itemId) => ItemService.deleteItem(restaurantId, itemId),
+
+  getAddonGroups: (restaurantId) => AddonGroupService.getAddonGroups(restaurantId),
+  createAddonGroup: (restaurantId, data) => AddonGroupService.createAddonGroup(restaurantId, data),
+  updateAddonGroup: (restaurantId, groupId, data) => AddonGroupService.updateAddonGroup(restaurantId, groupId, data),
+  deleteAddonGroup: (restaurantId, groupId) => AddonGroupService.deleteAddonGroup(restaurantId, groupId),
+
+  bulkUpdateDescriptions: (restaurantId, items) => BulkService.bulkUpdateDescriptions(restaurantId, items),
+  bulkUpdateAddons: (restaurantId, itemIds, addonGroupIds, action) => BulkService.bulkUpdateAddons(restaurantId, itemIds, addonGroupIds, action),
+  bulkUpdateStructure: (restaurantId, action, payload) => BulkService.bulkUpdateStructure(restaurantId, action, payload),
+
+  getCategories: (restaurantId) => CategoryService.getCategories(restaurantId),
+  createCategory: (restaurantId, data) => CategoryService.createCategory(restaurantId, data),
+  updateCategory: (restaurantId, categoryId, data) => CategoryService.updateCategory(restaurantId, categoryId, data),
+  deleteCategory: (restaurantId, categoryId) => CategoryService.deleteCategory(restaurantId, categoryId)
 };

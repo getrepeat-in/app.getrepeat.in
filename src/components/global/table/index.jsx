@@ -232,7 +232,7 @@ export default function DataTable({
             renderGridLoading ? (
               renderGridLoading()
             ) : (
-              <div className={cn("p-4 sm:p-5", gridClassName)}>
+              <div className={cn("p-4 sm:p-5 flex-1 overflow-y-auto min-h-0", gridClassName)}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {[1, 2, 3, 4, 5, 6, 7, 8].map((item) => (
                     <div
@@ -257,7 +257,7 @@ export default function DataTable({
               {React.isValidElement(emptyState) ? emptyState : <TableEmpty {...emptyState} />}
             </div>
           ) : (
-            <div className={cn("p-4 sm:p-5", gridClassName)}>
+            <div className={cn("p-4 sm:p-5 flex-1 overflow-y-auto min-h-0", gridClassName)}>
               {renderGrid(paginatedData)}
             </div>
           )

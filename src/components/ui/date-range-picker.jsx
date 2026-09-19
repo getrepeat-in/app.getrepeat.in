@@ -57,7 +57,7 @@ export function DatePickerWithRange({ className, date, setDate }) {
   return (
     <div className={cn("inline-flex shrink-0", className)}>
       <Popover open={isOpen} onOpenChange={handleOpenChange}>
-        <PopoverTrigger asChild>
+        <PopoverTrigger render={
           <Button
             id="date"
             variant={"outline"}
@@ -81,7 +81,7 @@ export function DatePickerWithRange({ className, date, setDate }) {
               <span className="text-xs font-medium text-gray-700 dark:text-gray-200">All time</span>
             )}
           </Button>
-        </PopoverTrigger>
+        } />
         <PopoverContent className="w-auto max-w-[95vw] p-0 flex flex-col sm:flex-row shadow-xl border border-gray-100 dark:border-zinc-800 rounded-md overflow-hidden" align="end" sideOffset={4}>
           <div className="w-full sm:w-32 md:w-36 border-b sm:border-b-0 sm:border-r border-gray-100 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-900/50 flex flex-row sm:flex-col p-1.5 sm:p-2 gap-1 overflow-x-auto sm:overflow-y-auto no-scrollbar shrink-0 max-h-[360px]">
             {PRESETS.map((preset) => {

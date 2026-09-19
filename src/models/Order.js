@@ -1,20 +1,33 @@
 import mongoose, { Schema, Types, models, model } from "mongoose";
 
 const ORDER_STATUS = {
-  PENDING_PAYMENT: "PENDING_PAYMENT",
   PLACED: "PLACED",
   ACCEPTED: "ACCEPTED",
   PREPARING: "PREPARING",
-  READY_FOR_PICKUP: "READY_FOR_PICKUP",
-  PICKED_UP: "PICKED_UP",
-  OUT_FOR_DELIVERY: "OUT_FOR_DELIVERY",
-  DELIVERED: "DELIVERED",
+  READY: "READY",
+  COMPLETED: "COMPLETED",
   CANCELLED: "CANCELLED",
   REJECTED: "REJECTED"
 };
 
-const ORDER_TYPES = ["dine-in", "takeaway", "online"];
-const PAYMENT_STATUSES = ["pending", "completed", "failed", "refunded"];
+const PAYMENT_STATUS = {
+  PENDING: "PENDING",
+  AUTHORIZED: "AUTHORIZED",
+  PAID: "PAID",
+  FAILED: "FAILED",
+  REFUNDED: "REFUNDED",
+  PARTIALLY_REFUNDED: "PARTIALLY_REFUNDED"
+};
+
+const FULFILLMENT_STATUS = {
+  PENDING: "PENDING",
+  READY: "READY",
+  PICKED_UP: "PICKED_UP",
+  IN_TRANSIT: "IN_TRANSIT",
+  FULFILLED: "FULFILLED"
+};
+
+const ORDER_TYPES = ["dine-in", "takeaway", "delivery"];
 const PAYMENT_METHODS = ["cash", "card", "upi", "online"];
 
 const OrderItemSchema = new Schema({
@@ -73,15 +86,30 @@ const OrderSchema = new Schema({
   
   items: [OrderItemSchema],
   
-  status: {
+  orderStatus: {
     type: String,
     enum: Object.values(ORDER_STATUS),
-    default: ORDER_STATUS.PENDING_PAYMENT,
+    default: ORDER_STATUS.PLACED,
+    index: true,
+  },
+  
+  paymentStatus: {
+    type: String,
+    enum: Object.values(PAYMENT_STATUS),
+    default: PAYMENT_STATUS.PENDING,
+    index: true,
+  },
+
+  fulfillmentStatus: {
+    type: String,
+    enum: Object.values(FULFILLMENT_STATUS),
+    default: FULFILLMENT_STATUS.PENDING,
     index: true,
   },
   
   statusHistory: [{
-    status: { type: String, enum: Object.values(ORDER_STATUS), required: true },
+    statusType: { type: String, enum: ['ORDER', 'PAYMENT', 'FULFILLMENT'], required: true },
+    status: { type: String, required: true },
     timestamp: { type: Date, default: Date.now },
     updatedBy: { type: Types.ObjectId, ref: "Staff", default: null }
   }],
@@ -91,11 +119,6 @@ const OrderSchema = new Schema({
   discount: { type: Number, default: 0, min: 0 },
   totalAmount: { type: Number, required: true, min: 0 },
   
-  paymentStatus: {
-    type: String,
-    enum: PAYMENT_STATUSES,
-    default: "pending",
-  },
   paymentMethod: {
     type: String,
     enum: PAYMENT_METHODS,
@@ -113,4 +136,6 @@ OrderSchema.pre('save', function() {
 });
 
 export const OrderStatus = ORDER_STATUS;
+export const PaymentStatus = PAYMENT_STATUS;
+export const FulfillmentStatus = FULFILLMENT_STATUS;
 export default models.Order || model("Order", OrderSchema);

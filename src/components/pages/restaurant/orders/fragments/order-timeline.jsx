@@ -8,7 +8,7 @@ import { ORDER_STATUS_CONFIG } from "../helpers/constants";
 
 const getTimelineStepState = (status, isLast) => {
     const isRejected = status === "REJECTED" || status === "CANCELLED";
-    const isCompleted = status === "DELIVERED" || status === "PICKED_UP";
+    const isCompleted = status === "COMPLETED";
 
     if (isRejected) {
         return {
@@ -50,7 +50,9 @@ export const OrderTimeline = ({ statusHistory = [], createdAt }) => {
         );
     }
 
-    const sortedHistory = [...statusHistory].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    const sortedHistory = [...statusHistory]
+        .filter(item => item.statusType === "ORDER" || !item.statusType)
+        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
     return (
         <div className="flex relative mt-4 overflow-x-auto no-scrollbar pb-2">

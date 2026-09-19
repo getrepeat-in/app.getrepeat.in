@@ -50,16 +50,19 @@ export function PriceEditor() {
         {
             header: "Base Price (₹)",
             width: "15%",
-            render: (item) => (
-                <div className="pt-1">
-                    <Input 
-                        type="number" 
-                        value={editor.editedItems[item.id]?.base_price !== undefined ? editor.editedItems[item.id].base_price : (item.base_price || 0)}
-                        onChange={(e) => editor.handleBasePriceChange(item.id, e.target.value)}
-                        className="w-[70px] font-semibold font-sans text-[13px] text-slate-800 border-gray-200 focus:border-primary focus:ring-primary/10 rounded-md h-[34px] shadow-none px-3"
-                    />
-                </div>
-            )
+            render: (item) => {
+                const itemId = String(item.id || item._id);
+                return (
+                    <div className="pt-1">
+                        <Input 
+                            type="number" 
+                            value={editor.editedItems[itemId]?.base_price !== undefined ? editor.editedItems[itemId].base_price : (item.base_price || 0)}
+                            onChange={(e) => editor.handleBasePriceChange(itemId, e.target.value)}
+                            className="w-[70px] font-semibold font-sans text-[13px] text-slate-800 border-gray-200 focus:border-primary focus:ring-primary/10 rounded-md h-[34px] shadow-none px-3"
+                        />
+                    </div>
+                );
+            }
         },
         {
             header: "Variants Prices (₹)",

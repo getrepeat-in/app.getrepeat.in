@@ -1,4 +1,5 @@
 import mongoose, { Schema, Types } from "mongoose";
+import { Permission } from "./Permission";
 
 const roleSchema = new Schema(
   {

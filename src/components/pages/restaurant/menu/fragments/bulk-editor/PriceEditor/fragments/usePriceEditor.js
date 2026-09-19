@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQueryClient } from "@tanstack/react-query";
 import { MenuService } from "@/services/frontend/menu";
 import useNotification from "@/store/hooks/useNotification";
+import { applyBulkMathToItems } from '../../helpers/priceCalculator';
 
 export function usePriceEditor(restaurantId) {
     const [editedItems, setEditedItems] = useState({});
@@ -146,88 +147,18 @@ export function usePriceEditor(restaurantId) {
     };
 
     const applyBulkPriceUpdate = ({ applyTo, selectedCats, selectedItems, action, type, value, roundingOption, items }) => {
-        const val = Number(value);
-        if (isNaN(val) || val <= 0) return;
-
-        const roundPrice = (price, option) => {
-            const p = Math.max(0, price);
-            if (option === "round_to_integer") {
-                return Math.round(p);
-            }
-            if (option === "nearest_9") {
-                const lower = Math.floor(p / 10) * 10 - 1;
-                const upper = Math.floor(p / 10) * 10 + 9; 
-                return Math.abs(p - lower) <= Math.abs(upper - p) ? Math.max(0, lower) : upper;
-            }
-            if (option === "next_9") {
-                const remainder = Math.round(p) % 10;
-                if (remainder === 9) return Math.round(p);
-                const distToNext = (9 - remainder + 10) % 10 || 10;
-                return Math.round(p) + distToNext;
-            }
-            return Math.max(0, Number(p.toFixed(2)));
-        };
-
-        const calculateNewPrice = (oldPrice) => {
-            let newPrice = oldPrice;
-            if (action === "increase") {
-                newPrice = type === "percentage" ? oldPrice * (1 + val / 100) : oldPrice + val;
-            } else {
-                newPrice = type === "percentage" ? oldPrice * (1 - val / 100) : oldPrice - val;
-            }
-            return roundPrice(newPrice, roundingOption);
-        };
-
         setEditedItems(prev => {
-            const nextEdited = { ...prev };
-
-            items.forEach(item => {
-                const itemId = String(item.id || item._id);
-                const isSelected = applyTo === "entire_menu" || 
-                    (Array.isArray(selectedItems) ? selectedItems.map(String).includes(itemId) : selectedItems?.[itemId]) || 
-                    (selectedCats && (selectedCats[item.category] || selectedCats[item.category?._id]));
-
-                if (!isSelected) return;
-
-                const currentItemEdit = nextEdited[item.id] || {};
-                const originalBasePrice = item.base_price;
-                const originalVariants = item.variants || [];
-
-                const currentVariants = currentItemEdit.variants 
-                    ? JSON.parse(JSON.stringify(currentItemEdit.variants)) 
-                    : JSON.parse(JSON.stringify(originalVariants));
-
-                if (currentVariants && currentVariants.length > 0) {
-                    let minPrice = Infinity;
-                    currentVariants.forEach(variant => {
-                        if (variant.options) {
-                            variant.options.forEach(opt => {
-                                const newOptPrice = calculateNewPrice(Number(opt.price) || 0);
-                                opt.price = newOptPrice;
-                                if (newOptPrice < minPrice) {
-                                    minPrice = newOptPrice;
-                                }
-                            });
-                        }
-                    });
-
-                    nextEdited[item.id] = {
-                        ...currentItemEdit,
-                        id: item.id,
-                        variants: currentVariants,
-                        base_price: minPrice !== Infinity ? minPrice : calculateNewPrice(Number(currentItemEdit.base_price ?? originalBasePrice) || 0)
-                    };
-                } else {
-                    const currentBasePrice = Number(currentItemEdit.base_price ?? originalBasePrice) || 0;
-                    nextEdited[item.id] = {
-                        ...currentItemEdit,
-                        id: item.id,
-                        base_price: calculateNewPrice(currentBasePrice)
-                    };
-                }
+            return applyBulkMathToItems({
+                items,
+                editedItems: prev,
+                applyTo,
+                selectedItems,
+                selectedCats,
+                action,
+                type,
+                value,
+                roundingOption
             });
-
-            return nextEdited;
         });
     };
 

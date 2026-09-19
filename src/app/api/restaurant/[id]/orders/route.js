@@ -1,19 +1,12 @@
-import dbConnect from "@/lib/db";
-import { getRestaurant } from "@/lib/api/hooks/getRestaurant";
 import { OrderService } from "@/services/backend/order";
-import { getCache, setCache } from "@/services/backend/redis/cache.service";
-import { 
-  withErrorHandler, 
-  successResponse, 
-  BadRequestError 
-} from "@/lib/api/response-handler";
+import { getRestaurant } from "@/lib/api/hooks/getRestaurant";
+import { withErrorHandler, successResponse, BadRequestError } from "@/lib/api/response-handler";
 
 export const GET = withErrorHandler(async (req, { params }) => {
   const { id } = await params;
   if (!id) throw new BadRequestError("Restaurant ID is required!");
 
   await getRestaurant({ restaurantId: id });
-  await dbConnect();
 
   const url = new URL(req.url);
   const status = url.searchParams.get("status");
@@ -25,14 +18,7 @@ export const GET = withErrorHandler(async (req, { params }) => {
   const startDate = url.searchParams.get("startDate");
   const endDate = url.searchParams.get("endDate");
 
-  const cacheKey = `restaurant:${id}:orders:page:${page}:limit:${limit}:status:${status || "all"}:type:${orderType || "all"}:search:${search || "none"}:start:${startDate || "all"}:end:${endDate || "all"}:summary:${summary}`;
-  const cachedResult = await getCache(cacheKey);
-
-  if (cachedResult) {
-    return successResponse(cachedResult, "Orders fetched successfully (cached)");
-  }
-
-  const result = await OrderService.listOrders({
+  const { isCached, ...result } = await OrderService.listOrders({
     restaurantId: id,
     status,
     orderType,
@@ -44,9 +30,7 @@ export const GET = withErrorHandler(async (req, { params }) => {
     summary,
   });
 
-  await setCache(cacheKey, result, 60 * 2);
-
-  return successResponse(result, "Orders fetched successfully");
+  return successResponse(result, `Orders fetched successfully${isCached ? " (cached)" : ""}`);
 });
 
 export const POST = withErrorHandler(async (req, { params }) => {
@@ -54,8 +38,6 @@ export const POST = withErrorHandler(async (req, { params }) => {
   if (!id) throw new BadRequestError("Restaurant ID is required!");
 
   const { user } = await getRestaurant({ restaurantId: id });
-  await dbConnect();
-
   const data = await req.json();
 
   const order = await OrderService.createOrder({

@@ -1,8 +1,8 @@
 import dbConnect from "@/lib/db";
 import Restaurant from "@/models/Restaurant";
 import { OrderService } from "@/services/backend/order";
+import { OrderService } from "@/services/backend/order";
 import { withErrorHandler, successResponse, BadRequestError, RestaurantNotFoundError, UnauthorizedError } from "@/lib/api/response-handler";
-import { getAuthUser } from "@/lib/api/helpers/auth";
 
 export const GET = withErrorHandler(async (req, { params }) => {
     const { slug } = await params;
@@ -20,7 +20,6 @@ export const GET = withErrorHandler(async (req, { params }) => {
     const orderNumber = url.searchParams.get("orderNumber");
     const orderId = url.searchParams.get("orderId");
 
-    // 1. Direct order lookup by orderNumber
     if (orderNumber) {
         const order = await OrderService.getOrderByNumber(orderNumber, {
             restaurantId: restaurant._id,
@@ -28,7 +27,6 @@ export const GET = withErrorHandler(async (req, { params }) => {
         return successResponse(order, "Order fetched successfully", 200);
     }
 
-    // 2. Direct order lookup by orderId
     if (orderId) {
         const order = await OrderService.getOrderById(orderId, {
             restaurantId: restaurant._id,
@@ -36,7 +34,6 @@ export const GET = withErrorHandler(async (req, { params }) => {
         return successResponse(order, "Order fetched successfully", 200);
     }
 
-    // 3. Authenticated customer order history
     const authUser = getAuthUser(req);
     const queryPhone = url.searchParams.get("phone");
     const queryUserId = url.searchParams.get("userId");

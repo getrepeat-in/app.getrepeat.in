@@ -16,9 +16,8 @@ export default function ItemDetails({ item, updateField, onDelete }) {
     };
 
     return (
-        <div className="flex gap-4">
+        <div className="flex gap-3">
             <ItemImageUpload item={item} updateField={updateField} />
-
             <div className="flex-1 min-w-0 flex flex-col justify-between py-1">
                 <div className="space-y-2">
                     <div className="flex items-start justify-between gap-4">

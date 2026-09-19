@@ -12,7 +12,7 @@ export default function ItemVariants({
     addSuggestedVariant 
 }) {
     return (
-        <div className="mt-4 pt-3 border-t border-dashed">
+        <div className="mt-2.5 pt-2.5 border-t border-dashed">
             {variants.length > 0 ? (
                 <div className="space-y-3">
                     {variants.map((group, gIdx) => (

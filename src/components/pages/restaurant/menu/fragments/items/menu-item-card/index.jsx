@@ -52,7 +52,7 @@ export default function MenuItemRow({
 
     return (
         <div
-            className={`group border rounded-xl p-3 transition-all duration-300 relative ${
+            className={`group border rounded-xl p-2.5 transition-all duration-300 relative ${
                 item?.status === 'delete' ? "bg-red-50 border-red-300 pointer-events-none opacity-60" :
                 item?.id?.toString().startsWith("temp-") 
                     ? "bg-emerald-50/40 border-emerald-200 hover:border-emerald-400 shadow-sm"

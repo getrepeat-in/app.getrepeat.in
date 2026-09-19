@@ -2,7 +2,7 @@
 import { format } from "date-fns";
 import { OrderTimeline } from "./order-timeline";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { StatusBadge, PaymentBadge } from "../helpers/badges";
+import { StatusBadge, PaymentBadge, FulfillmentBadge } from "../helpers/badges";
 import { Printer, Receipt as ReceiptIcon, User, Phone, Mail } from "lucide-react";
 
 export const OrderDetailsDrawer = ({ isOpen, onClose, order }) => {
@@ -48,7 +48,8 @@ export const OrderDetailsDrawer = ({ isOpen, onClose, order }) => {
                         </div>
 
                         <div className="mt-4 pt-4 flex items-center gap-3 border-t border-gray-100 dark:border-zinc-800">
-                            <StatusBadge status={order.status} />
+                            <StatusBadge status={order.orderStatus} />
+                            <FulfillmentBadge status={order.fulfillmentStatus} />
                             <span className="text-[13px] text-gray-500 font-medium capitalize flex items-center gap-1.5">
                                 {order.orderType} 
                                 {order.table && (
@@ -63,7 +64,7 @@ export const OrderDetailsDrawer = ({ isOpen, onClose, order }) => {
 
                     <div className="bg-white dark:bg-zinc-900 p-6 shadow-sm border-y border-gray-200 dark:border-zinc-800">
                         <h3 className="text-[11px] font-bold tracking-widest text-gray-500 dark:text-gray-400 uppercase mb-2">Order Timeline</h3>
-                        <OrderTimeline statusHistory={order.statusHistory} currentStatus={order.status} createdAt={order.createdAt} />
+                        <OrderTimeline statusHistory={order.statusHistory} currentStatus={order.orderStatus} createdAt={order.createdAt} />
                     </div>
 
                     <div className="bg-white dark:bg-zinc-900 p-6 shadow-sm border-y border-gray-200 dark:border-zinc-800">

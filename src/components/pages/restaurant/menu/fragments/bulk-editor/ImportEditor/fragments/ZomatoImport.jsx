@@ -41,27 +41,29 @@ export function ZomatoImport() {
     };
 
     return (
-        <div className="flex flex-col h-full overflow-hidden items-center justify-center p-4 sm:p-8 relative">
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-50/50 via-transparent to-transparent pointer-events-none" />
-            
-            <div className="max-w-xl mx-auto w-full bg-white rounded-[24px] shadow-xl shadow-slate-200/40 border border-slate-100 p-8 sm:p-12 text-center relative z-10">
-                <div className="w-20 h-20 bg-gradient-to-tr from-red-500 to-red-400 text-white rounded-[22px] flex items-center justify-center mx-auto mb-8 shadow-lg shadow-red-500/30 transform -rotate-3 transition-transform duration-300 hover:rotate-0 hover:scale-105">
-                    <Search className="w-10 h-10 stroke-[2.5]" />
+        <div className="flex flex-col h-full w-full p-2">
+            <div className="w-full bg-white rounded-xl border border-slate-200 p-8 sm:p-10 shadow-sm flex flex-col items-center justify-center text-center">
+                <div className="w-16 h-16 bg-slate-100 text-slate-700 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Search className="w-7 h-7" />
                 </div>
                 
-                <h4 className="text-[22px] font-bold text-slate-800 mb-3 tracking-tight">Import from Zomato</h4>
-                <p className="text-[15px] text-slate-500 mb-10 leading-relaxed max-w-[420px] mx-auto">
-                    Go to Zomato, find your restaurant page, and copy the URL from your browser's address bar. It should look like <code className="bg-slate-50 border border-slate-100 px-2 py-1 rounded-md text-slate-600 text-sm font-medium">zomato.com/ncr/your-restaurant</code>.
-                </p>
+                <div className="mb-8">
+                    <h4 className="text-2xl font-semibold text-slate-900 mb-2">Import from Zomato</h4>
+                    <p className="text-[15px] text-slate-500 max-w-lg mx-auto">
+                        Copy your restaurant's URL from Zomato and paste it below to fetch your entire menu automatically.
+                    </p>
+                </div>
 
-                <form onSubmit={handleImport} className="w-full flex flex-col gap-4">
-                    <div className="relative group">
-                        <Link className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-red-400 transition-colors w-5 h-5 z-10" />
+                <form onSubmit={handleImport} className="w-full max-w-3xl flex flex-col sm:flex-row gap-3">
+                    <div className="relative flex-1">
+                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                            <Link className="w-5 h-5 text-slate-400" />
+                        </div>
                         <Input 
                             placeholder="e.g. https://www.zomato.com/ncr/barbeque-nation" 
                             value={url}
                             onChange={(e) => setUrl(e.target.value)}
-                            className="h-14 w-full bg-slate-50 border-2 border-slate-100 text-slate-800 pl-12 pr-4 rounded-xl text-[15px] font-medium transition-all focus:bg-white focus:border-red-400 focus:ring-4 focus:ring-red-400/10 placeholder:text-slate-400 shadow-none"
+                            className="h-12 w-full bg-slate-50 border-slate-200 text-slate-900 pl-11 pr-4 rounded-lg text-[15px] focus:bg-white focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all shadow-none"
                             required
                         />
                     </div>
@@ -69,12 +71,16 @@ export function ZomatoImport() {
                     <Button 
                         type="submit"
                         disabled={!url || isLoading}
-                        className="h-14 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white font-bold text-[15px] w-full rounded-xl shadow-lg shadow-red-500/25 hover:shadow-xl hover:shadow-red-500/40 transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:pointer-events-none disabled:transform-none"
+                        className="h-12 px-6 bg-slate-900 hover:bg-slate-800 text-white font-medium text-[15px] rounded-lg shadow-sm transition-all sm:w-auto w-full flex items-center gap-2"
                     >
-                        {isLoading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : null}
-                        {isLoading ? "Fetching Menu Data..." : "Fetch Menu Data"}
+                        {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                        {isLoading ? "Fetching..." : "Fetch Menu Data"}
                     </Button>
                 </form>
+
+                <div className="mt-8 text-sm text-slate-500">
+                    It should look like: <code className="bg-slate-100 px-2 py-1 rounded text-slate-700">zomato.com/ncr/your-restaurant</code>
+                </div>
             </div>
         </div>
     );
