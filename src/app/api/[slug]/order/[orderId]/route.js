@@ -1,8 +1,8 @@
 import dbConnect from "@/lib/db";
 import Restaurant from "@/models/Restaurant";
+import { getAuthUser } from "@/lib/api/helpers/auth";
 import { OrderService } from "@/services/backend/order";
 import { withErrorHandler, successResponse, BadRequestError, RestaurantNotFoundError } from "@/lib/api/response-handler";
-import { getAuthUser } from "@/lib/api/helpers/auth";
 
 export const GET = withErrorHandler(async (req, { params }) => {
     const { slug, orderId } = await params;
@@ -16,10 +16,13 @@ export const GET = withErrorHandler(async (req, { params }) => {
         throw new RestaurantNotFoundError();
     }
 
-    // Support lookup by either MongoDB _id or human-readable orderNumber
     let order;
     if (orderId.startsWith("ORD-")) {
         order = await OrderService.getOrderByNumber(orderId, {
+            restaurantId: restaurant._id,
+        });
+    } else if (orderId.startsWith("order_")) {
+        order = await OrderService.getOrderByRazorpayId(orderId, {
             restaurantId: restaurant._id,
         });
     } else {
@@ -46,7 +49,6 @@ export const PATCH = withErrorHandler(async (req, { params }) => {
     const data = await req.json();
     const authUser = getAuthUser(req);
 
-    // Action: Customer cancelling order
     if (data.action === "cancel" || data.status === "CANCELLED") {
         const updatedOrder = await OrderService.cancelOrder(orderId, {
             reason: data.reason || "Customer requested cancellation",

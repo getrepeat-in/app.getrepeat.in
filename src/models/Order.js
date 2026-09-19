@@ -54,6 +54,15 @@ const OrderItemSchema = new Schema({
   totalPrice: { type: Number, required: true }
 });
 
+const DeliveryAddressSchema = new Schema({
+  street: { type: String, required: true },
+  city: { type: String, required: true },
+  state: { type: String },
+  zipCode: { type: String, required: true },
+  label: { type: String },
+  instructions: { type: String },
+});
+
 const OrderSchema = new Schema({
   restaurant: {
     type: Types.ObjectId,
@@ -82,6 +91,11 @@ const OrderSchema = new Schema({
     type: Types.ObjectId,
     ref: "User",
     index: true,
+  },
+  
+  deliveryAddress: {
+    type: DeliveryAddressSchema,
+    required: function() { return this.orderType === "delivery"; },
   },
   
   items: [OrderItemSchema],
@@ -122,6 +136,12 @@ const OrderSchema = new Schema({
   paymentMethod: {
     type: String,
     enum: PAYMENT_METHODS,
+  },
+  
+  paymentDetails: {
+    razorpayOrderId: { type: String, index: true, sparse: true },
+    razorpayPaymentId: { type: String },
+    razorpaySignature: { type: String },
   },
 }, {
   timestamps: true,

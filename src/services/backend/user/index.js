@@ -261,9 +261,61 @@ export class UserService {
 
     return { success: true, userId };
   }
-  
-  static getAll(restaurantId) {
-    return this.getUsers(restaurantId).then((res) => res.users);
+  static async addAddress(userId, restaurantId, addressData) {
+    await dbConnect();
+    const user = await User.findOne({ _id: userId, restaurant: restaurantId });
+    if (!user) throw new NotFoundError("Customer not found");
+
+    if (user.addresses && user.addresses.length >= 3) {
+      throw new BadRequestError("Maximum of 3 saved addresses allowed");
+    }
+
+    if (addressData.isDefault && user.addresses) {
+      user.addresses.forEach(addr => addr.isDefault = false);
+    } else if (!user.addresses || user.addresses.length === 0) {
+      addressData.isDefault = true;
+    }
+
+    user.addresses.push(addressData);
+    await user.save();
+    return user.addresses[user.addresses.length - 1];
+  }
+
+  static async updateAddress(userId, restaurantId, addressId, addressData) {
+    await dbConnect();
+    const user = await User.findOne({ _id: userId, restaurant: restaurantId });
+    if (!user) throw new NotFoundError("Customer not found");
+
+    const address = user.addresses.id(addressId);
+    if (!address) throw new NotFoundError("Address not found");
+
+    if (addressData.isDefault) {
+      user.addresses.forEach(addr => {
+        if (addr._id.toString() !== addressId) addr.isDefault = false;
+      });
+    }
+
+    Object.assign(address, addressData);
+    await user.save();
+    return address;
+  }
+
+  static async removeAddress(userId, restaurantId, addressId) {
+    await dbConnect();
+    const user = await User.findOne({ _id: userId, restaurant: restaurantId });
+    if (!user) throw new NotFoundError("Customer not found");
+
+    const address = user.addresses.id(addressId);
+    if (!address) throw new NotFoundError("Address not found");
+
+    user.addresses.pull(addressId);
+    await user.save();
+    return { success: true };
+  }
+
+  static async getAll(restaurantId) {
+    const res = await this.getUsers(restaurantId);
+    return res.users;
   }
 
   static create(restaurantId, data) {

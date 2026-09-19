@@ -46,10 +46,12 @@ export const OrderService = {
     customer,
     customerInfo,
     items,
+    deliveryAddress = null,
     tax: rawTax = 0,
     discount: rawDiscount = 0,
     paymentMethod = "cash",
     paymentStatus = "pending",
+    paymentDetails = null,
     specialInstructions = "",
     initialStatus = null,
     updatedBy = null,
@@ -64,6 +66,12 @@ export const OrderService = {
     const validOrderTypes = ["dine-in", "takeaway", "delivery"];
     if (!validOrderTypes.includes(orderType)) {
       throw new Error(`Invalid order type. Must be one of: ${validOrderTypes.join(", ")}`);
+    }
+
+    if (orderType === "delivery") {
+      if (!deliveryAddress || !deliveryAddress.street || !deliveryAddress.city || !deliveryAddress.zipCode) {
+        throw new Error("Delivery address with street, city, and zipCode is required for delivery orders");
+      }
     }
 
     const resolvedTableId = await resolveTable(restaurantId, orderType, table);
@@ -90,6 +98,7 @@ export const OrderService = {
       orderNumber,
       orderType,
       table: resolvedTableId,
+      deliveryAddress: orderType === "delivery" ? deliveryAddress : undefined,
       customer: resolvedCustomerId,
       items: validatedItems,
       subtotal,
@@ -98,6 +107,11 @@ export const OrderService = {
       totalAmount,
       paymentMethod,
       paymentStatus: resolvedPaymentStatus,
+      paymentDetails: paymentDetails && paymentDetails.razorpay_order_id ? {
+        razorpayOrderId: paymentDetails.razorpay_order_id,
+        razorpayPaymentId: paymentDetails.razorpay_payment_id,
+        razorpaySignature: paymentDetails.razorpay_signature,
+      } : undefined,
       fulfillmentStatus,
       specialInstructions: specialInstructions || "",
       orderStatus,
@@ -120,7 +134,8 @@ export const OrderService = {
         populate: { path: "image", select: "original variants key" },
       })
       .populate("table", "tableNumber label zone")
-      .populate("customer", "name phone email");
+      .populate({ path: "customer", select: "name phone email image", populate: { path: "image", select: "original variants key" } })
+      .populate({ path: "restaurant", select: "name logo address", populate: { path: "logo", select: "original variants key" } });
 
     const formattedOrder = formatOrderResponse(populatedOrder);
     
@@ -146,7 +161,8 @@ export const OrderService = {
         populate: { path: "image", select: "original variants key" },
       })
       .populate("table", "tableNumber label zone")
-      .populate("customer", "name phone email profileImageUrl")
+      .populate({ path: "customer", select: "name phone email profileImageUrl image", populate: { path: "image", select: "original variants key" } })
+      .populate({ path: "restaurant", select: "name logo address", populate: { path: "logo", select: "original variants key" } })
       .populate("statusHistory.updatedBy", "name email");
 
     if (!order) {
@@ -172,7 +188,35 @@ export const OrderService = {
         populate: { path: "image", select: "original variants key" },
       })
       .populate("table", "tableNumber label zone")
-      .populate("customer", "name phone email profileImageUrl")
+      .populate({ path: "customer", select: "name phone email profileImageUrl image", populate: { path: "image", select: "original variants key" } })
+      .populate({ path: "restaurant", select: "name logo address", populate: { path: "logo", select: "original variants key" } })
+      .populate("statusHistory.updatedBy", "name email");
+
+    if (!order) {
+      throw new Error("Order not found");
+    }
+
+    return formatOrderResponse(order);
+  },
+
+  /**
+   * Get single order by Razorpay Order ID
+   */
+  getOrderByRazorpayId: async (razorpayOrderId, { restaurantId = null } = {}) => {
+    await dbConnect();
+
+    const query = { "paymentDetails.razorpayOrderId": razorpayOrderId };
+    if (restaurantId) query.restaurant = restaurantId;
+
+    const order = await Order.findOne(query)
+      .populate({
+        path: "items.menuItem",
+        select: "name base_price dietaryType image",
+        populate: { path: "image", select: "original variants key" },
+      })
+      .populate("table", "tableNumber label zone")
+      .populate({ path: "customer", select: "name phone email profileImageUrl image", populate: { path: "image", select: "original variants key" } })
+      .populate({ path: "restaurant", select: "name logo address", populate: { path: "logo", select: "original variants key" } })
       .populate("statusHistory.updatedBy", "name email");
 
     if (!order) {
@@ -274,7 +318,8 @@ export const OrderService = {
               populate: { path: "image", select: "original variants key" },
             })
             .populate("table", "tableNumber label zone")
-            .populate("customer", "name phone email profileImageUrl")
+            .populate({ path: "customer", select: "name phone email profileImageUrl image", populate: { path: "image", select: "original variants key" } })
+            .populate({ path: "restaurant", select: "name logo address", populate: { path: "logo", select: "original variants key" } })
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit),
@@ -353,6 +398,8 @@ export const OrderService = {
           populate: { path: "image", select: "original variants key" },
         })
         .populate("table", "tableNumber label zone")
+        .populate({ path: "customer", select: "name phone email profileImageUrl image", populate: { path: "image", select: "original variants key" } })
+        .populate({ path: "restaurant", select: "name logo address", populate: { path: "logo", select: "original variants key" } })
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit),

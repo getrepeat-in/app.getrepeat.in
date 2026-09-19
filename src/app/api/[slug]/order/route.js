@@ -1,8 +1,8 @@
 import dbConnect from "@/lib/db";
 import Restaurant from "@/models/Restaurant";
 import { OrderService } from "@/services/backend/order";
-import { OrderService } from "@/services/backend/order";
 import { withErrorHandler, successResponse, BadRequestError, RestaurantNotFoundError, UnauthorizedError } from "@/lib/api/response-handler";
+import { getAuthUser } from "@/lib/api/helpers/auth";
 
 export const GET = withErrorHandler(async (req, { params }) => {
     const { slug } = await params;
@@ -88,8 +88,9 @@ export const POST = withErrorHandler(async (req, { params }) => {
         tax: data.tax,
         discount: data.discount,
         totalAmount: data.totalAmount,
-        paymentMethod: data.paymentMethod || "cash",
-        paymentStatus: data.paymentStatus || "pending",
+        paymentMethod: data.paymentMethod || data.payment?.method?.toLowerCase() || "cash",
+        paymentStatus: data.paymentStatus || data.payment?.status || "PENDING",
+        paymentDetails: data.payment,
         specialInstructions: data.specialInstructions || "",
         initialStatus: data.status || null,
     });
