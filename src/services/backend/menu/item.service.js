@@ -129,7 +129,7 @@ export const ItemService = {
       subCategory: data.subCategory || null,
       name: data.name.trim(),
       description: data.description || "",
-      image: data.image || null,
+      image: (data.image && typeof data.image === 'object') ? (data.image._id || data.image.id || null) : (data.image || null),
       base_price: calculateMinVariantPrice(data.variants, data.base_price),
       variants: data.variants || [],
       dietaryType: data.dietaryType,
@@ -151,10 +151,14 @@ export const ItemService = {
   updateItem: async (restaurantId, itemId, data) => {
     await dbConnect();
 
+
     if (data.image === "") {
       data.image = null;
+    } else if (data.image && typeof data.image === "object") {
+      const imageId = data.image._id || data.image.id;
+      if (imageId) data.image = imageId;
+      else delete data.image;
     }
-
     if (data.category) {
       const categoryExists = await Category.exists({ _id: data.category, restaurant: restaurantId });
       if (!categoryExists) {

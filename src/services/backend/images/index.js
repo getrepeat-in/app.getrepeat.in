@@ -46,6 +46,8 @@ export const ImageService = {
     if (!card && !thumbnail && !original) return null;
 
     return {
+      _id: imageInput._id?.toString() || imageInput.id || undefined,
+      id: imageInput.id || imageInput._id?.toString() || undefined,
       original,
       thumbnail: thumbnail || card || original,
       card: card || original,
