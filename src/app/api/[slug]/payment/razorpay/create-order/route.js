@@ -60,7 +60,7 @@ export const POST = async (req, { params }) => {
             return errorResponse(err.message, 500);
         }
 
-        const publicToken = integrations?.razorpay?.publicToken;
+        const publicToken = integration?.razorpay?.publicToken;
 
         return successResponse(
             {
