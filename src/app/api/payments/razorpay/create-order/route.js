@@ -1,59 +1,40 @@
-import Razorpay from "razorpay";
-import merchantApi from "@/lib/api/merchantInstance";
-import { JsonResponse } from "@/lib/api/responseHandler";
+import dbConnect from "@/lib/db";
+import Restaurant from "@/models/Restaurant";
+import { razorpayService } from "@/services/backend/payments/razorpay";
+import { backendIntegrationService } from "@/services/backend/integration";
+import { successResponse, errorResponse } from "@/lib/api/response-handler";
 
 export const POST = async (req, { params }) => {
     try {
-        const { domain } = await params;
         const body = await req.json();
+        const domain = (await params).domain || body.domain;
         const { amount, currency = "INR", notes = {} } = body;
 
         if (!domain) {
-            return JsonResponse.error("Restaurant slug is required!", 400);
+            return errorResponse("Restaurant slug is required!", 400);
         }
 
         if (!amount || amount <= 0) {
-            return JsonResponse.error("Valid order amount is required!", 400);
+            return errorResponse("Valid order amount is required!", 400);
         }
 
-        const key_id = process.env.RAZORPAY_API_KEY;
-        const key_secret = process.env.RAZORPAY_KEY_SECRET;
-
-        if (!key_id || !key_secret) {
-            return JsonResponse.error(
-                "Razorpay API credentials not configured on server.",
-                500
-            );
-        }
-
-        const restaurantRes = await merchantApi.get(`/api/${domain}`);
-        const restaurant = restaurantRes.data?.data || restaurantRes.data;
+        await dbConnect();
+        const restaurant = await Restaurant.findOne({ slug: domain }).lean();
         
         if (!restaurant?._id) {
-            return JsonResponse.error("Restaurant not found", 404);
+            return errorResponse("Restaurant not found", 404);
         }
 
-        // Fetch integrations using the new API
-        const integrationsRes = await merchantApi.get(`/api/restaurant/${restaurant._id}/integrations`);
-        const integrations = integrationsRes.data?.data || integrationsRes.data;
-        const accountId = integrations?.razorpay?.accountId;
+        const integrations = await backendIntegrationService.getIntegrations(restaurant._id);
+        const accessToken = integrations?.razorpay?.accessToken;
 
-        if (!accountId || !integrations?.razorpay?.isLinked) {
-            return JsonResponse.error(
+        if (!accessToken || !integrations?.razorpay?.isLinked) {
+            return errorResponse(
                 "This restaurant has not connected a Razorpay account.",
                 400
             );
         }
 
-        const razorpayInstance = new Razorpay({
-            key_id,
-            key_secret,
-            headers: {
-                "X-Razorpay-Account": accountId,
-            }
-        });
-
-        // Amount must be in the smallest currency sub-unit (paise for INR)
         const amountInPaise = Math.round(Number(amount) * 100);
 
         const options = {
@@ -66,21 +47,27 @@ export const POST = async (req, { params }) => {
             },
         };
 
-        const order = await razorpayInstance.orders.create(options);
+        let order;
+        try {
+            order = await razorpayService.createOrder(accessToken, options);
+        } catch (err) {
+            console.error("Razorpay API error:", err.message);
+            return errorResponse(err.message, 500);
+        }
 
-        return JsonResponse.success(
+        return successResponse(
             {
                 orderId: order.id,
                 amount: order.amount,
                 currency: order.currency,
-                key: key_id,
+                key: process.env.RAZORPAY_CLIENT_ID || process.env.NEXT_PUBLIC_RAZORPAY_CLIENT_ID,
             },
             "Razorpay order created successfully",
             201
         );
     } catch (err) {
         console.error("Razorpay create order error:", err);
-        return JsonResponse.error(
+        return errorResponse(
             err.message || "Failed to create Razorpay order",
             500
         );

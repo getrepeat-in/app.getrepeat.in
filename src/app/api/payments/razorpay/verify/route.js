@@ -1,11 +1,14 @@
-import crypto from "crypto";
-import merchantApi from "@/lib/api/merchantInstance";
-import { JsonResponse } from "@/lib/api/responseHandler";
+import dbConnect from "@/lib/db";
+import Restaurant from "@/models/Restaurant";
+import { OrderService } from "@/services/backend/order";
+import { razorpayService } from "@/services/backend/payments/razorpay";
+import { successResponse, errorResponse } from "@/lib/api/response-handler";
+import { backendIntegrationService } from "@/services/backend/integration";
 
 export const POST = async (req, { params }) => {
     try {
-        const { domain } = await params;
         const body = await req.json();
+        const domain = (await params).domain || body.domain;
         const {
             razorpay_order_id,
             razorpay_payment_id,
@@ -14,66 +17,85 @@ export const POST = async (req, { params }) => {
         } = body;
 
         if (!domain) {
-            return JsonResponse.error("Restaurant slug is required!", 400);
+            return errorResponse("Restaurant slug is required!", 400);
         }
 
         if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-            return JsonResponse.error(
+            return errorResponse(
                 "Missing Razorpay payment verification details!",
                 400
             );
         }
 
-        const key_secret = process.env.RAZORPAY_KEY_SECRET;
-        if (!key_secret) {
-            return JsonResponse.error(
-                "Razorpay secret key not configured on server.",
-                500
+        await dbConnect();
+        const restaurant = await Restaurant.findOne({ slug: domain }).lean();
+        
+        if (!restaurant?._id) {
+            return errorResponse("Restaurant not found", 404);
+        }
+
+        const integrations = await backendIntegrationService.getIntegrations(restaurant._id);
+        const accessToken = integrations?.razorpay?.accessToken;
+
+        if (!accessToken || !integrations?.razorpay?.isLinked) {
+            return errorResponse(
+                "This restaurant has not connected a Razorpay account.",
+                400
             );
         }
 
-        const hmac = crypto.createHmac("sha256", key_secret);
-        hmac.update(`${razorpay_order_id}|${razorpay_payment_id}`);
-        const generatedSignature = hmac.digest("hex");
-
-        const isValid = generatedSignature === razorpay_signature;
+        let isValid = false;
+        try {
+            const payment = await razorpayService.getPayment(accessToken, razorpay_payment_id);
+            
+            if (payment.order_id === razorpay_order_id && (payment.status === "captured" || payment.status === "authorized")) {
+                isValid = true;
+            }
+        } catch (error) {
+            console.error("Error fetching payment from Razorpay API:", error.message);
+        }
 
         if (!isValid) {
-            return JsonResponse.error(
-                "Payment verification failed: Invalid signature",
+            return errorResponse(
+                "Payment verification failed: Invalid payment or order mismatch",
                 400
             );
         }
 
         let merchantOrderResult = null;
         try {
-            if (process.env.MERCHANT_APP_URL && orderData) {
-                const payload = {
-                    ...orderData,
-                    payment: {
-                        method: "RAZORPAY",
-                        status: "PAID",
-                        razorpay_order_id,
-                        razorpay_payment_id,
-                        razorpay_signature,
-                    },
-                };
-                const res = await merchantApi.post(`/api/${domain}/order`, payload);
-                merchantOrderResult = res.data?.data || res.data;
+            if (orderData) {
+                const order = await OrderService.createOrder({
+                    restaurantId: restaurant._id,
+                    orderType: orderData.orderType,
+                    table: orderData.table,
+                    customer: orderData.customer || null,
+                    customerInfo: orderData.customerInfo,
+                    deliveryAddress: orderData.deliveryAddress,
+                    items: orderData.items,
+                    subtotal: orderData.subtotal,
+                    tax: orderData.tax,
+                    discount: orderData.discount,
+                    totalAmount: orderData.totalAmount,
+                    paymentMethod: "RAZORPAY",
+                    paymentStatus: "PAID",
+                    specialInstructions: orderData.specialInstructions || "",
+                    initialStatus: orderData.status || null,
+                });
+                merchantOrderResult = order;
             }
         } catch (merchantErr) {
             console.error(
                 "Payment verified, but failed to sync order to merchant API:",
-                merchantErr.message,
-                merchantErr.response?.data
+                merchantErr.message
             );
-            return JsonResponse.error(
-                merchantErr.response?.data?.message || "Payment received, but order creation failed. Please contact support.",
+            return errorResponse(
+                "Payment received, but order creation failed. Please contact support.",
                 500
             );
         }
 
-        return JsonResponse.success(
+        return successResponse(
             {
                 verified: true,
                 paymentId: razorpay_payment_id,
@@ -85,7 +107,7 @@ export const POST = async (req, { params }) => {
         );
     } catch (err) {
         console.error("Razorpay verification error:", err);
-        return JsonResponse.error(
+        return errorResponse(
             err.message || "Failed to verify payment",
             500
         );

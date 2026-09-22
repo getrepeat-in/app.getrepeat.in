@@ -74,6 +74,41 @@ class RazorpayService {
       throw new Error("Failed to refresh Razorpay tokens");
     }
   }
+
+  async createOrder(accessToken, options) {
+    if (!accessToken) {
+      throw new Error("Access token is required to create a Razorpay order");
+    }
+    try {
+      const response = await axios.post("https://api.razorpay.com/v1/orders", options, {
+        headers: {
+          "Authorization": `Bearer ${accessToken}`,
+          "Content-Type": "application/json"
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error("[RazorpayService] Error creating order:", error?.response?.data || error.message);
+      throw new Error("Failed to create Razorpay order with integration credentials");
+    }
+  }
+
+  async getPayment(accessToken, paymentId) {
+    if (!accessToken || !paymentId) {
+      throw new Error("Access token and payment ID are required to fetch a Razorpay payment");
+    }
+    try {
+      const response = await axios.get(`https://api.razorpay.com/v1/payments/${paymentId}`, {
+        headers: {
+          "Authorization": `Bearer ${accessToken}`
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error("[RazorpayService] Error fetching payment:", error?.response?.data || error.message);
+      throw new Error("Failed to fetch payment details from Razorpay");
+    }
+  }
 }
 
 export const razorpayService = new RazorpayService();
