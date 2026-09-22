@@ -1,5 +1,4 @@
 import dbConnect from "@/lib/db";
-import { encrypt } from "@/lib/crypto";
 import { NextResponse } from "next/server";
 import Restaurant from "@/models/Restaurant";
 import Integration from "@/models/Integration";
@@ -36,8 +35,6 @@ export async function GET(req) {
     }
 
     const tokenData = await razorpayService.exchangeCodeForTokens(code);
-    const encryptedAccessToken = encrypt(tokenData.access_token);
-    const encryptedRefreshToken = encrypt(tokenData.refresh_token);
     await dbConnect();
     
     const restaurant = await Restaurant.findById(restaurantId);
@@ -49,9 +46,10 @@ export async function GET(req) {
       { restaurantId },
       {
         $set: {
+          "razorpay.isActive": true,
           "razorpay.accountId": tokenData.razorpay_account_id,
-          "razorpay.accessToken": encryptedAccessToken,
-          "razorpay.refreshToken": encryptedRefreshToken,
+          "razorpay.accessToken": tokenData.access_token,
+          "razorpay.refreshToken": tokenData.refresh_token,
           "razorpay.connectedAt": new Date()
         }
       },

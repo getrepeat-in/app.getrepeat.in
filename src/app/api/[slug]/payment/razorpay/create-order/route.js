@@ -30,22 +30,14 @@ export const POST = async (req, { params }) => {
         }
 
         const integration = await Integration.findOne({ restaurantId: restaurant._id }).lean();
-        const encryptedAccessToken = integration?.razorpay?.accessToken;
+        const accessToken = integration?.razorpay?.accessToken;
         const accountId = integration?.razorpay?.accountId;
 
-        if (!encryptedAccessToken || !accountId) {
+        if (!accessToken || !accountId) {
             return errorResponse(
                 "This restaurant has not connected a Razorpay account.",
                 400
             );
-        }
-
-        let accessToken;
-        try {
-            accessToken = decrypt(encryptedAccessToken);
-        } catch (e) {
-            console.error("Failed to decrypt access token:", e);
-            return errorResponse("Invalid Razorpay integration configuration.", 500);
         }
 
         const amountInPaise = Math.round(Number(amount) * 100);
