@@ -36,8 +36,7 @@ class RazorpayService {
         client_secret: this.clientSecret,
         grant_type: "authorization_code",
         redirect_uri: this.redirectUri,
-        code: decodeURIComponent(code),
-        mode: process.env.NODE_ENV === "production" ? "live" : "test"
+        code: decodeURIComponent(code)
       }, {
         headers: {
           "Content-Type": "application/json"
@@ -75,13 +74,34 @@ class RazorpayService {
     }
   }
 
+  async revokeToken(token, tokenTypeHint = "access_token") {
+    if (!this.clientId || !this.clientSecret) {
+      throw new Error("Razorpay credentials are not fully configured");
+    }
+    try {
+      const response = await axios.post("https://auth.razorpay.com/revoke", {
+        client_id: this.clientId,
+        client_secret: this.clientSecret,
+        token_type_hint: tokenTypeHint,
+        token: token
+      }, {
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error("[RazorpayService] Error revoking token:", error?.response?.data || error.message);
+      throw new Error("Failed to revoke Razorpay token");
+    }
+  }
+
   async createOrder(accessToken, options) {
     if (!accessToken) {
       throw new Error("Access token is required to create a Razorpay order");
     }
     try {
-      const mode = process.env.NODE_ENV === "production" ? "live" : "test";
-      const response = await axios.post(`https://api.razorpay.com/v1/orders?mode=${mode}`, options, {
+      const response = await axios.post(`https://api.razorpay.com/v1/orders`, options, {
         headers: {
           "Authorization": `Bearer ${accessToken}`,
           "Content-Type": "application/json"
@@ -99,8 +119,7 @@ class RazorpayService {
       throw new Error("Access token and payment ID are required to fetch a Razorpay payment");
     }
     try {
-      const mode = process.env.NODE_ENV === "production" ? "live" : "test";
-      const response = await axios.get(`https://api.razorpay.com/v1/payments/${paymentId}?mode=${mode}`, {
+      const response = await axios.get(`https://api.razorpay.com/v1/payments/${paymentId}`, {
         headers: {
           "Authorization": `Bearer ${accessToken}`
         }

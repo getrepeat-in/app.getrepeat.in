@@ -53,13 +53,18 @@ export const POST = async (req, { params }) => {
 
         let isValid = false;
         try {
-            const payment = await razorpayService.getPayment(accessToken, razorpay_payment_id);
-            
-            if (payment.order_id === razorpay_order_id && (payment.status === "captured" || payment.status === "authorized")) {
+            const crypto = require("crypto");
+            const clientSecret = process.env.RAZORPAY_CLIENT_SECRET;
+            const generatedSignature = crypto
+                .createHmac("sha256", clientSecret)
+                .update(razorpay_order_id + "|" + razorpay_payment_id)
+                .digest("hex");
+
+            if (generatedSignature === razorpay_signature) {
                 isValid = true;
             }
         } catch (error) {
-            console.error("Error fetching payment from Razorpay API:", error.message);
+            console.error("Error verifying Razorpay signature:", error.message);
         }
 
         if (!isValid) {
