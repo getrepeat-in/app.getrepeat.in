@@ -171,21 +171,6 @@ const RestaurantSchema = new Schema(
       ],
     },
 
-    instagram: {
-      userId: { type: String, default: null },
-      accessToken: { type: String, default: null },
-      tokenExpiresAt: { type: Date, default: null },
-      username: { type: String, default: null },
-      connectedAt: { type: Date, default: null }
-    },
-
-    razorpay: {
-      accountId: { type: String, default: null },
-      accessToken: { type: String, default: null },
-      refreshToken: { type: String, default: null },
-      connectedAt: { type: Date, default: null }
-    },
-
     createdBy: {
       type: String,
       required: true,

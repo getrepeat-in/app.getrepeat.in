@@ -66,6 +66,14 @@ export const API_ENDPOINTS = {
         DELETE: (resId, promotionId) => `/api/restaurant/${resId}/promotions/${promotionId}`,
     },
     PAYMENTS: {
-        RAZORPAY_CONNECT: (resId) => `/api/restaurant/${resId}/payments/razorpay/connect`,
+        RAZORPAY: {
+            CONNECT: (resId) => `/api/restaurant/${resId}/integrations/razorpay/connect`,
+            CALLBACK: "/api/payments/razorpay/callback"
+        }
+    },
+    INTEGRATIONS: {
+        GET: (resId) => `/api/restaurant/${resId}/integrations`,
+        UPDATE: (resId) => `/api/restaurant/${resId}/integrations`,
+        INSTAGRAM_CONNECT: (resId) => `/api/restaurant/${resId}/integrations/instagram/auth`
     }
-}
+};

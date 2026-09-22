@@ -2,6 +2,7 @@ import dbConnect from "@/lib/db";
 import { encrypt } from "@/lib/crypto";
 import { NextResponse } from "next/server";
 import Restaurant from "@/models/Restaurant";
+import Integration from "@/models/Integration";
 import { invalidateRestaurantCache } from "@/lib/api/helpers/cacheKeys";
 import { instagramService } from "@/services/backend/social/instagram.service";
 
@@ -68,15 +69,19 @@ export const GET = async (req) => {
             return buildRedirect("ig_error=token_exchange_failed");
         }
         
-        restaurant.instagram = {
-            userId: instagramData.userId,
-            accessToken: encrypt(instagramData.accessToken),
-            tokenExpiresAt: instagramData.tokenExpiresAt,
-            username: instagramData.username,
-            connectedAt: new Date()
-        };
-        
-        await restaurant.save();
+        await Integration.findOneAndUpdate(
+            { restaurantId },
+            {
+                $set: {
+                    "instagram.userId": instagramData.userId,
+                    "instagram.accessToken": encrypt(instagramData.accessToken),
+                    "instagram.tokenExpiresAt": instagramData.tokenExpiresAt,
+                    "instagram.username": instagramData.username,
+                    "instagram.connectedAt": new Date()
+                }
+            },
+            { upsert: true, new: true }
+        );
 
         await invalidateRestaurantCache({
             userId: restaurant.createdBy,

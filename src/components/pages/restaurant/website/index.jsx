@@ -11,6 +11,7 @@ import OrderingSection from "./fragments/OrderingSection";
 import { useRestaurant } from "@/store/hooks/useRestaurant";
 import { useFormMutation } from "@/store/hooks/useFormMutation";
 import SocialLinksSection from "./fragments/SocialLinksSection";
+import { integrationService } from "@/services/frontend/integration";
 import { WebsiteConfigService } from "@/services/frontend/website-config";
 
 const WebsiteConfigPage = () => {
@@ -27,8 +28,15 @@ const WebsiteConfigPage = () => {
     enabled: !!restaurantId,
   });
 
+  const { data: integrationsData } = useQuery({
+    queryKey: ["integrations", restaurantId],
+    queryFn: () => integrationService.getIntegrations(restaurantId),
+    enabled: !!restaurantId,
+  });
+
   const activeRestaurant = restaurants?.find(r => r._id === restaurantId);
   const configData = data?.data || data;
+  const isRazorpayConnected = integrationsData?.razorpay?.isLinked || false;
 
   const { mutate, isPending } = useFormMutation({
     mutationFn: (payload) => WebsiteConfigService.updateWebsiteConfig(restaurantId, payload),
@@ -141,7 +149,7 @@ const WebsiteConfigPage = () => {
         <div className="bg-white dark:bg-zinc-900 rounded-xl border border-border/40 shadow-sm p-5 md:p-8 space-y-12">
           <BannerSection formik={formik} />
           <ThemeSection formik={formik} />
-          <OrderingSection formik={formik} isRazorpayConnected={!!activeRestaurant?.razorpay?.accountId} restaurantId={restaurantId} />
+          <OrderingSection formik={formik} isRazorpayConnected={isRazorpayConnected} restaurantId={restaurantId} />
           <SocialLinksSection formik={formik} />
         </div>
       </div>

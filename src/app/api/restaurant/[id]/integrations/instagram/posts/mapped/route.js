@@ -1,14 +1,16 @@
 import MenuItem from "@/models/Item";
 import { decrypt } from "@/lib/crypto";
+import Integration from "@/models/Integration";
 import { getRestaurant } from "@/lib/api/hooks/getRestaurant";
 import InstagramPostMapping from "@/models/InstagramPostMapping";
 import { withErrorHandler, successResponse } from "@/lib/api/response-handler";
 
 export const GET = withErrorHandler(async (req, { params }) => {
     const { id } = await params;
-    const { restaurant } = await getRestaurant({ restaurantId: id });
+    await getRestaurant({ restaurantId: id });
 
-    const instagram = restaurant?.instagram;
+    const integration = await Integration.findOne({ restaurantId: id }).lean();
+    const instagram = integration?.instagram;
 
     if (!instagram || !instagram.accessToken) {
         return successResponse({

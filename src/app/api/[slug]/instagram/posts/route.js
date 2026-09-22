@@ -2,6 +2,7 @@ import dbConnect from "@/lib/db";
 import MenuItem from "@/models/Item";
 import { decrypt } from "@/lib/crypto";
 import Restaurant from "@/models/Restaurant";
+import Integration from "@/models/Integration";
 import InstagramPostMapping from "@/models/InstagramPostMapping";
 import { getCache, setCache } from "@/services/backend/redis/cache.service";
 import { withErrorHandler, successResponse, BadRequestError, RestaurantNotFoundError, NotFoundError, UnauthorizedError, AppError } from "@/lib/api/response-handler";
@@ -21,13 +22,14 @@ export const GET = withErrorHandler(async (req, { params }) => {
     }
 
     await dbConnect();
-    const restaurant = await Restaurant.findOne({ slug }).select("instagram").lean();
+    const restaurant = await Restaurant.findOne({ slug }).select("_id").lean();
     
     if (!restaurant) {
         throw new RestaurantNotFoundError();
     }
 
-    const instagram = restaurant.instagram;
+    const integration = await Integration.findOne({ restaurantId: restaurant._id }).lean();
+    const instagram = integration?.instagram;
 
     if (!instagram || !instagram.accessToken) {
         throw new NotFoundError("Instagram account not connected");

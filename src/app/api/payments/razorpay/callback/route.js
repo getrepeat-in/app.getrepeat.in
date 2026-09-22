@@ -2,6 +2,7 @@ import dbConnect from "@/lib/db";
 import { encrypt } from "@/lib/crypto";
 import { NextResponse } from "next/server";
 import Restaurant from "@/models/Restaurant";
+import Integration from "@/models/Integration";
 import { razorpayService } from "@/services/backend/payments/razorpay";
 
 export async function GET(req) {
@@ -38,8 +39,14 @@ export async function GET(req) {
     const encryptedAccessToken = encrypt(tokenData.access_token);
     const encryptedRefreshToken = encrypt(tokenData.refresh_token);
     await dbConnect();
-    const updatedRestaurant = await Restaurant.findByIdAndUpdate(
-      restaurantId,
+    
+    const restaurant = await Restaurant.findById(restaurantId);
+    if (!restaurant) {
+      return NextResponse.json({ message: "Restaurant not found" }, { status: 404 });
+    }
+
+    await Integration.findOneAndUpdate(
+      { restaurantId },
       {
         $set: {
           "razorpay.accountId": tokenData.razorpay_account_id,
@@ -48,13 +55,9 @@ export async function GET(req) {
           "razorpay.connectedAt": new Date()
         }
       },
-      { new: true, runValidators: false }
+      { upsert: true, new: true }
     );
 
-    if (!updatedRestaurant) {
-      return NextResponse.json({ message: "Restaurant not found" }, { status: 404 });
-    }
-    
     const redirectUrl = new URL("/restaurant/website?razorpay_success=true", req.url);
     return NextResponse.redirect(redirectUrl);
 
