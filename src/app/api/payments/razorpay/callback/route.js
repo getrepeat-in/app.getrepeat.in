@@ -13,7 +13,7 @@ export async function GET(req) {
     
     if (error) {
       console.error("[Razorpay Callback] OAuth error:", error);
-      return NextResponse.redirect(new URL("/settings?razorpay_error=access_denied", req.url));
+      return NextResponse.redirect(new URL("/restaurant/website?razorpay_error=access_denied", req.url));
     }
 
     if (!code || !state) {
@@ -55,11 +55,11 @@ export async function GET(req) {
       return NextResponse.json({ message: "Restaurant not found" }, { status: 404 });
     }
     
-    const redirectUrl = new URL(`/restaurant/${restaurantId}/settings?razorpay_success=true`, req.url);
+    const redirectUrl = new URL("/restaurant/website?razorpay_success=true", req.url);
     return NextResponse.redirect(redirectUrl);
 
   } catch (error) {
     console.error("[Razorpay Callback] Critical error:", error);
-    return NextResponse.redirect(new URL("/settings?razorpay_error=internal_error", req.url));
+    return NextResponse.redirect(new URL("/restaurant/website?razorpay_error=internal_error", req.url));
   }
 }
