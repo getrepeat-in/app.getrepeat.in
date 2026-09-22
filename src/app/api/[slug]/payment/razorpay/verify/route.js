@@ -1,5 +1,7 @@
 import dbConnect from "@/lib/db";
+import { decrypt } from "@/lib/crypto";
 import Restaurant from "@/models/Restaurant";
+import Integration from "@/models/Integration";
 import { OrderService } from "@/services/backend/order";
 import { razorpayService } from "@/services/backend/payments/razorpay";
 import { successResponse, errorResponse } from "@/lib/api/response-handler";
@@ -8,13 +10,9 @@ import { backendIntegrationService } from "@/services/backend/integration";
 export const POST = async (req, { params }) => {
     try {
         const body = await req.json();
-        const domain = (await params).domain || body.domain;
-        const {
-            razorpay_order_id,
-            razorpay_payment_id,
-            razorpay_signature,
-            orderData,
-        } = body;
+        const resolvedParams = params ? await params : {};
+        const domain = resolvedParams.slug || body.domain;
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderData } = body;
 
         if (!domain) {
             return errorResponse("Restaurant slug is required!", 400);
@@ -34,14 +32,23 @@ export const POST = async (req, { params }) => {
             return errorResponse("Restaurant not found", 404);
         }
 
-        const integrations = await backendIntegrationService.getIntegrations(restaurant._id);
-        const accessToken = integrations?.razorpay?.accessToken;
+        const integration = await Integration.findOne({ restaurantId: restaurant._id }).lean();
+        const encryptedAccessToken = integration?.razorpay?.accessToken;
+        const accountId = integration?.razorpay?.accountId;
 
-        if (!accessToken || !integrations?.razorpay?.isLinked) {
+        if (!encryptedAccessToken || !accountId) {
             return errorResponse(
                 "This restaurant has not connected a Razorpay account.",
                 400
             );
+        }
+
+        let accessToken;
+        try {
+            accessToken = decrypt(encryptedAccessToken);
+        } catch (e) {
+            console.error("Failed to decrypt access token:", e);
+            return errorResponse("Invalid Razorpay integration configuration.", 500);
         }
 
         let isValid = false;

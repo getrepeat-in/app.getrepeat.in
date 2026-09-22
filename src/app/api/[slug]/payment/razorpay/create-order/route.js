@@ -1,14 +1,17 @@
 import dbConnect from "@/lib/db";
 import Restaurant from "@/models/Restaurant";
+import Integration from "@/models/Integration";
 import { razorpayService } from "@/services/backend/payments/razorpay";
 import { backendIntegrationService } from "@/services/backend/integration";
 import { successResponse, errorResponse } from "@/lib/api/response-handler";
+import { decrypt } from "@/lib/crypto";
 
 export const POST = async (req, { params }) => {
     try {
         const body = await req.json();
+        // Safely access params if it exists
         const resolvedParams = params ? await params : {};
-        const domain = resolvedParams.domain || body.domain;
+        const domain = resolvedParams.slug || body.domain;
         const { amount, currency = "INR", notes = {} } = body;
 
         if (!domain) {
@@ -26,14 +29,23 @@ export const POST = async (req, { params }) => {
             return errorResponse("Restaurant not found", 404);
         }
 
-        const integrations = await backendIntegrationService.getIntegrations(restaurant._id);
-        const accessToken = integrations?.razorpay?.accessToken;
+        const integration = await Integration.findOne({ restaurantId: restaurant._id }).lean();
+        const encryptedAccessToken = integration?.razorpay?.accessToken;
+        const accountId = integration?.razorpay?.accountId;
 
-        if (!accessToken || !integrations?.razorpay?.isLinked) {
+        if (!encryptedAccessToken || !accountId) {
             return errorResponse(
                 "This restaurant has not connected a Razorpay account.",
                 400
             );
+        }
+
+        let accessToken;
+        try {
+            accessToken = decrypt(encryptedAccessToken);
+        } catch (e) {
+            console.error("Failed to decrypt access token:", e);
+            return errorResponse("Invalid Razorpay integration configuration.", 500);
         }
 
         const amountInPaise = Math.round(Number(amount) * 100);

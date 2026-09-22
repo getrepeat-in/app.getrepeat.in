@@ -36,7 +36,7 @@ class RazorpayService {
         client_secret: this.clientSecret,
         grant_type: "authorization_code",
         redirect_uri: this.redirectUri,
-        code: decodeURIComponent(code), 
+        code: decodeURIComponent(code),
         mode: process.env.NODE_ENV === "production" ? "live" : "test"
       }, {
         headers: {
@@ -80,7 +80,8 @@ class RazorpayService {
       throw new Error("Access token is required to create a Razorpay order");
     }
     try {
-      const response = await axios.post("https://api.razorpay.com/v1/orders", options, {
+      const mode = process.env.NODE_ENV === "production" ? "live" : "test";
+      const response = await axios.post(`https://api.razorpay.com/v1/orders?mode=${mode}`, options, {
         headers: {
           "Authorization": `Bearer ${accessToken}`,
           "Content-Type": "application/json"
@@ -98,7 +99,8 @@ class RazorpayService {
       throw new Error("Access token and payment ID are required to fetch a Razorpay payment");
     }
     try {
-      const response = await axios.get(`https://api.razorpay.com/v1/payments/${paymentId}`, {
+      const mode = process.env.NODE_ENV === "production" ? "live" : "test";
+      const response = await axios.get(`https://api.razorpay.com/v1/payments/${paymentId}?mode=${mode}`, {
         headers: {
           "Authorization": `Bearer ${accessToken}`
         }
