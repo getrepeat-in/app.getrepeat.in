@@ -3,9 +3,9 @@ import { UtensilsCrossed, ShoppingBag, Globe } from "lucide-react";
 export const PAGE_SIZE = 24;
 
 export const ORDER_TYPE_MAP = {
-    "dine-in": { label: "DINE-IN", color: "bg-orange-50 text-orange-600 border-b border-orange-100", icon: UtensilsCrossed },
-    "takeaway": { label: "TAKEAWAY", color: "bg-purple-50 text-purple-600 border-b border-purple-100", icon: ShoppingBag },
-    "delivery": { label: "DELIVERY", color: "bg-cyan-50 text-cyan-600 border-b border-cyan-100", icon: Globe },
+    "DINE_IN": { label: "DINE_IN", color: "bg-orange-50 text-orange-600 border-b border-orange-100", icon: UtensilsCrossed },
+    "TAKEAWAY": { label: "TAKEAWAY", color: "bg-purple-50 text-purple-600 border-b border-purple-100", icon: ShoppingBag },
+    "DELIVERY": { label: "DELIVERY", color: "bg-cyan-50 text-cyan-600 border-b border-cyan-100", icon: Globe },
 };
 
 export const ORDER_TAB_FILTERS = [

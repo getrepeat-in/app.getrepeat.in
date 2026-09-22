@@ -19,24 +19,46 @@ const LocationTab = ({ locationData }) => {
     successMessage: "Location information updated successfully!"
   });
 
-  const formik = useFormik({
-    initialValues: {
+    const initialValues = {
       street: locationData?.street || "",
       city: locationData?.city || "",
       state: locationData?.state || "",
       postalCode: locationData?.postalCode || "",
       country: locationData?.country || "IN",
-      lat: locationData?.lat || "",
-      long: locationData?.long || "",
-    },
-    enableReinitialize: true,
-    onSubmit: (values, { resetForm }) => {
-      if (!restaurantId) return;
-      mutate({ address: values }, {
-        onSuccess: () => resetForm({ values }),
-      });
-    },
-  });
+      lat: locationData?.location?.coordinates?.[1] || "",
+      long: locationData?.location?.coordinates?.[0] || "",
+    };
+
+    const formik = useFormik({
+      initialValues,
+      enableReinitialize: true,
+      onSubmit: (values, { resetForm }) => {
+        if (!restaurantId) return;
+        
+        const addressPayload = {
+          street: values.street,
+          city: values.city,
+          state: values.state,
+          postalCode: values.postalCode,
+          country: values.country,
+        };
+
+        if (values.lat && values.long) {
+          const lat = parseFloat(values.lat);
+          const lng = parseFloat(values.long);
+          if (!isNaN(lat) && !isNaN(lng)) {
+            addressPayload.location = {
+              type: "Point",
+              coordinates: [lng, lat]
+            };
+          }
+        }
+
+        mutate({ address: addressPayload }, {
+          onSuccess: () => resetForm({ values }),
+        });
+      },
+    });
 
   return (
     <form onSubmit={formik.handleSubmit} className="flex flex-col">

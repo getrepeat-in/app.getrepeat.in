@@ -1,8 +1,8 @@
 import { cn } from "@/lib/utils";
 import { useState, useMemo } from "react";
-import { ChevronRight, ChevronDown, Check, Minus, Layers } from "lucide-react";
+import { ChevronRight, ChevronDown, Check, Minus, Layers, X } from "lucide-react";
 
-export const NestedItemSelection = ({ items, categories, selectedItems, onToggleItem, onToggleCategory }) => {
+export const NestedItemSelection = ({ items, categories, selectedItems, onToggleItem, onToggleCategory, addonGroups, onUnmapSingle, removingMappings }) => {
     const [expandedCats, setExpandedCats] = useState({});
     const [expandedSubCats, setExpandedSubCats] = useState({});
 
@@ -136,12 +136,42 @@ export const NestedItemSelection = ({ items, categories, selectedItems, onToggle
                                                                 <div 
                                                                     onClick={() => onToggleItem(itemId)}
                                                                     className={cn(
-                                                                        "flex items-center gap-3 py-2 px-3 rounded-lg cursor-pointer transition-colors group",
+                                                                        "flex flex-col gap-1.5 py-2 px-3 rounded-lg cursor-pointer transition-colors group",
                                                                         isSelected ? "bg-slate-100 dark:bg-zinc-800" : "hover:bg-slate-50 dark:hover:bg-zinc-900/50"
                                                                     )}
                                                                 >
-                                                                    {renderCheckbox(isSelected, false)}
-                                                                    <span className={cn("text-[14px] truncate transition-colors", isSelected ? "text-slate-900 font-medium dark:text-white" : "text-slate-600 font-medium group-hover:text-slate-900 dark:text-gray-300 dark:group-hover:text-white")}>{item.name}</span>
+                                                                    <div className="flex items-center gap-3">
+                                                                        {renderCheckbox(isSelected, false)}
+                                                                        <span className={cn("text-[14px] truncate transition-colors", isSelected ? "text-slate-900 font-medium dark:text-white" : "text-slate-600 font-medium group-hover:text-slate-900 dark:text-gray-300 dark:group-hover:text-white")}>{item.name}</span>
+                                                                    </div>
+                                                                    {addonGroups && item.addonGroups?.length > 0 && (
+                                                                        <div className="pl-7 flex flex-wrap gap-1.5">
+                                                                            {item.addonGroups.map(agId => {
+                                                                                const agObj = typeof agId === 'object' ? agId : addonGroups.find(ag => ag._id === agId || ag.id === agId);
+                                                                                if (!agObj) return null;
+                                                                                const gId = agObj._id || agObj.id;
+                                                                                if (removingMappings?.has(`${itemId}:${gId}`)) return null;
+                                                                                return (
+                                                                                    <span
+                                                                                        key={gId}
+                                                                                        className="inline-flex items-center gap-1 text-[10px] bg-primary/5 text-primary/70 border border-primary/10 px-1.5 py-0.5 rounded max-w-[140px]"
+                                                                                    >
+                                                                                        <span className="truncate">{agObj.name}</span>
+                                                                                        {onUnmapSingle && (
+                                                                                            <button
+                                                                                                type="button"
+                                                                                                onClick={(e) => { e.stopPropagation(); onUnmapSingle(itemId, gId); }}
+                                                                                                className="shrink-0 text-primary/50 hover:text-destructive transition-colors"
+                                                                                                title={`Remove ${agObj.name}`}
+                                                                                            >
+                                                                                                <X className="w-2.5 h-2.5" />
+                                                                                            </button>
+                                                                                        )}
+                                                                                    </span>
+                                                                                );
+                                                                            })}
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                         );
@@ -162,12 +192,42 @@ export const NestedItemSelection = ({ items, categories, selectedItems, onToggle
                                                     <div 
                                                         onClick={() => onToggleItem(itemId)}
                                                         className={cn(
-                                                            "flex items-center gap-3 py-2 px-3 rounded-lg cursor-pointer transition-colors group",
+                                                            "flex flex-col gap-1.5 py-2 px-3 rounded-lg cursor-pointer transition-colors group",
                                                             isSelected ? "bg-slate-100 dark:bg-zinc-800" : "hover:bg-slate-50 dark:hover:bg-zinc-900/50"
                                                         )}
                                                     >
-                                                        {renderCheckbox(isSelected, false)}
-                                                        <span className={cn("text-[14px] truncate transition-colors", isSelected ? "text-slate-900 font-medium dark:text-white" : "text-slate-600 font-medium group-hover:text-slate-900 dark:text-gray-300 dark:group-hover:text-white")}>{item.name}</span>
+                                                        <div className="flex items-center gap-3">
+                                                            {renderCheckbox(isSelected, false)}
+                                                            <span className={cn("text-[14px] truncate transition-colors", isSelected ? "text-slate-900 font-medium dark:text-white" : "text-slate-600 font-medium group-hover:text-slate-900 dark:text-gray-300 dark:group-hover:text-white")}>{item.name}</span>
+                                                        </div>
+                                                        {addonGroups && item.addonGroups?.length > 0 && (
+                                                            <div className="pl-7 flex flex-wrap gap-1.5">
+                                                                {item.addonGroups.map(agId => {
+                                                                    const agObj = typeof agId === 'object' ? agId : addonGroups.find(ag => ag._id === agId || ag.id === agId);
+                                                                    if (!agObj) return null;
+                                                                    const gId = agObj._id || agObj.id;
+                                                                    if (removingMappings?.has(`${itemId}:${gId}`)) return null;
+                                                                    return (
+                                                                        <span
+                                                                            key={gId}
+                                                                            className="inline-flex items-center gap-1 text-[10px] bg-primary/5 text-primary/70 border border-primary/10 px-1.5 py-0.5 rounded max-w-[140px]"
+                                                                        >
+                                                                            <span className="truncate">{agObj.name}</span>
+                                                                            {onUnmapSingle && (
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={(e) => { e.stopPropagation(); onUnmapSingle(itemId, gId); }}
+                                                                                    className="shrink-0 text-primary/50 hover:text-destructive transition-colors"
+                                                                                    title={`Remove ${agObj.name}`}
+                                                                                >
+                                                                                    <X className="w-2.5 h-2.5" />
+                                                                                </button>
+                                                                            )}
+                                                                        </span>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             );

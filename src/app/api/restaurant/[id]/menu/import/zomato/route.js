@@ -1,17 +1,16 @@
+import fs from "fs";
 import axios from "axios";
 import crypto from "crypto";
 import dbConnect from "@/lib/db";
 import MenuItem from "@/models/Item";
 import Category from "@/models/Category";
 import ImageAsset from "@/models/Image";
+import AddonGroup from "@/models/AddonGroup";
+import Restaurant from "@/models/Restaurant";
 import { uploadToS3 } from "@/services/backend/s3";
 import { getRestaurant } from "@/lib/api/hooks/getRestaurant";
-import { invalidateCategoryCache, invalidateItemCache } from "@/lib/api/helpers/cacheKeys";
-import { 
-  withErrorHandler, 
-  successResponse, 
-  BadRequestError 
-} from "@/lib/api/response-handler";
+import { withErrorHandler, successResponse, BadRequestError } from "@/lib/api/response-handler";
+import { invalidateCategoryCache, invalidateItemCache, invalidateAddonGroupCache } from "@/lib/api/helpers/cacheKeys";
 
 const parseVariantGroups = (itemData) => {
   if (!itemData || !Array.isArray(itemData.groups)) {
@@ -73,6 +72,11 @@ export const GET = withErrorHandler(async (req, { params }) => {
     throw new BadRequestError("pageUrl query parameter is required");
   }
 
+  const importItems = searchParams.get("items") !== "false";
+  const importMedia = searchParams.get("media") !== "false";
+  const importAddons = searchParams.get("addons") !== "false";
+  const importAddress = searchParams.get("address") !== "false";
+
   const pageUrl = getNormalizedUrl(pageUrlParam);
 
   const response = await axios.get(
@@ -94,11 +98,34 @@ export const GET = withErrorHandler(async (req, { params }) => {
   );
 
   const menus = response?.data?.page_data?.order?.menuList?.menus || [];
+  const modifierGroups = response?.data?.page_data?.order?.menuList?.modifierGroups || {};
+  const resContactInfo = response?.data?.page_data?.sections?.SECTION_RES_CONTACT || {};
+
+  if (importAddress && (resContactInfo.city_name || resContactInfo.address)) {
+    const lat = parseFloat(resContactInfo.latitude);
+    const lng = parseFloat(resContactInfo.longitude);
+    
+    const updateData = {
+      "address.city": resContactInfo.city_name || "",
+      "address.street": resContactInfo.address || "",
+      "address.country": "IN"
+    };
+
+    if (!isNaN(lng) && !isNaN(lat)) {
+      updateData["address.location.type"] = "Point";
+      updateData["address.location.coordinates"] = [lng, lat];
+    }
+
+    await Restaurant.findByIdAndUpdate(id, { $set: updateData });
+  }
 
   let categoriesImported = 0;
   let itemsImported = 0;
+  let addonGroupsImported = 0;
 
-  for (const [menuIndex, menuWrapper] of menus.entries()) {
+  const itemNameToId = {};
+  const menusToProcess = importItems ? menus : [];
+  for (const [menuIndex, menuWrapper] of menusToProcess.entries()) {
     const menu = menuWrapper?.menu || {};
     if (!menu.name) continue;
 
@@ -146,7 +173,7 @@ export const GET = withErrorHandler(async (req, { params }) => {
           zomatoImageUrl = itemData.media.url;
         }
 
-        if (zomatoImageUrl) {
+        if (zomatoImageUrl && importMedia) {
           try {
             const imgResp = await axios.get(zomatoImageUrl, { responseType: "arraybuffer" });
             const buffer = Buffer.from(imgResp.data, "binary");
@@ -160,12 +187,7 @@ export const GET = withErrorHandler(async (req, { params }) => {
 
             const imageAsset = await ImageAsset.create({
               restaurant: id,
-              original: {
-                key: s3Result.key,
-                mimeType: s3Result.contentType,
-                sizeBytes: buffer.length,
-              },
-              status: "PENDING",
+              original: s3Result.key,
             });
             image = imageAsset._id;
           } catch (err) {
@@ -192,14 +214,78 @@ export const GET = withErrorHandler(async (req, { params }) => {
           displayOrder: itemIndex,
           isAvailable: true,
         };
-        await MenuItem.create(itemPayload);
+        const savedItem = await MenuItem.create(itemPayload);
         itemsImported++;
+
+        itemNameToId[itemData.name.trim().toLowerCase()] = savedItem._id;
       }
+    }
+  }
+
+  const modifierGroupEntries = importAddons ? Object.values(modifierGroups) : [];
+
+  for (const groupWrapper of modifierGroupEntries) {
+    const group = groupWrapper?.group;
+    if (!group?.name) continue;
+
+    const zItems = Array.isArray(group.items) ? group.items : [];
+    const resolvedItems = [];
+    for (const itemWrapper of zItems) {
+      const zItem = itemWrapper?.item;
+      if (!zItem?.name) continue;
+      const matchedId = itemNameToId[zItem.name.trim().toLowerCase()];
+      const price = zItem.price || zItem.default_price || zItem.display_price || zItem.min_price || 0;
+
+      let dietaryType = "non-veg";
+      if (
+        zItem.dietary_slugs?.includes("veg") || 
+        zItem.dietary_slugs?.includes("vegan") ||
+        zItem.tag_slugs?.includes("veg") ||
+        zItem.tag_slugs?.includes("vegan")
+      ) {
+        dietaryType = "veg";
+      } else if (
+        zItem.dietary_slugs?.includes("egg") ||
+        zItem.tag_slugs?.includes("egg")
+      ) {
+        dietaryType = "egg";
+      }
+
+      resolvedItems.push({
+        item: matchedId || null,     
+        name: zItem.name,
+        description: zItem.desc || "",
+        price,
+        isFree: price === 0,
+        dietaryType, 
+        displayOrder: resolvedItems.length,
+      });
+    }
+
+    const selectionType = group.max === 1 ? "single" : "multiple";
+
+    const newAddonGroup = await AddonGroup.create({
+      restaurant: id,
+      name: group.name,
+      selectionType,
+      minSelection: group.min ?? 0,
+      maxSelection: group.max ?? null,
+      items: resolvedItems,
+    });
+    addonGroupsImported++;
+
+    const linkedItemIds = resolvedItems.filter(r => r.item).map(r => r.item);
+    if (linkedItemIds.length > 0) {
+      await MenuItem.updateMany(
+        { _id: { $in: linkedItemIds }, restaurant: id },
+        { $addToSet: { addonGroups: newAddonGroup._id } }
+      );
     }
   }
 
   await invalidateCategoryCache(id);
   await invalidateItemCache(id);
+  await invalidateAddonGroupCache(id);
 
   return successResponse(
     {
@@ -207,6 +293,7 @@ export const GET = withErrorHandler(async (req, { params }) => {
       stats: {
         categoriesImported,
         itemsImported,
+        addonGroupsImported,
       },
     },
     "Menu imported successfully"

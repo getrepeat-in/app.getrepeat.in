@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { FolderPlus, Plus } from "lucide-react";
 import { useCategory } from "@/store/hooks/useCategory";
 import EmptyState from "@/components/global/empty-state";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { useRestaurant } from "@/store/hooks/useRestaurant";
 import { CategoryFormPopover } from "../fragments/category-form-popover";
 
-const CategoryView = ({ activeCategory, setActiveCategory, activeSubCategory, setActiveSubCategory }) => {
+const CategoryView = ({ activeCategory, setActiveCategory, activeSubCategory, setActiveSubCategory, isCollapsed }) => {
     const { restaurantId } = useRestaurant();
     const { categories, isLoading, addCategory, updateCategory, deleteCategory } = useCategory(restaurantId);
     const [expandedCategoryId, setExpandedCategoryId] = useState(null);
@@ -61,26 +62,29 @@ const CategoryView = ({ activeCategory, setActiveCategory, activeSubCategory, se
 
     return (
         <div className="space-y-2">
-            {categories?.map((category, index) => (
-                <CategoryCard 
-                    key={category.id || index} 
-                    category={category} 
-                    index={index}
-                    isExpanded={expandedCategoryId === category.id}
-                    onToggleExpand={() =>
-                        setExpandedCategoryId(expandedCategoryId === category.id ? null : category.id)
-                    }
-                    activeCategory={activeCategory}
-                    setActiveCategory={setActiveCategory}
-                    activeSubCategory={activeSubCategory}
-                    setActiveSubCategory={setActiveSubCategory}
-                    updateCategory={updateCategory}
-                    deleteCategory={deleteCategory}
-                    addSubCategory={addSubCategory}
-                    updateSubCategory={updateSubCategory}
-                    deleteSubCategory={deleteSubCategory}
-                />
-            ))}
+            <TooltipProvider delayDuration={200}>
+                {categories?.map((category, index) => (
+                    <CategoryCard 
+                        key={category.id || index} 
+                        category={category} 
+                        index={index}
+                        isExpanded={expandedCategoryId === category.id}
+                        onToggleExpand={() =>
+                            setExpandedCategoryId(expandedCategoryId === category.id ? null : category.id)
+                        }
+                        activeCategory={activeCategory}
+                        setActiveCategory={setActiveCategory}
+                        activeSubCategory={activeSubCategory}
+                        setActiveSubCategory={setActiveSubCategory}
+                        updateCategory={updateCategory}
+                        deleteCategory={deleteCategory}
+                        addSubCategory={addSubCategory}
+                        updateSubCategory={updateSubCategory}
+                        deleteSubCategory={deleteSubCategory}
+                        isCollapsed={isCollapsed}
+                    />
+                ))}
+            </TooltipProvider>
         </div>
     );
 };

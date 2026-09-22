@@ -1,6 +1,9 @@
 import { OrderService } from "@/services/backend/order";
 import { getRestaurant } from "@/lib/api/hooks/getRestaurant";
+import { validateRequiredFields } from "@/lib/api/helpers/validator";
 import { withErrorHandler, successResponse, BadRequestError } from "@/lib/api/response-handler";
+
+const ORDER_POST_REQUIRED_FIELDS = ["orderType", "items", "subtotal", "totalAmount"];
 
 export const GET = withErrorHandler(async (req, { params }) => {
   const { id } = await params;
@@ -40,6 +43,19 @@ export const POST = withErrorHandler(async (req, { params }) => {
   const { user } = await getRestaurant({ restaurantId: id });
   const data = await req.json();
 
+  const { isValid, message } = validateRequiredFields(data, ORDER_POST_REQUIRED_FIELDS);
+  if (!isValid) throw new BadRequestError(message);
+
+  const staff = await dbConnect().then(() => import("@/models/Staff").then(m => m.Staff.findOne({
+    restaurant: id,
+    $or: [
+      { clerkUserId: user.id },
+      { email: user.emailAddresses?.[0]?.emailAddress },
+    ],
+  }).select("_id").lean()));
+  
+  const updatedByStaff = staff?._id || null;
+
   const order = await OrderService.createOrder({
     restaurantId: id,
     orderType: data.orderType,
@@ -51,11 +67,11 @@ export const POST = withErrorHandler(async (req, { params }) => {
     tax: data.tax,
     discount: data.discount,
     totalAmount: data.totalAmount,
-    paymentMethod: data.paymentMethod || "cash",
-    paymentStatus: data.paymentStatus || "pending",
+    paymentMethod: data.paymentMethod || "CASH",
+    paymentStatus: data.paymentStatus || "PENDING",
     specialInstructions: data.specialInstructions || "",
     initialStatus: data.status || null,
-    updatedBy: user.id,
+    updatedByStaff,
   });
 
   return successResponse(order, "Order created successfully", 201);

@@ -1,8 +1,8 @@
-import { useState, useMemo } from "react";
 import { Search, X } from "lucide-react";
+import { useState, useMemo } from "react";
 import { NestedItemSelection } from "@/components/global/nested-item-selector";
 
-export function AssignAddons({ categories, items, targetItems, setTargetItems }) {
+export function AssignAddons({ categories, items, targetItems, setTargetItems, addonGroups, onUnmapSingle, removingMappings }) {
     const [searchQuery, setSearchQuery] = useState("");
 
     const allItemIds = useMemo(() => items.map(i => String(i._id || i.id)), [items]);
@@ -35,7 +35,7 @@ export function AssignAddons({ categories, items, targetItems, setTargetItems })
     const handleClearAll = () => setTargetItems([]);
 
     return (
-        <div className="w-1/2 h-full flex flex-col bg-slate-50/60 border-l border-border/60">
+        <div className="w-full lg:w-1/2 min-h-[500px] lg:min-h-0 h-auto lg:h-full flex flex-col bg-slate-50/60 border-t lg:border-t-0 lg:border-l border-border/60 shrink-0 lg:shrink">
             <div className="flex flex-col border-b border-border/60 bg-white">
                 <div className="flex items-center justify-between px-5 pt-4 pb-3">
                     <h3 className="font-bold text-[15px] text-foreground">2. Select Target Items</h3>
@@ -88,6 +88,9 @@ export function AssignAddons({ categories, items, targetItems, setTargetItems })
                         selectedItems={targetItems}
                         onToggleItem={handleToggleItem}
                         onToggleCategory={handleToggleCategory}
+                        addonGroups={addonGroups}
+                        onUnmapSingle={onUnmapSingle}
+                        removingMappings={removingMappings}
                     />
                 )}
             </div>

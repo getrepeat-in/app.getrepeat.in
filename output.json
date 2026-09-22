@@ -1,0 +1,25 @@
+{
+  "response": {
+    "city_id": 1,
+    "city_name": "New Delhi",
+    "country_id": 1,
+    "country_name": "India",
+    "zipcode": "",
+    "is_dark_kitchen": false,
+    "locality_verbose": "Connaught Place, New Delhi",
+    "latitude": "28.6312810054",
+    "longitude": "77.2159631923",
+    "static_map_url": "https://maps.zomato.com/php/staticmap?center=28.6312810054,77.2159631923&maptype=zomato&markers=28.6312810054,77.2159631923,pin_res32&sensor=false&scale=2&zoom=16&language=en&size=240x150&size=400x240",
+    "address": "P 2/90, Circus, Opposite PVR Revoli Cinema, Connaught Place, New Delhi",
+    "is_phone_available": 1,
+    "phoneDetails": {
+      "title": "Phone Numbers",
+      "phoneStr": "+911141516628"
+    },
+    "res_chain_text": "See all 41 Andhra Kodi Pulao outlets in Delhi NCR",
+    "res_group_text": "",
+    "res_chain_url": "https://www.zomato.com/ncr/restaurants/andhra-kodi-pulao",
+    "res_group_url": "",
+    "show_res_map": true
+  }
+}

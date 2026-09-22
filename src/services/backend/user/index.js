@@ -9,7 +9,7 @@ import { BadRequestError, ConflictError, NotFoundError } from "@/lib/api/respons
 
 const POPULATE_USER_IMAGE = {
   path: "image",
-  select: "variants original blurHash status key",
+  select: "original thumbnail card detail",
 };
 
 export class UserService {

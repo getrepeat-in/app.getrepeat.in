@@ -66,12 +66,12 @@ export default function ItemDetails({ item, updateField, onDelete }) {
                         </div>
                     </div>
 
-                    <input
-                        type="text"
+                    <textarea
                         value={item?.description || ""}
                         onChange={(e) => updateField("description", e.target.value)}
                         placeholder="Description"
-                        className={`w-full text-sm placeholder:text-gray-400 outline-none bg-transparent ${!item?.description?.trim() ? "border-b border-red-500 text-red-500" : "text-gray-500"}`}
+                        rows={2}
+                        className={`w-full text-sm placeholder:text-gray-400 outline-none bg-transparent resize-none overflow-hidden ${!item?.description?.trim() ? "border-b border-red-500 text-red-500" : "text-gray-500"}`}
                     />
                 </div>
             </div>

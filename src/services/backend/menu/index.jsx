@@ -30,7 +30,7 @@ const formatItem = (item) => {
   if (Array.isArray(item.variants) && item.variants.length > 0) {
     formatted.variants = item.variants.map((v) => ({
       _id: v._id,
-      name: v.name,
+      property_name: v.property_name,
       options: Array.isArray(v.options)
         ? v.options.map((opt) => ({
             _id: opt._id,
@@ -56,7 +56,7 @@ const fetchCategories = async (restaurantId) => {
     .select("name displayOrder image parentCategory")
     .populate({
       path: "image",
-      select: "original variants key",
+      select: "original thumbnail card detail",
     })
     .sort({ displayOrder: 1, createdAt: 1 })
     .lean();
@@ -85,7 +85,7 @@ const fetchMenuItems = async (restaurantId, { isAvailableOnly = false } = {}) =>
     .select("name description base_price image variants dietaryType isAvailable displayOrder addonGroups category subCategory")
     .populate({
       path: "image",
-      select: "original variants key",
+      select: "original thumbnail card detail",
     })
     .sort({ displayOrder: 1, createdAt: 1 })
     .lean();
@@ -95,14 +95,6 @@ const fetchAddonGroups = async (restaurantId) => {
   try {
     const groups = await mongoose.models.AddonGroup.find({ restaurant: restaurantId })
       .select("name selectionType minSelection maxSelection items")
-      .populate({
-        path: "items.item",
-        select: "name base_price image variants dietaryType",
-        populate: {
-          path: "image",
-          select: "original variants key",
-        },
-      })
       .lean();
 
     return groups.map((group) => {
@@ -113,23 +105,26 @@ const fetchAddonGroups = async (restaurantId) => {
         minSelection: group.minSelection ?? 0,
         items: group.items
           ? group.items
-              .filter((i) => i && i.item)
-              .map((mapped) => {
+              .map((snapshot) => {
                 const itemObj = {
-                  _id: mapped.item._id,
-                  name: mapped.item.name,
-                  base_price: mapped.item.base_price,
-                  dietaryType: mapped.item.dietaryType,
+                  _id: snapshot._id || snapshot.item,
+                  name: snapshot.name,
+                  price: snapshot.price ?? 0,
+                  isFree: snapshot.isFree ?? false,
+                  dietaryType: snapshot.dietaryType || "veg",
+                  displayOrder: snapshot.displayOrder ?? 0,
                 };
-                const img = ImageService.formatImage(mapped.item.image);
-                if (img) itemObj.image = img;
-                if (Array.isArray(mapped.item.variants) && mapped.item.variants.length > 0) {
-                  itemObj.variants = mapped.item.variants;
+                
+                if (snapshot.description) {
+                  itemObj.description = snapshot.description;
                 }
-                return {
-                  item: itemObj,
-                  priceOverride: mapped.priceOverride ?? null,
-                };
+
+                if (snapshot.image) {
+                   const img = ImageService.formatImage(snapshot.image);
+                   if (img) itemObj.image = img;
+                }
+                
+                return itemObj;
               })
           : [],
       };

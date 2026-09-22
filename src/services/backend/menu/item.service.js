@@ -13,6 +13,7 @@ const formatMenuItem = (item) => {
   const obj = item.toObject ? item.toObject() : { ...item };
   return {
     ...obj,
+    id: obj._id,
     image: ImageService.formatImage(obj.image),
     addonGroups: Array.isArray(obj.addonGroups)
       ? obj.addonGroups.map((ag) => {
@@ -63,13 +64,7 @@ export const ItemService = {
       cacheKey,
       () => MenuItem.find({ restaurant: restaurantId })
         .populate("image")
-        .populate({
-          path: "addonGroups",
-          populate: {
-            path: "items.item",
-            select: "name base_price image variants dietaryType isAvailable",
-          },
-        })
+        .populate("addonGroups")
         .sort({ displayOrder: 1, createdAt: -1 })
         .lean(),
       3600
@@ -146,13 +141,7 @@ export const ItemService = {
     const newItem = await MenuItem.create(newItemData);
     const populatedItem = await MenuItem.findById(newItem._id)
       .populate("image")
-      .populate({
-        path: "addonGroups",
-        populate: {
-          path: "items.item",
-          select: "name base_price image variants dietaryType isAvailable",
-        },
-      })
+      .populate("addonGroups")
       .lean();
 
     await invalidateItemCache(restaurantId);
@@ -184,19 +173,21 @@ export const ItemService = {
       data.base_price = calculateMinVariantPrice(data.variants, data.base_price);
     }
 
+    const updatePayload = { ...data };
+    delete updatePayload._id;
+    delete updatePayload.id;
+    delete updatePayload.createdAt;
+    delete updatePayload.updatedAt;
+    delete updatePayload.__v;
+    delete updatePayload.restaurant;
+
     const updatedItem = await MenuItem.findOneAndUpdate(
       { _id: itemId, restaurant: restaurantId },
-      { $set: data },
+      { $set: updatePayload },
       { new: true, runValidators: true }
     )
       .populate("image")
-      .populate({
-        path: "addonGroups",
-        populate: {
-          path: "items.item",
-          select: "name base_price image variants dietaryType isAvailable",
-        },
-      })
+      .populate("addonGroups")
       .lean();
 
     if (!updatedItem) {

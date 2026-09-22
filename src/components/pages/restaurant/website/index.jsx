@@ -6,9 +6,10 @@ import Loader from "@/components/global/loader";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import BannerSection from "./fragments/BannerSection";
+import OrderingSection from "./fragments/OrderingSection";
 import { useRestaurant } from "@/store/hooks/useRestaurant";
-import SocialLinksSection from "./fragments/SocialLinksSection";
 import { useFormMutation } from "@/store/hooks/useFormMutation";
+import SocialLinksSection from "./fragments/SocialLinksSection";
 import { WebsiteConfigService } from "@/services/frontend/website-config";
 
 const WebsiteConfigPage = () => {
@@ -48,6 +49,22 @@ const WebsiteConfigPage = () => {
         instagram: configData?.socialLinks?.instagram || "",
         twitter: configData?.socialLinks?.twitter || "",
       },
+      ordering: {
+        acceptedTypes: configData?.ordering?.acceptedTypes || ["DINE_IN", "TAKEAWAY", "DELIVERY"],
+        paymentMethods: configData?.ordering?.paymentMethods || ["CASH", "ONLINE"],
+        packingCharges: {
+          isEnabled: configData?.ordering?.packingCharges?.isEnabled ?? false,
+          amount: configData?.ordering?.packingCharges?.amount ?? 0
+        },
+        platformFee: {
+          isEnabled: configData?.ordering?.platformFee?.isEnabled ?? false,
+          amount: configData?.ordering?.platformFee?.amount ?? 0
+        },
+        taxAndServiceFee: {
+          isEnabled: configData?.ordering?.taxAndServiceFee?.isEnabled ?? false,
+          amount: configData?.ordering?.taxAndServiceFee?.amount ?? 0
+        }
+      },
     },
     enableReinitialize: true,
     onSubmit: (values, { resetForm }) => {
@@ -65,6 +82,7 @@ const WebsiteConfigPage = () => {
           }
         },
         socialLinks: values.socialLinks,
+        ordering: values.ordering,
       };
 
       mutate(payload, {
@@ -107,6 +125,7 @@ const WebsiteConfigPage = () => {
 
         <div className="bg-white dark:bg-zinc-900 rounded-xl border border-border/40 shadow-sm p-5 md:p-8 space-y-12">
           <BannerSection formik={formik} />
+          <OrderingSection formik={formik} />
           <SocialLinksSection formik={formik} />
         </div>
       </div>

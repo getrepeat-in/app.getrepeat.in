@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Loader2, Link } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useQueryClient } from "@tanstack/react-query";
 import { MenuService } from "@/services/frontend/menu";
 import { useRestaurant } from "@/store/hooks/useRestaurant";
@@ -14,6 +15,12 @@ export function ZomatoImport() {
 
     const [url, setUrl] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const [importOptions, setImportOptions] = useState({
+        items: true,
+        media: true,
+        addons: true,
+        address: true
+    });
 
     const handleImport = async (e) => {
         e.preventDefault();
@@ -24,9 +31,16 @@ export function ZomatoImport() {
         
         setIsLoading(true);
         try {
-            const data = await MenuService.importZomato(restaurantId, url);
+            const data = await MenuService.importZomato(restaurantId, url, importOptions);
             if (data.success) {
-                notification.success(`Successfully imported ${data.total_items || data.stats?.itemsImported || 0} items!`);
+                const parts = [];
+                if (importOptions.items) parts.push(`${data.stats?.itemsImported || data.total_items || 0} items`);
+                if (importOptions.addons) parts.push(`${data.stats?.addonGroupsImported || 0} addons`);
+                if (importOptions.address) parts.push(`address info`);
+                
+                const msg = parts.length > 0 ? parts.join(', ') : 'selected data';
+                notification.success(`Successfully imported ${msg}!`);
+                
                 setUrl("");
                 queryClient.invalidateQueries({ queryKey: ["items", restaurantId] });
                 queryClient.invalidateQueries({ queryKey: ["categories", restaurantId] });
@@ -39,6 +53,13 @@ export function ZomatoImport() {
             setIsLoading(false);
         }
     };
+
+    const IMPORT_OPTIONS = [
+        { id: 'items', label: 'Menu Items' },
+        { id: 'media', label: 'Media/Images' },
+        { id: 'addons', label: 'Addons' },
+        { id: 'address', label: 'Address' }
+    ];
 
     return (
         <div className="flex flex-col h-full w-full p-2">
@@ -54,28 +75,44 @@ export function ZomatoImport() {
                     </p>
                 </div>
 
-                <form onSubmit={handleImport} className="w-full max-w-3xl flex flex-col sm:flex-row gap-3">
-                    <div className="relative flex-1">
-                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                            <Link className="w-5 h-5 text-slate-400" />
+                <form onSubmit={handleImport} className="w-full max-w-3xl flex flex-col gap-6">
+                    <div className="flex flex-col sm:flex-row gap-3">
+                        <div className="relative flex-1">
+                            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                <Link className="w-5 h-5 text-slate-400" />
+                            </div>
+                            <Input 
+                                placeholder="e.g. https://www.zomato.com/ncr/barbeque-nation" 
+                                value={url}
+                                onChange={(e) => setUrl(e.target.value)}
+                                className="h-12 w-full bg-slate-50 border-slate-200 text-slate-900 pl-11 pr-4 rounded-lg text-[15px] focus:bg-white focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all shadow-none"
+                                required
+                            />
                         </div>
-                        <Input 
-                            placeholder="e.g. https://www.zomato.com/ncr/barbeque-nation" 
-                            value={url}
-                            onChange={(e) => setUrl(e.target.value)}
-                            className="h-12 w-full bg-slate-50 border-slate-200 text-slate-900 pl-11 pr-4 rounded-lg text-[15px] focus:bg-white focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all shadow-none"
-                            required
-                        />
+                        
+                        <Button 
+                            type="submit"
+                            disabled={!url || isLoading}
+                            className="h-12 px-6 bg-slate-900 hover:bg-slate-800 text-white font-medium text-[15px] rounded-lg shadow-sm transition-all sm:w-auto w-full flex items-center gap-2"
+                        >
+                            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                            {isLoading ? "Fetching..." : "Fetch Menu Data"}
+                        </Button>
                     </div>
-                    
-                    <Button 
-                        type="submit"
-                        disabled={!url || isLoading}
-                        className="h-12 px-6 bg-slate-900 hover:bg-slate-800 text-white font-medium text-[15px] rounded-lg shadow-sm transition-all sm:w-auto w-full flex items-center gap-2"
-                    >
-                        {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-                        {isLoading ? "Fetching..." : "Fetch Menu Data"}
-                    </Button>
+
+                    <div className="flex flex-wrap justify-center gap-8 border-t border-slate-100 pt-5">
+                        {IMPORT_OPTIONS.map((option) => (
+                            <label key={option.id} className="flex items-center gap-2 cursor-pointer group">
+                                <Checkbox 
+                                    checked={importOptions[option.id]}
+                                    onCheckedChange={(checked) => setImportOptions(prev => ({ ...prev, [option.id]: checked }))}
+                                />
+                                <span className="text-[14px] font-medium text-slate-600 group-hover:text-slate-900 transition-colors">
+                                    {option.label}
+                                </span>
+                            </label>
+                        ))}
+                    </div>
                 </form>
 
                 <div className="mt-8 text-sm text-slate-500">

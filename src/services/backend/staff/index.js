@@ -19,7 +19,7 @@ const POPULATE_STAFF_ROLE = {
 
 const POPULATE_STAFF_IMAGE = {
   path: "image",
-  select: "variants original blurHash status key",
+  select: "original thumbnail card detail",
 };
 
 export class StaffService {

@@ -80,9 +80,8 @@ async function processImage(bucketName, rawKey) {
   if (ext === '.svg') {
     console.log('Skipping variant generation for SVG file.');
     await ImageAsset.findOneAndUpdate(
-      { 'original.key': decodedKey },
-      { $set: { status: 'READY' } },
-      { returnDocument: 'after' }
+      { original: decodedKey },
+      { $set: { thumbnail: decodedKey, card: decodedKey, detail: decodedKey } }
     );
     return;
   }
@@ -99,21 +98,10 @@ async function processImage(bucketName, rawKey) {
   const originalMeta = await sharp(originalBuffer).metadata();
 
   // Populate original metadata info if not present
-  await ImageAsset.findOneAndUpdate(
-    { 'original.key': decodedKey },
-    {
-      $set: {
-        'original.width': originalMeta.width,
-        'original.height': originalMeta.height,
-        'original.sizeBytes': originalBuffer.length,
-      }
-    }
-  );
-
   const variants = {
-    thumbnail: [],
-    card: [],
-    detail: [],
+    thumbnail: null,
+    card: null,
+    detail: null,
   };
 
   // 2. Generate and upload multi-size, multi-format variants
@@ -152,26 +140,21 @@ async function processImage(bucketName, rawKey) {
 
         console.log(`Generated and uploaded ${sizeName} (${format}) to S3.`);
 
-        variants[sizeName].push({
-          key: variantKey,
-          width: variantMeta.width,
-          height: variantMeta.height,
-          format: format,
-          sizeBytes: variantBuffer.length,
-        });
+        variants[sizeName] = variantKey;
       } catch (variantErr) {
         console.error(`Failed to process variant ${sizeName} in ${format}:`, variantErr);
       }
     }
   }
 
-  // 3. Save all variant metadata and set status READY
+  // 3. Save all variant metadata
   const updatedAsset = await ImageAsset.findOneAndUpdate(
-    { 'original.key': decodedKey },
+    { original: decodedKey },
     {
       $set: {
-        status: 'READY',
-        variants: variants,
+        thumbnail: variants.thumbnail,
+        card: variants.card,
+        detail: variants.detail,
       }
     },
     { returnDocument: 'after' }

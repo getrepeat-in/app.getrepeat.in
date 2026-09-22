@@ -1,12 +1,13 @@
 "use client";
 import { useState } from "react";
-import { cn } from "@/lib/utils";
 import ActionMenu from "../action-menu";
+import { cn, getImageUrl } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import SubCategoryList from "../sub-category-list";
 import InlineInput from "@/components/ui/inline-input";
 import { CategoryFormPopover } from "../fragments/category-form-popover";
-import { ChevronDown, ChevronRight, FolderKanban, Plus } from "lucide-react";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { ChevronDown, ChevronRight, FolderKanban, Plus, LayoutList } from "lucide-react";
 
 export default function CategoryCard({
     category,
@@ -23,6 +24,7 @@ export default function CategoryCard({
     addSubCategory,
     updateSubCategory,
     deleteSubCategory,
+    isCollapsed,
 }) {
     const [isEditing, setIsEditing] = useState(false);
     const [addingSubCategory, setAddingSubCategory] = useState(false);
@@ -41,6 +43,40 @@ export default function CategoryCard({
             setActiveSubCategory?.(firstSubCategory.id);
         }
     };
+
+    if (isCollapsed) {
+        const categoryImage = category.image || category.imageUrl || category.items?.[0]?.image || category.items?.[0]?.imageUrl || category.subcategories?.[0]?.items?.[0]?.image || category.subcategories?.[0]?.items?.[0]?.imageUrl;
+        
+        return (
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <button
+                        onClick={handleCategorySelect}
+                        className={cn(
+                            "group relative flex w-11 h-11 mx-auto items-center justify-center rounded-xl transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20",
+                            isCategoryActive ? "bg-primary/10 shadow-[0_1px_2px_rgba(0,0,0,0.02)] border border-primary/20" : "hover:bg-muted/70 border border-transparent"
+                        )}
+                    >
+                        {categoryImage ? (
+                            <div className="w-8 h-8 overflow-hidden rounded-[8px] border border-border/50 shadow-xs">
+                                <img src={getImageUrl(categoryImage)} alt={category.name} className="w-full h-full object-cover" />
+                            </div>
+                        ) : (
+                            <div className={cn(
+                                "flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] transition-colors border shadow-xs",
+                                isCategoryActive ? "bg-primary text-primary-foreground border-primary" : "bg-muted text-muted-foreground border-border/50 group-hover:bg-background group-hover:text-foreground"
+                            )}>
+                                <LayoutList className="h-4 w-4" />
+                            </div>
+                        )}
+                    </button>
+                </TooltipTrigger>
+                <TooltipContent side="right" sideOffset={10}>
+                    <p className="font-semibold text-[13px]">{category.name}</p>
+                </TooltipContent>
+            </Tooltip>
+        );
+    }
 
     return (
         <div

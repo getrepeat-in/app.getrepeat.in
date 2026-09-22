@@ -1,10 +1,13 @@
 import mongoose, { Schema, Types, models, model } from "mongoose";
-
 const ORDER_STATUS = {
   PLACED: "PLACED",
   ACCEPTED: "ACCEPTED",
   PREPARING: "PREPARING",
   READY: "READY",
+  SERVED: "SERVED",
+  PICKED_UP: "PICKED_UP",
+  IN_TRANSIT: "IN_TRANSIT",
+  DELIVERED: "DELIVERED",
   COMPLETED: "COMPLETED",
   CANCELLED: "CANCELLED",
   REJECTED: "REJECTED"
@@ -19,16 +22,9 @@ const PAYMENT_STATUS = {
   PARTIALLY_REFUNDED: "PARTIALLY_REFUNDED"
 };
 
-const FULFILLMENT_STATUS = {
-  PENDING: "PENDING",
-  READY: "READY",
-  PICKED_UP: "PICKED_UP",
-  IN_TRANSIT: "IN_TRANSIT",
-  FULFILLED: "FULFILLED"
-};
 
-const ORDER_TYPES = ["dine-in", "takeaway", "delivery"];
-const PAYMENT_METHODS = ["cash", "card", "upi", "online"];
+const ORDER_TYPES = ["DINE_IN", "TAKEAWAY", "DELIVERY"];
+const PAYMENT_METHODS = ["CASH", "CARD", "UPI", "ONLINE"];
 
 const OrderItemSchema = new Schema({
   menuItem: {
@@ -46,8 +42,18 @@ const OrderItemSchema = new Schema({
   },
   
   addons: [{
-    name: { type: String, required: true },
-    price: { type: Number, required: true, min: 0 }
+    name: { type: String, required: true, trim: true },
+    price: {
+        type: Number,
+        default: 0,
+        min: [0, "Price cannot be negative"],
+    },
+    isFree: { type: Boolean, default: false },
+    dietaryType: {
+        type: String,
+        enum: ["veg", "non-veg", "egg", "vegan"],
+        default: "veg",
+    },
   }],
   
   specialInstructions: { type: String, default: "" },
@@ -85,7 +91,7 @@ const OrderSchema = new Schema({
   table: {
     type: Types.ObjectId,
     ref: "Table",
-    required: function() { return this.orderType === "dine-in"; },
+    required: function() { return this.orderType === "DINE_IN"; },
   },
   customer: {
     type: Types.ObjectId,
@@ -95,7 +101,7 @@ const OrderSchema = new Schema({
   
   deliveryAddress: {
     type: DeliveryAddressSchema,
-    required: function() { return this.orderType === "delivery"; },
+    required: function() { return this.orderType === "DELIVERY"; },
   },
   
   items: [OrderItemSchema],
@@ -114,18 +120,12 @@ const OrderSchema = new Schema({
     index: true,
   },
 
-  fulfillmentStatus: {
-    type: String,
-    enum: Object.values(FULFILLMENT_STATUS),
-    default: FULFILLMENT_STATUS.PENDING,
-    index: true,
-  },
-  
   statusHistory: [{
-    statusType: { type: String, enum: ['ORDER', 'PAYMENT', 'FULFILLMENT'], required: true },
+    statusType: { type: String, enum: ['ORDER', 'PAYMENT'], required: true },
     status: { type: String, required: true },
     timestamp: { type: Date, default: Date.now },
-    updatedBy: { type: Types.ObjectId, ref: "Staff", default: null }
+    updatedByStaff: { type: Types.ObjectId, ref: "Staff", default: null },
+    updatedByCustomer: { type: Types.ObjectId, ref: "User", default: null }
   }],
   
   subtotal: { type: Number, required: true, min: 0 },
@@ -143,6 +143,8 @@ const OrderSchema = new Schema({
     razorpayPaymentId: { type: String },
     razorpaySignature: { type: String },
   },
+  
+  rejectionReason: { type: String },
 }, {
   timestamps: true,
   toJSON: { virtuals: true },
@@ -157,5 +159,4 @@ OrderSchema.pre('save', function() {
 
 export const OrderStatus = ORDER_STATUS;
 export const PaymentStatus = PAYMENT_STATUS;
-export const FulfillmentStatus = FULFILLMENT_STATUS;
 export default models.Order || model("Order", OrderSchema);

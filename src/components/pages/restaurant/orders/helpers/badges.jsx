@@ -1,10 +1,9 @@
 "use client";
-import React from "react";
 import { MapPin, ShoppingBag } from "lucide-react";
-import { ORDER_STATUS_CONFIG, PAYMENT_STATUS_CONFIG, ORDER_TYPE_CONFIG, FULFILLMENT_STATUS_CONFIG } from "./constants";
+import { ORDER_STATUS_CONFIG, PAYMENT_STATUS_CONFIG, ORDER_TYPE_CONFIG } from "./constants";
 
 export const OrderTypeBadge = ({ orderType, table, onClick }) => {
-    const typeKey = (orderType || "").toLowerCase();
+    const typeKey = (orderType || "").toUpperCase();
     const cfg = ORDER_TYPE_CONFIG[typeKey] || {
         label: orderType || "Unknown",
         icon: ShoppingBag,
@@ -40,23 +39,6 @@ export const OrderTypeBadge = ({ orderType, table, onClick }) => {
 export const StatusBadge = ({ status }) => {
     const cfg = ORDER_STATUS_CONFIG[status] || { label: status, badge: "bg-gray-100 text-gray-500 border-gray-200", dot: "bg-gray-400" };
     const isLive = ["PLACED", "ACCEPTED", "PREPARING"].includes((status || "").toUpperCase());
-
-    return (
-        <span className={`inline-flex items-center gap-1.5 text-[11px] font-medium px-2 py-0.5 rounded-md border ${cfg.badge} shadow-2xs transition-all`}>
-            <span className="relative flex h-1.5 w-1.5">
-                {isLive && (
-                    <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${cfg.dot}`} />
-                )}
-                <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${cfg.dot}`} />
-            </span>
-            <span>{cfg.label}</span>
-        </span>
-    );
-};
-
-export const FulfillmentBadge = ({ status }) => {
-    const cfg = FULFILLMENT_STATUS_CONFIG[status?.toUpperCase()] || FULFILLMENT_STATUS_CONFIG.PENDING;
-    const isLive = ["IN_TRANSIT"].includes((status || "").toUpperCase());
 
     return (
         <span className={`inline-flex items-center gap-1.5 text-[11px] font-medium px-2 py-0.5 rounded-md border ${cfg.badge} shadow-2xs transition-all`}>

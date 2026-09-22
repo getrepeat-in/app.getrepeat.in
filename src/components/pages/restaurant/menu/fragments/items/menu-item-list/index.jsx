@@ -49,8 +49,9 @@ export default function MenuItemList({ activeCategoryId, activeSubCategoryId }) 
 
     if (combinedItems.length === 0) {
         return (
-            <div className="flex-1 flex bg-white m-3 items-center h-[100%] justify-center p-6">
+            <div className="flex-1 flex bg-white m-3 items-center h-[100%] justify-center p-2">
                 <EmptyState
+                    className={"w-full h-full"}
                     icon={UtensilsCrossed}
                     title="No Menu Items Found"
                     description="You haven't got any items in this subcategory yet."

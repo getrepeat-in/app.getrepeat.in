@@ -28,14 +28,15 @@ export const getDescriptionColumns = ({
       header: "Description",
       className: "pl-4",
       render: (item) => {
-        const isEdited = formik.values[item.id] !== formik.initialValues[item.id];
-        const currentDesc = formik.values[item.id] || "";
+        const id = item._id || item.id;
+        const isEdited = formik.values[id] !== formik.initialValues[id];
+        const currentDesc = formik.values[id] || "";
 
         return (
           <div className="flex items-center gap-3 pt-1 pb-1 w-full max-w-2xl pr-4">
             <textarea
               value={currentDesc}
-              onChange={(e) => handleDescriptionChange(item.id, e.target.value)}
+              onChange={(e) => handleDescriptionChange(id, e.target.value)}
               placeholder="Add a delicious description..."
               rows={2}
               className={`w-full text-[14px] font-medium text-slate-700 bg-white border rounded-md p-3 outline-none resize-none shadow-none transition-all duration-200 ${
@@ -46,7 +47,7 @@ export const getDescriptionColumns = ({
             />
             {isEdited && (
               <button
-                onClick={() => handleUndoItem(item.id)}
+                onClick={() => handleUndoItem(id)}
                 className="text-amber-500 hover:text-amber-600 p-2 rounded-md hover:bg-amber-50 transition-colors shrink-0 cursor-pointer"
                 title="Revert changes"
               >

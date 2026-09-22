@@ -2,6 +2,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { GroupFormPopover } from "./GroupFormPopover";
+import EmptyState from "@/components/global/empty-state"; 
 import { ConfirmDeleteAlert } from "@/components/ui/confirm-delete-alert";
 import { Check, Edit2, Plus, Trash2, Layers, Search, X } from "lucide-react";
 
@@ -34,7 +35,7 @@ export function ManageGroups({ addonGroups, items, selectedGroups, setSelectedGr
     const filteredGroups = addonGroups.filter(g => g.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
     return (
-        <div className="w-1/2 h-full flex flex-col bg-white">
+        <div className="w-full lg:w-1/2 min-h-[500px] lg:min-h-0 h-auto lg:h-full flex flex-col bg-white shrink-0 lg:shrink">
             <div className="flex flex-col border-b border-border/60">
                 <div className="flex items-center justify-between px-5 pt-4 pb-3">
                     <h3 className="font-bold text-[15px] text-foreground">1. Select Addon Groups</h3>
@@ -108,8 +109,27 @@ export function ManageGroups({ addonGroups, items, selectedGroups, setSelectedGr
                                     <div className={cn("font-semibold text-[13px] truncate", isSelected ? "text-primary" : "text-foreground")}>
                                         {group.name}
                                     </div>
-                                    <div className="text-[11px] text-muted-foreground font-medium mt-0.5 capitalize">
-                                        {group.selectionType} · Min {group.minSelection} · Max {group.maxSelection || '∞'}
+                                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
+                                        <div className="text-[11px] text-muted-foreground font-medium capitalize flex items-center shrink-0">
+                                            {group.selectionType} · Min {group.minSelection} · Max {group.maxSelection || '∞'}
+                                        </div>
+                                        {(() => {
+                                            const mappedCount = items?.filter(item => 
+                                                item.addonGroups?.some(ag => ag === group._id || ag?._id === group._id)
+                                            ).length || 0;
+                                            
+                                            if (mappedCount > 0) {
+                                                return (
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-muted-foreground/30">•</span>
+                                                        <span className="text-[10px] font-semibold text-primary/80 bg-primary/10 px-1.5 py-0.5 rounded whitespace-nowrap shrink-0">
+                                                            {mappedCount} item{mappedCount !== 1 ? 's' : ''} mapped
+                                                        </span>
+                                                    </div>
+                                                );
+                                            }
+                                            return null;
+                                        })()}
                                     </div>
                                 </div>
 
@@ -135,22 +155,28 @@ export function ManageGroups({ addonGroups, items, selectedGroups, setSelectedGr
                                 </div>
                             </div>
 
-                            {group.items?.some(m => m?.item) && (
+                            {group.items?.some(m => m?.name) && (
                                 <div className={cn(
                                     "flex flex-wrap gap-1.5 px-3.5 py-2.5 border-t",
                                     isSelected ? "border-primary/20 bg-primary/[0.04]" : "border-border/40 bg-slate-50/60"
                                 )}>
-                                    {group.items.filter(m => m?.item).map((mapped, idx) => (
-                                        <div key={idx} className="bg-white border border-border/50 text-slate-700 text-[11px] font-medium px-2 py-0.5 rounded-md shadow-2xs flex items-center gap-1">
-                                            {mapped.item?.name || 'Unknown'}
-                                            {mapped.priceOverride != null
-                                                ? <span className="text-primary font-bold">+₹{mapped.priceOverride}</span>
-                                                : mapped.item?.base_price != null
-                                                    ? <span className="text-slate-400">+₹{mapped.item.base_price}</span>
-                                                    : null
-                                            }
-                                        </div>
-                                    ))}
+                            {group.items?.filter(m => m?.name).map((addonItem, idx) => {
+                                const displayPrice = addonItem.isFree
+                                    ? null 
+                                    : addonItem.price ?? 0;
+                                return (
+                                    <div key={addonItem._id || idx} className="bg-white border border-border/50 text-slate-700 text-[11px] font-medium px-2 py-0.5 rounded-md shadow-2xs flex items-center gap-1">
+                                        {addonItem.name}
+                                        {addonItem.isFree ? (
+                                            <span className="text-emerald-600 font-bold">FREE</span>
+                                        ) : displayPrice === 0 ? (
+                                            <span className="text-slate-400">Free</span>
+                                        ) : (
+                                            <span className="text-primary font-bold">+₹{displayPrice}</span>
+                                        )}
+                                    </div>
+                                );
+                            })}
                                 </div>
                             )}
                         </div>
@@ -158,8 +184,13 @@ export function ManageGroups({ addonGroups, items, selectedGroups, setSelectedGr
                 })}
 
                 {filteredGroups.length === 0 && (
-                    <div className="text-center py-12 text-muted-foreground text-sm">
-                        {searchQuery ? `No groups match "${searchQuery}"` : "No addon groups found."}
+                    <div className="flex items-center justify-center h-full">
+                        <EmptyState
+                            icon={Layers}
+                            title={searchQuery ? `No results for "${searchQuery}"` : "No addon groups yet"}
+                            description={searchQuery ? "Try a different search term." : "Create your first addon group to start mapping extras to menu items."}
+                            className={"w-full h-full"}
+                        />
                     </div>
                 )}
             </div>

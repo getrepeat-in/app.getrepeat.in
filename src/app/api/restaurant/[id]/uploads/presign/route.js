@@ -44,15 +44,7 @@ export const POST = withErrorHandler(async (request, { params }) => {
 
   const imageAsset = await ImageAsset.create({
     restaurant: restaurantId,
-    original: {
-      key,
-      filename: cleanFilename,
-      mimeType: contentType,
-      width,
-      height,
-      sizeBytes,
-    },
-    status: "PENDING",
+    original: key,
   });
 
   return successResponse(

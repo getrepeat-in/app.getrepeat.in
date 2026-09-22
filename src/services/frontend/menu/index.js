@@ -40,8 +40,15 @@ export const MenuService = {
             return response.data;
         }
     },
-    importZomato: async (resId, pageUrl) => {
-        const response = await axios.get(`${API_ENDPOINTS.MENU.IMPORT_ZOMATO(resId)}?pageUrl=${encodeURIComponent(pageUrl)}`);
+    importZomato: async (resId, pageUrl, options = { items: true, media: true, addons: true, address: true }) => {
+        const queryStr = new URLSearchParams({ 
+            pageUrl, 
+            items: options.items, 
+            media: options.media, 
+            addons: options.addons,
+            address: options.address
+        }).toString();
+        const response = await axios.get(`${API_ENDPOINTS.MENU.IMPORT_ZOMATO(resId)}?${queryStr}`);
         return response.data;
     },
     bulkUpdatePrice: async (resId, data) => {

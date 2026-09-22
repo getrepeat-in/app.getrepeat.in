@@ -46,11 +46,16 @@ export const deleteCacheByPattern = async (pattern) => {
     await connectRedis();
     if (!redisClient.isOpen) return;
 
+    const keys = [];
     for await (const key of redisClient.scanIterator({
       MATCH: pattern,
       COUNT: 100,
     })) {
-      await redisClient.del(key);
+      keys.push(key);
+    }
+
+    if (keys.length > 0) {
+      await redisClient.del(keys);
     }
   } catch (error) {
     console.error(`Redis pattern delete error [${pattern}]:`, error.message || error);

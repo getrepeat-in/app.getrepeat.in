@@ -16,21 +16,9 @@ export const GET = withErrorHandler(async (req, { params }) => {
         throw new RestaurantNotFoundError();
     }
 
-    let order;
-    if (orderId.startsWith("ORD-")) {
-        order = await OrderService.getOrderByNumber(orderId, {
-            restaurantId: restaurant._id,
-        });
-    } else if (orderId.startsWith("order_")) {
-        order = await OrderService.getOrderByRazorpayId(orderId, {
-            restaurantId: restaurant._id,
-        });
-    } else {
-        order = await OrderService.getOrderById(orderId, {
-            restaurantId: restaurant._id,
-        });
-    }
-
+    const order = await OrderService.getOrderDetails(orderId, {
+        restaurantId: restaurant._id,
+    });
     return successResponse(order, "Order details fetched successfully", 200);
 });
 
@@ -57,6 +45,5 @@ export const PATCH = withErrorHandler(async (req, { params }) => {
         });
         return successResponse(updatedOrder, "Order cancelled successfully", 200);
     }
-
     throw new BadRequestError("Invalid action requested");
 });

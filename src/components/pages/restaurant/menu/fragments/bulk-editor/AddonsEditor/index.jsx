@@ -21,6 +21,7 @@ export function AddonsEditor() {
     const [selectedGroups, setSelectedGroups] = useState([]);
     const [targetItems, setTargetItems] = useState([]);
     const [isSaving, setIsSaving] = useState(false);
+    const [removingMappings, setRemovingMappings] = useState(new Set());
     
     const notification = useNotification();
     const queryClient = useQueryClient();
@@ -49,7 +50,7 @@ export function AddonsEditor() {
             });
 
             notification.success(`Addons ${action === 'remove' ? 'removed from' : 'mapped to'} items successfully!`);
-            queryClient.invalidateQueries({ queryKey: ["items", restaurantId] });
+            await queryClient.invalidateQueries({ queryKey: ["items"] });
             handleClearSelection();
             
         } catch (error) {
@@ -57,6 +58,30 @@ export function AddonsEditor() {
             notification.error(error?.response?.data?.message || "Failed to update addons.");
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    const handleUnmapSingle = async (itemId, groupId) => {
+        if (!restaurantId) return;
+        const key = `${itemId}:${groupId}`;
+        setRemovingMappings(prev => new Set([...prev, key]));
+        try {
+            await MenuService.bulkUpdateAddons(restaurantId, {
+                action: 'remove',
+                itemIds: [itemId],
+                addonGroupIds: [groupId]
+            });
+            notification.success("Addon removed successfully!");
+            await queryClient.invalidateQueries({ queryKey: ["items"] });
+        } catch (error) {
+            console.error("Addons unmap error:", error);
+            notification.error(error?.response?.data?.message || "Failed to unmap addon.");
+        } finally {
+            setRemovingMappings(prev => {
+                const next = new Set(prev);
+                next.delete(key);
+                return next;
+            });
         }
     };
 
@@ -70,7 +95,7 @@ export function AddonsEditor() {
 
     return (
         <div className="flex-1 flex flex-col bg-slate-50/40 overflow-hidden font-sans">
-            <div className="flex flex-1 overflow-hidden">
+            <div className="flex flex-col lg:flex-row flex-1 overflow-y-auto lg:overflow-hidden">
                 <ManageGroups
                     addonGroups={addonGroups}
                     items={items}
@@ -81,13 +106,16 @@ export function AddonsEditor() {
                     deleteGroup={deleteGroup}
                 />
 
-                <div className="w-px bg-border/60 shrink-0 z-10" />
+                <div className="w-full h-px lg:w-px lg:h-auto bg-border/60 shrink-0 z-10" />
 
                 <AssignAddons
                     categories={categories}
                     items={items}
                     targetItems={targetItems}
                     setTargetItems={setTargetItems}
+                    addonGroups={addonGroups}
+                    onUnmapSingle={handleUnmapSingle}
+                    removingMappings={removingMappings}
                 />
             </div>
 

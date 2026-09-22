@@ -11,12 +11,8 @@ export async function getRestaurant({ restaurantId = null, required = true } = {
   }
 
   await dbConnect();
-  let restaurant = null;
-  if (restaurantId) {
-    restaurant = await Restaurant.findById(restaurantId).lean();
-  } else {
-    restaurant = await Restaurant.findOne({ createdBy: user.id }).lean();
-  }
+  const query = restaurantId ? { _id: restaurantId } : { createdBy: user.id };
+  const restaurant = await Restaurant.findOne(query).lean();
 
   if (!restaurant && required) {
     throw new RestaurantNotFoundError("Restaurant not found or you do not have access to it.");

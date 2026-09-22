@@ -4,6 +4,8 @@ import { Providers } from "@/provider";
 import { fontPoppins } from "@/constants/fonts";
 import { appMetadata } from "@/constants/metadata";
 
+import { Toaster } from "sonner";
+
 export const metadata = appMetadata;
 
 export default function RootLayout({ children }) {
@@ -17,6 +19,7 @@ export default function RootLayout({ children }) {
         <Providers>
           {children}
         </Providers>
+        <Toaster richColors position="bottom-right" />
       </body>
     </html>
   );

@@ -1,11 +1,14 @@
 "use client";
+import { useState } from "react";
 import { format } from "date-fns";
 import { OrderTimeline } from "./order-timeline";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { StatusBadge, PaymentBadge, FulfillmentBadge } from "../helpers/badges";
-import { Printer, Receipt as ReceiptIcon, User, Phone, Mail } from "lucide-react";
+import { StatusBadge, PaymentBadge } from "../helpers/badges";
+import { Printer, Receipt as ReceiptIcon, User, Phone, Mail, MapPin } from "lucide-react";
 
 export const OrderDetailsDrawer = ({ isOpen, onClose, order }) => {
+    const [isAddressExpanded, setIsAddressExpanded] = useState(false);
+    
     if (!order) return null;
 
     return (
@@ -45,11 +48,28 @@ export const OrderDetailsDrawer = ({ isOpen, onClose, order }) => {
                                     <span>{order.customer.email}</span>
                                 </div>
                             )}
+                            {order.orderType === "DELIVERY" && order.deliveryAddress && (
+                                <div className="flex items-start gap-2 text-[13px] text-gray-600 dark:text-gray-400 mt-1 p-2.5 bg-gray-50 dark:bg-zinc-800/40 rounded-lg border border-gray-100 dark:border-zinc-700/50 flex-col">
+                                    <div className="flex items-start gap-2 w-full">
+                                        <MapPin size={14} className="text-gray-400 dark:text-gray-500 shrink-0 mt-0.5" />
+                                        <span className={`leading-relaxed break-words w-full ${!isAddressExpanded ? 'line-clamp-2' : ''}`}>
+                                            <span className="font-semibold text-gray-700 dark:text-gray-300 block mb-0.5">Delivery Address</span>
+                                            {order.deliveryAddress.street}, {order.deliveryAddress.city} {order.deliveryAddress.zipCode}
+                                        </span>
+                                    </div>
+                                    <button 
+                                        onClick={(e) => { e.stopPropagation(); setIsAddressExpanded(!isAddressExpanded); }}
+                                        className="text-[10px] font-bold text-blue-600 dark:text-blue-400 hover:underline uppercase tracking-wider self-start ml-5"
+                                    >
+                                        {isAddressExpanded ? 'Show less' : 'View more...'}
+                                    </button>
+                                </div>
+                            )}
                         </div>
 
                         <div className="mt-4 pt-4 flex items-center gap-3 border-t border-gray-100 dark:border-zinc-800">
                             <StatusBadge status={order.orderStatus} />
-                            <FulfillmentBadge status={order.fulfillmentStatus} />
+
                             <span className="text-[13px] text-gray-500 font-medium capitalize flex items-center gap-1.5">
                                 {order.orderType} 
                                 {order.table && (

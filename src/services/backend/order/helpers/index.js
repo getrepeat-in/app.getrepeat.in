@@ -2,11 +2,12 @@ import mongoose from "mongoose";
 import Table from "@/models/Table";
 import MenuItem from "@/models/Item";
 import { User } from "@/models/User";
+import { BadRequestError, NotFoundError } from "@/lib/api/response-handler";
 
 export const resolveTable = async (restaurantId, orderType, tableInput) => {
-  if (orderType !== "dine-in") return null;
+  if (orderType !== "DINE_IN") return null;
   if (!tableInput) {
-    throw new Error("Table is required for dine-in orders");
+    throw new BadRequestError("Table is required for dine-in orders");
   }
 
   let tableDoc = null;
@@ -21,7 +22,7 @@ export const resolveTable = async (restaurantId, orderType, tableInput) => {
   }
 
   if (!tableDoc) {
-    throw new Error("Specified table not found for this restaurant");
+    throw new NotFoundError("Specified table not found for this restaurant");
   }
 
   return tableDoc._id;
@@ -29,7 +30,7 @@ export const resolveTable = async (restaurantId, orderType, tableInput) => {
 
 export const validateAndCalculateItems = async (restaurantId, items) => {
   if (!Array.isArray(items) || items.length === 0) {
-    throw new Error("Order must contain at least one item");
+    throw new BadRequestError("Order must contain at least one item");
   }
 
   const itemIds = items.map((i) => i.menuItem || i._id).filter(Boolean);
@@ -50,7 +51,7 @@ export const validateAndCalculateItems = async (restaurantId, items) => {
     const dbItem = dbMenuItemMap.get(menuItemId);
 
     if (!dbItem) {
-      throw new Error(`Menu item '${rawItem.name || menuItemId}' is invalid or no longer available`);
+      throw new BadRequestError(`Menu item '${rawItem.name || menuItemId}' is invalid or no longer available`);
     }
 
     const quantity = Math.max(1, parseInt(rawItem.quantity || 1, 10));
@@ -73,9 +74,15 @@ export const validateAndCalculateItems = async (restaurantId, items) => {
       for (const addon of rawItem.addons) {
         if (addon && addon.name) {
           const addonPrice = Math.max(0, Number(addon.price) || 0);
+          const isFree = Boolean(addon.isFree);
+          const validDietaryTypes = ["veg", "non-veg", "egg", "vegan"];
+          const dietaryType = validDietaryTypes.includes(addon.dietaryType) ? addon.dietaryType : "veg";
+          
           validatedAddons.push({
-            name: String(addon.name),
+            name: String(addon.name).trim(),
             price: addonPrice,
+            isFree: isFree,
+            dietaryType: dietaryType,
           });
           addonsTotal += addonPrice;
         }

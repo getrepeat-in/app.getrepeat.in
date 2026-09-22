@@ -6,8 +6,9 @@ import { usePathname } from "next/navigation";
 export function Breadcrumbs() {
   const pathname = usePathname();
   const segments = pathname.split("/").filter(Boolean);
+  
   return (
-    <div className="flex justify-between w-full items-center">
+    <div className="flex w-full items-center">
       <nav className="flex items-center gap-1 text-sm text-muted-foreground">
         <Link href="/" className="hover:text-foreground">
           Home

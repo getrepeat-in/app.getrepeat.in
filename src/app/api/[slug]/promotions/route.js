@@ -3,6 +3,7 @@ import Promotion from "@/models/Promotion";
 import Restaurant from "@/models/Restaurant";
 import { withErrorHandler, successResponse, BadRequestError, RestaurantNotFoundError } from "@/lib/api/response-handler";
 import { getCache, setCache } from "@/services/backend/redis/cache.service";
+import { ImageService } from "@/services/backend/images";
 
 export const GET = withErrorHandler(async (req, { params }) => {
     const { slug } = await params;
@@ -39,12 +40,24 @@ export const GET = withErrorHandler(async (req, { params }) => {
         select: "name base_price description dietaryType isAvailable image",
         populate: {
             path: "image",
-            select: "variants original blurHash status"
+            select: "original thumbnail card detail"
         }
     })
     .select("name type discount_type discount_value min_order_value items starts_at ends_at usage_limit per_user_limit times_used")
     .lean();
     
-    await setCache(cacheKey, promotions, 300);
-    return successResponse(promotions, "Active promotions fetched successfully");
+    const formattedPromotions = promotions.map(promo => {
+        if (promo.items && Array.isArray(promo.items)) {
+            promo.items = promo.items.map(item => {
+                if (item.image) {
+                    item.image = ImageService.formatImage(item.image);
+                }
+                return item;
+            });
+        }
+        return promo;
+    });
+
+    await setCache(cacheKey, formattedPromotions, 300);
+    return successResponse(formattedPromotions, "Active promotions fetched successfully");
 });

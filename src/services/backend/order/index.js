@@ -4,10 +4,11 @@ import dbConnect from "@/lib/db";
 import { User } from "@/models/User";
 import Restaurant from "@/models/Restaurant";
 import { ImageService } from "@/services/backend/images";
+import Order, { OrderStatus, PaymentStatus } from "@/models/Order";
 import { invalidateOrderCache } from "@/lib/api/helpers/cacheKeys";
 import { getOrSetCache } from "@/services/backend/redis/cache.service";
+import { BadRequestError, NotFoundError } from "@/lib/api/response-handler";
 import { resolveTable, validateAndCalculateItems, resolveCustomer } from "./helpers";
-import Order, { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/models/Order";
 
 const generateOrderNumber = () => {
   const timestampPart = Date.now().toString().slice(-6);
@@ -54,23 +55,24 @@ export const OrderService = {
     paymentDetails = null,
     specialInstructions = "",
     initialStatus = null,
-    updatedBy = null,
+    updatedByStaff = null,
+    updatedByCustomer = null,
   }) => {
     await dbConnect();
 
     const restaurant = await Restaurant.findById(restaurantId).select("_id name").lean();
     if (!restaurant) {
-      throw new Error("Restaurant not found");
+      throw new NotFoundError("Restaurant not found");
     }
 
-    const validOrderTypes = ["dine-in", "takeaway", "delivery"];
+    const validOrderTypes = ["DINE_IN", "TAKEAWAY", "DELIVERY"];
     if (!validOrderTypes.includes(orderType)) {
-      throw new Error(`Invalid order type. Must be one of: ${validOrderTypes.join(", ")}`);
+      throw new BadRequestError(`Invalid order type. Must be one of: ${validOrderTypes.join(", ")}`);
     }
 
-    if (orderType === "delivery") {
+    if (orderType === "DELIVERY") {
       if (!deliveryAddress || !deliveryAddress.street || !deliveryAddress.city || !deliveryAddress.zipCode) {
-        throw new Error("Delivery address with street, city, and zipCode is required for delivery orders");
+        throw new BadRequestError("Delivery address with street, city, and zipCode is required for delivery orders");
       }
     }
 
@@ -84,9 +86,8 @@ export const OrderService = {
 
     let orderStatus = initialStatus || OrderStatus.PLACED;
     let resolvedPaymentStatus = paymentStatus === "pending" ? PaymentStatus.PENDING : paymentStatus.toUpperCase();
-    let fulfillmentStatus = FulfillmentStatus.PENDING;
 
-    if (paymentMethod === "online" && resolvedPaymentStatus !== PaymentStatus.PAID) {
+    if (paymentMethod === "ONLINE" && resolvedPaymentStatus !== PaymentStatus.PAID) {
       orderStatus = OrderStatus.PLACED;
     }
 
@@ -98,7 +99,7 @@ export const OrderService = {
       orderNumber,
       orderType,
       table: resolvedTableId,
-      deliveryAddress: orderType === "delivery" ? deliveryAddress : undefined,
+      deliveryAddress: orderType === "DELIVERY" ? deliveryAddress : undefined,
       customer: resolvedCustomerId,
       items: validatedItems,
       subtotal,
@@ -112,7 +113,6 @@ export const OrderService = {
         razorpayPaymentId: paymentDetails.razorpay_payment_id,
         razorpaySignature: paymentDetails.razorpay_signature,
       } : undefined,
-      fulfillmentStatus,
       specialInstructions: specialInstructions || "",
       orderStatus,
       statusHistory: [
@@ -120,7 +120,8 @@ export const OrderService = {
           statusType: "ORDER",
           status: orderStatus,
           timestamp: new Date(),
-          updatedBy: updatedBy || null,
+          updatedByStaff,
+          updatedByCustomer
         },
       ],
     });
@@ -131,11 +132,11 @@ export const OrderService = {
       .populate({
         path: "items.menuItem",
         select: "name base_price dietaryType image",
-        populate: { path: "image", select: "original variants key" },
+        populate: { path: "image", select: "original thumbnail card detail" },
       })
       .populate("table", "tableNumber label zone")
-      .populate({ path: "customer", select: "name phone email image", populate: { path: "image", select: "original variants key" } })
-      .populate({ path: "restaurant", select: "name logo address", populate: { path: "logo", select: "original variants key" } });
+      .populate({ path: "customer", select: "name phone email image", populate: { path: "image", select: "original thumbnail card detail" } })
+      .populate({ path: "restaurant", select: "name logo address", populate: { path: "logo", select: "original thumbnail card detail" } });
 
     const formattedOrder = formatOrderResponse(populatedOrder);
     
@@ -158,15 +159,16 @@ export const OrderService = {
       .populate({
         path: "items.menuItem",
         select: "name base_price dietaryType image",
-        populate: { path: "image", select: "original variants key" },
+        populate: { path: "image", select: "original thumbnail card detail" },
       })
       .populate("table", "tableNumber label zone")
-      .populate({ path: "customer", select: "name phone email profileImageUrl image", populate: { path: "image", select: "original variants key" } })
-      .populate({ path: "restaurant", select: "name logo address", populate: { path: "logo", select: "original variants key" } })
-      .populate("statusHistory.updatedBy", "name email");
+      .populate({ path: "customer", select: "name phone email profileImageUrl image", populate: { path: "image", select: "original thumbnail card detail" } })
+      .populate({ path: "restaurant", select: "name logo address", populate: { path: "logo", select: "original thumbnail card detail" } })
+      .populate("statusHistory.updatedByStaff", "name email")
+      .populate("statusHistory.updatedByCustomer", "name phone email profileImageUrl");
 
     if (!order) {
-      throw new Error("Order not found");
+      throw new NotFoundError("Order not found");
     }
 
     return formatOrderResponse(order);
@@ -185,23 +187,31 @@ export const OrderService = {
       .populate({
         path: "items.menuItem",
         select: "name base_price dietaryType image",
-        populate: { path: "image", select: "original variants key" },
+        populate: { path: "image", select: "original thumbnail card detail" },
       })
       .populate("table", "tableNumber label zone")
-      .populate({ path: "customer", select: "name phone email profileImageUrl image", populate: { path: "image", select: "original variants key" } })
-      .populate({ path: "restaurant", select: "name logo address", populate: { path: "logo", select: "original variants key" } })
-      .populate("statusHistory.updatedBy", "name email");
+      .populate({ path: "customer", select: "name phone email profileImageUrl image", populate: { path: "image", select: "original thumbnail card detail" } })
+      .populate({ path: "restaurant", select: "name logo address", populate: { path: "logo", select: "original thumbnail card detail" } })
+      .populate("statusHistory.updatedByStaff", "name email")
+      .populate("statusHistory.updatedByCustomer", "name phone email profileImageUrl");
 
     if (!order) {
-      throw new Error("Order not found");
+      throw new NotFoundError("Order not found");
     }
 
     return formatOrderResponse(order);
   },
 
-  /**
-   * Get single order by Razorpay Order ID
-   */
+  getOrderDetails: async (orderId, options = {}) => {
+    if (orderId.startsWith("ORD-")) {
+      return OrderService.getOrderByNumber(orderId, options);
+    }
+    if (orderId.startsWith("order_")) {
+      return OrderService.getOrderByRazorpayId(orderId, options);
+    }
+    return OrderService.getOrderById(orderId, options);
+  },
+
   getOrderByRazorpayId: async (razorpayOrderId, { restaurantId = null } = {}) => {
     await dbConnect();
 
@@ -212,15 +222,16 @@ export const OrderService = {
       .populate({
         path: "items.menuItem",
         select: "name base_price dietaryType image",
-        populate: { path: "image", select: "original variants key" },
+        populate: { path: "image", select: "original thumbnail card detail" },
       })
       .populate("table", "tableNumber label zone")
-      .populate({ path: "customer", select: "name phone email profileImageUrl image", populate: { path: "image", select: "original variants key" } })
-      .populate({ path: "restaurant", select: "name logo address", populate: { path: "logo", select: "original variants key" } })
-      .populate("statusHistory.updatedBy", "name email");
+      .populate({ path: "customer", select: "name phone email profileImageUrl image", populate: { path: "image", select: "original thumbnail card detail" } })
+      .populate({ path: "restaurant", select: "name logo address", populate: { path: "logo", select: "original thumbnail card detail" } })
+      .populate("statusHistory.updatedByStaff", "name email")
+      .populate("statusHistory.updatedByCustomer", "name phone email profileImageUrl");
 
     if (!order) {
-      throw new Error("Order not found");
+      throw new NotFoundError("Order not found");
     }
 
     return formatOrderResponse(order);
@@ -315,11 +326,13 @@ export const OrderService = {
             .populate({
               path: "items.menuItem",
               select: "name base_price dietaryType image",
-              populate: { path: "image", select: "original variants key" },
+              populate: { path: "image", select: "original thumbnail card detail" },
             })
             .populate("table", "tableNumber label zone")
-            .populate({ path: "customer", select: "name phone email profileImageUrl image", populate: { path: "image", select: "original variants key" } })
-            .populate({ path: "restaurant", select: "name logo address", populate: { path: "logo", select: "original variants key" } })
+            .populate({ path: "customer", select: "name phone email profileImageUrl image", populate: { path: "image", select: "original thumbnail card detail" } })
+            .populate({ path: "restaurant", select: "name logo address", populate: { path: "logo", select: "original thumbnail card detail" } })
+            .populate("statusHistory.updatedByStaff", "name email")
+      .populate("statusHistory.updatedByCustomer", "name phone email profileImageUrl")
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit),
@@ -351,7 +364,7 @@ export const OrderService = {
     await dbConnect();
 
     if (!customerId && !phone) {
-      throw new Error("Customer ID or phone number is required");
+      throw new BadRequestError("Customer ID or phone number is required");
     }
 
     const query = {};
@@ -395,11 +408,13 @@ export const OrderService = {
         .populate({
           path: "items.menuItem",
           select: "name base_price dietaryType image",
-          populate: { path: "image", select: "original variants key" },
+          populate: { path: "image", select: "original thumbnail card detail" },
         })
         .populate("table", "tableNumber label zone")
-        .populate({ path: "customer", select: "name phone email profileImageUrl image", populate: { path: "image", select: "original variants key" } })
-        .populate({ path: "restaurant", select: "name logo address", populate: { path: "logo", select: "original variants key" } })
+        .populate({ path: "customer", select: "name phone email profileImageUrl image", populate: { path: "image", select: "original thumbnail card detail" } })
+        .populate({ path: "restaurant", select: "name logo address", populate: { path: "logo", select: "original thumbnail card detail" } })
+        .populate("statusHistory.updatedByStaff", "name email")
+      .populate("statusHistory.updatedByCustomer", "name phone email profileImageUrl")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit),
@@ -415,7 +430,7 @@ export const OrderService = {
     };
   },
   
-  advanceOrderState: async (orderId, { updatedBy = null, restaurantId = null }) => {
+  advanceOrderState: async (orderId, { updatedByStaff = null, restaurantId = null }) => {
     await dbConnect();
 
     const query = { _id: orderId };
@@ -423,64 +438,80 @@ export const OrderService = {
 
     const order = await Order.findOne(query);
     if (!order) {
-      throw new Error("Order not found");
+      throw new NotFoundError("Order not found");
     }
 
-    const { orderStatus, orderType, fulfillmentStatus } = order;
+    const { orderStatus, orderType } = order;
 
-    const transitionMap = {
-      [OrderStatus.PLACED]: { order: OrderStatus.ACCEPTED },
-      [OrderStatus.ACCEPTED]: { order: OrderStatus.PREPARING },
-      [OrderStatus.PREPARING]: { order: OrderStatus.READY, fulfillment: FulfillmentStatus.READY },
-      [OrderStatus.READY]: {
-        "dine-in": { order: OrderStatus.COMPLETED, fulfillment: FulfillmentStatus.FULFILLED },
-        "takeaway": { order: OrderStatus.COMPLETED, fulfillment: FulfillmentStatus.FULFILLED },
-        "delivery": {
-          [FulfillmentStatus.READY]: { fulfillment: FulfillmentStatus.IN_TRANSIT },
-          [FulfillmentStatus.IN_TRANSIT]: { order: OrderStatus.COMPLETED, fulfillment: FulfillmentStatus.FULFILLED }
-        }[fulfillmentStatus]
-      }[orderType]
+    // Unified per-type transition map — single orderStatus field, no fulfillmentStatus
+    const TRANSITION_MAP = {
+      DINE_IN:   [OrderStatus.PLACED, OrderStatus.ACCEPTED, OrderStatus.PREPARING, OrderStatus.READY, OrderStatus.SERVED, OrderStatus.COMPLETED],
+      TAKEAWAY:  [OrderStatus.PLACED, OrderStatus.ACCEPTED, OrderStatus.PREPARING, OrderStatus.READY, OrderStatus.PICKED_UP, OrderStatus.COMPLETED],
+      DELIVERY:  [OrderStatus.PLACED, OrderStatus.ACCEPTED, OrderStatus.PREPARING, OrderStatus.READY, OrderStatus.IN_TRANSIT, OrderStatus.DELIVERED, OrderStatus.COMPLETED],
     };
 
-    const nextState = transitionMap[orderStatus] || {};
-    const nextOrderStatus = nextState.order || orderStatus;
-    const nextFulfillmentStatus = nextState.fulfillment || fulfillmentStatus;
-
-    if (nextOrderStatus === orderStatus && nextFulfillmentStatus === fulfillmentStatus) {
-      throw new Error("Order cannot be advanced further or is in an invalid state.");
+    const normalizedOrderType = (orderType || "").toUpperCase();
+    const flow = TRANSITION_MAP[normalizedOrderType];
+    if (!flow) {
+      throw new BadRequestError(`Unknown order type: ${orderType}`);
     }
 
-    if (nextOrderStatus !== orderStatus) {
-      order.orderStatus = nextOrderStatus;
-      order.statusHistory.push({
-        statusType: "ORDER",
-        status: nextOrderStatus,
-        timestamp: new Date(),
-        updatedBy,
-      });
+    const currentIndex = flow.indexOf(orderStatus);
+    if (currentIndex === -1 || currentIndex === flow.length - 1) {
+      throw new BadRequestError("Order cannot be advanced further or is in an invalid state.");
     }
 
-    if (nextFulfillmentStatus !== fulfillmentStatus) {
-      order.fulfillmentStatus = nextFulfillmentStatus;
-      order.statusHistory.push({
-        statusType: "FULFILLMENT",
-        status: nextFulfillmentStatus,
-        timestamp: new Date(),
-        updatedBy,
-      });
+    const nextStatus = flow[currentIndex + 1];
+    const now = new Date();
+
+    if (orderStatus === OrderStatus.PLACED && nextStatus === OrderStatus.ACCEPTED) {
+      order.statusHistory.push({ statusType: "ORDER", status: OrderStatus.ACCEPTED, timestamp: now, updatedByStaff });
+      order.orderStatus = OrderStatus.PREPARING;
+      order.statusHistory.push({ statusType: "ORDER", status: OrderStatus.PREPARING, timestamp: now, updatedByStaff });
+    } else {
+      order.orderStatus = nextStatus;
+      order.statusHistory.push({ statusType: "ORDER", status: nextStatus, timestamp: now, updatedByStaff });
     }
 
     await order.save();
     await invalidateOrderCache(order.restaurant);
 
-    const updatedOrder = await OrderService.getOrderById(order._id);
+    return OrderService.getOrderById(order._id);
+  },
+
+
+  /**
+   * Central dispatcher for all order update actions.
+   * Routes to the appropriate service method based on the action field.
+   */
+  processOrderUpdate: async (orderId, { action, reason, paymentStatus, paymentMethod, restaurantId, updatedByStaff }) => {
+    const ACTION_HANDLERS = {
+      advance: () => OrderService.advanceOrderState(orderId, { updatedByStaff, restaurantId }),
+      reject:  () => OrderService.rejectOrder(orderId, { rejectedBy: updatedByStaff, restaurantId, reason }),
+      cancel:  () => OrderService.cancelOrder(orderId, { cancelledBy: updatedByStaff, restaurantId }),
+    };
+
+    const hasPaymentUpdate = paymentStatus || paymentMethod;
+    const handler = ACTION_HANDLERS[action];
+
+    if (!handler && !hasPaymentUpdate) {
+      throw new BadRequestError("No valid action or update fields provided");
+    }
+
+    let updatedOrder = handler ? await handler() : null;
+
+    if (hasPaymentUpdate) {
+      updatedOrder = await OrderService.updateOrderPayment(orderId, {
+        paymentStatus, paymentMethod, updatedByStaff, restaurantId,
+      });
+    }
 
     return updatedOrder;
   },
 
   updateOrderPayment: async (
     orderId,
-    { paymentStatus, paymentMethod, restaurantId = null, updatedBy = null }
+    { paymentStatus, paymentMethod, restaurantId = null, updatedByStaff = null }
   ) => {
     await dbConnect();
 
@@ -489,7 +520,7 @@ export const OrderService = {
 
     const order = await Order.findOne(query);
     if (!order) {
-      throw new Error("Order not found");
+      throw new NotFoundError("Order not found");
     }
 
     if (paymentStatus) {
@@ -500,7 +531,7 @@ export const OrderService = {
           statusType: "ORDER",
           status: OrderStatus.PLACED,
           timestamp: new Date(),
-          updatedBy,
+          updatedByStaff,
         });
       }
     }
@@ -512,9 +543,7 @@ export const OrderService = {
     await order.save();
     await invalidateOrderCache(order.restaurant);
 
-    const updatedOrder = await OrderService.getOrderById(order._id);
-
-    return updatedOrder;
+    return OrderService.getOrderById(order._id);
   },
 
   cancelOrder: async (orderId, { cancelledBy = null, restaurantId = null }) => {
@@ -525,15 +554,11 @@ export const OrderService = {
 
     const order = await Order.findOne(query);
     if (!order) {
-      throw new Error("Order not found");
+      throw new NotFoundError("Order not found");
     }
 
-    if (
-      [OrderStatus.COMPLETED, OrderStatus.CANCELLED].includes(
-        order.orderStatus
-      )
-    ) {
-      throw new Error(`Cannot cancel order in status ${order.orderStatus}`);
+    if ([OrderStatus.COMPLETED, OrderStatus.CANCELLED].includes(order.orderStatus)) {
+      throw new BadRequestError(`Cannot cancel order in status ${order.orderStatus}`);
     }
 
     order.orderStatus = OrderStatus.CANCELLED;
@@ -541,7 +566,37 @@ export const OrderService = {
       statusType: "ORDER",
       status: OrderStatus.CANCELLED,
       timestamp: new Date(),
-      updatedBy: cancelledBy,
+      updatedByStaff: cancelledBy,
+    });
+
+    await order.save();
+    await invalidateOrderCache(order.restaurant);
+
+    return OrderService.getOrderById(order._id);
+  },
+
+  rejectOrder: async (orderId, { rejectedBy = null, restaurantId = null, reason = "" }) => {
+    await dbConnect();
+
+    const query = { _id: orderId };
+    if (restaurantId) query.restaurant = restaurantId;
+
+    const order = await Order.findOne(query);
+    if (!order) {
+      throw new NotFoundError("Order not found");
+    }
+
+    if ([OrderStatus.COMPLETED, OrderStatus.CANCELLED, OrderStatus.REJECTED].includes(order.orderStatus)) {
+      throw new BadRequestError(`Cannot reject order in status ${order.orderStatus}`);
+    }
+
+    order.orderStatus = OrderStatus.REJECTED;
+    order.rejectionReason = reason;
+    order.statusHistory.push({
+      statusType: "ORDER",
+      status: OrderStatus.REJECTED,
+      timestamp: new Date(),
+      updatedByStaff: rejectedBy,
     });
 
     await order.save();
@@ -558,7 +613,7 @@ export const OrderService = {
 
     const order = await Order.findOne(query);
     if (!order) {
-      throw new Error("Order not found");
+      throw new NotFoundError("Order not found");
     }
 
     await Order.deleteOne({ _id: orderId });

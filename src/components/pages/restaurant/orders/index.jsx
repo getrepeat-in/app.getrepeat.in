@@ -10,7 +10,7 @@ import { useRestaurant } from "@/store/hooks/useRestaurant";
 import { Receipt, Hash, Eye, RefreshCw, Filter } from "lucide-react";
 import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import {  ORDER_TAB_FILTERS,  ORDER_TYPE_OPTIONS,  DEFAULT_PAGE_SIZE, OrderTypeBadge,  StatusBadge,  PaymentBadge, FulfillmentBadge } from "./helpers";
+import {  ORDER_TAB_FILTERS,  ORDER_TYPE_OPTIONS,  DEFAULT_PAGE_SIZE, OrderTypeBadge,  StatusBadge,  PaymentBadge } from "./helpers";
 
 export default function OrdersManagement() {
     const { restaurantId } = useRestaurant();
@@ -133,12 +133,7 @@ export default function OrdersManagement() {
             align: "center",
             render: (row) => <StatusBadge status={row.orderStatus} />,
         },
-        {
-            header: "Fulfillment",
-            key: "fulfillmentStatus",
-            align: "center",
-            render: (row) => <FulfillmentBadge status={row.fulfillmentStatus} />,
-        },
+
         {
             header: "Payment",
             key: "paymentStatus",
@@ -160,27 +155,7 @@ export default function OrdersManagement() {
                     </span>
                 </div>
             ),
-        },
-        {
-            header: "Action",
-            key: "actions",
-            align: "center",
-            width: "70px",
-            render: (row) => (
-                <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedOrder(row);
-                    }}
-                    className="rounded-md hover:bg-primary/10 hover:text-primary dark:hover:bg-orange-950/50"
-                    title="View Details"
-                >
-                    <Eye size={15} />
-                </Button>
-            ),
-        },
+        }
     ], []);
 
     return (

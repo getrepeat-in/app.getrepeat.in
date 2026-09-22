@@ -1,8 +1,11 @@
 import dbConnect from "@/lib/db";
 import Restaurant from "@/models/Restaurant";
-import { OrderService } from "@/services/backend/order";
-import { withErrorHandler, successResponse, BadRequestError, RestaurantNotFoundError, UnauthorizedError } from "@/lib/api/response-handler";
 import { getAuthUser } from "@/lib/api/helpers/auth";
+import { OrderService } from "@/services/backend/order";
+import { validateRequiredFields } from "@/lib/api/helpers/validator";
+import { withErrorHandler, successResponse, BadRequestError, RestaurantNotFoundError, UnauthorizedError } from "@/lib/api/response-handler";
+
+const ORDER_CREATE_REQUIRED_FIELDS = ["orderType", "items", "subtotal", "totalAmount"];
 
 export const GET = withErrorHandler(async (req, { params }) => {
     const { slug } = await params;
@@ -74,6 +77,9 @@ export const POST = withErrorHandler(async (req, { params }) => {
     }
 
     const data = await req.json();
+    const { isValid, message } = validateRequiredFields(data, ORDER_CREATE_REQUIRED_FIELDS);
+    if (!isValid) throw new BadRequestError(message);
+
     const authUser = getAuthUser(req);
     const customerId = authUser?.userId || data.customer || null;
 
@@ -83,14 +89,14 @@ export const POST = withErrorHandler(async (req, { params }) => {
         table: data.table,
         customer: customerId,
         customerInfo: data.customerInfo,
+        deliveryAddress: data.deliveryAddress,
         items: data.items,
         subtotal: data.subtotal,
         tax: data.tax,
         discount: data.discount,
         totalAmount: data.totalAmount,
-        paymentMethod: data.paymentMethod || data.payment?.method?.toLowerCase() || "cash",
-        paymentStatus: data.paymentStatus || data.payment?.status || "PENDING",
-        paymentDetails: data.payment,
+        paymentMethod: data.paymentMethod || "CASH",
+        paymentStatus: data.paymentStatus || "PENDING",
         specialInstructions: data.specialInstructions || "",
         initialStatus: data.status || null,
     });

@@ -3,37 +3,29 @@ const AWS_REGION = process.env.NEXT_PUBLIC_AWS_REGION || process.env.AWS_REGION;
 const S3_BASE_URL = S3_BUCKET && AWS_REGION ? `https://${S3_BUCKET}.s3.${AWS_REGION}.amazonaws.com` : "";
 
 export const ImageService = {
-  formatImage: (imageDoc) => {
-    if (!imageDoc) return null;
 
-    if (typeof imageDoc === "string") {
+  formatImage: (imageInput) => {
+    if (!imageInput) return null;
+
+    if (typeof imageInput === "string") {
       return {
-        original: imageDoc,
-        thumbnail: imageDoc,
-        card: imageDoc,
-        detail: imageDoc,
+        original: imageInput,
+        thumbnail: imageInput,
+        card: imageInput,
+        detail: imageInput,
       };
     }
 
-    if (imageDoc.card && imageDoc.thumbnail && typeof imageDoc.card === "string") {
-      return {
-        original: imageDoc.original || imageDoc.card,
-        thumbnail: imageDoc.thumbnail || imageDoc.card,
-        card: imageDoc.card,
-        detail: imageDoc.detail || imageDoc.card,
-      };
-    }
+    const originalKey = typeof imageInput.original === 'string' 
+      ? imageInput.original 
+      : (imageInput.original?.key || "");
 
-    const originalKey =
-      imageDoc.original?.key ||
-      (typeof imageDoc.original === "string" ? imageDoc.original : "") ||
-      imageDoc.key ||
-      "";
-
-    const rawVariants = imageDoc.variants || {};
-
-    const extractKey = (variantName) => {
-      const v = rawVariants[variantName];
+    const getVariantKey = (variantName) => {
+      if (typeof imageInput[variantName] === 'string' && imageInput[variantName]) {
+        return imageInput[variantName];
+      }
+      
+      const v = imageInput.variants?.[variantName];
       if (typeof v === "string" && v) return v;
       if (Array.isArray(v) && v.length > 0) {
         const match =
@@ -42,12 +34,13 @@ export const ImageService = {
           v[0];
         return match?.key || originalKey;
       }
-      return originalKey;
+      
+      return null;
     };
 
-    const card = extractKey("card");
-    const thumbnail = extractKey("thumbnail");
-    const detail = extractKey("detail");
+    const card = getVariantKey("card");
+    const thumbnail = getVariantKey("thumbnail");
+    const detail = getVariantKey("detail");
     const original = originalKey || card;
 
     if (!card && !thumbnail && !original) return null;
@@ -58,6 +51,42 @@ export const ImageService = {
       card: card || original,
       detail: detail || card || original,
     };
+  },
+
+  formatResponseImages: (data) => {
+    if (data === null || data === undefined) return data;
+    if (typeof data.toObject === 'function') {
+      try {
+        data = data.toObject();
+      } catch (e) {}
+    }
+
+    if (Array.isArray(data)) {
+      return data.map(item => ImageService.formatResponseImages(item));
+    }
+
+    if (typeof data === "object") {
+      if (data instanceof Date || data instanceof RegExp) return data;
+      
+      if (data._bsontype === 'ObjectID' || data.constructor?.name === 'ObjectId') {
+          return data;
+      }
+
+      const isOldSchema = data.variants && data.original && typeof data.original === "object";
+      const isNewSchema = data.original && (data.thumbnail !== undefined || data.card !== undefined || data.detail !== undefined);
+      
+      if (isOldSchema || isNewSchema) {
+        return ImageService.formatImage(data);
+      }
+
+      const formatted = {};
+      for (const [key, value] of Object.entries(data)) {
+        formatted[key] = ImageService.formatResponseImages(value);
+      }
+      return formatted;
+    }
+
+    return data;
   },
 
   resolveImageUrl: (imageInput, variant = "card") => {
@@ -84,4 +113,3 @@ export const ImageService = {
     return S3_BASE_URL ? `${S3_BASE_URL}/${key.replace(/^\//, "")}` : `/${key.replace(/^\//, "")}`;
   },
 };
-

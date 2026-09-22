@@ -7,11 +7,13 @@ import { useQuery } from "@tanstack/react-query";
 import DataTable from "@/components/global/table";
 import { OrderDetailsDrawer } from "../orders/fragments";
 import { OrderService } from "@/services/frontend/order";
+import useNotification from "@/store/hooks/useNotification";
 import { useRestaurant } from "@/store/hooks/useRestaurant";
 import { LIVE_ORDER_TABS } from "./fragments/helpers/constants";
 
 export default function LiveOrders() {
     const { restaurantId } = useRestaurant();
+    const notify = useNotification();
     const [filter, setFilter] = useState("all");
     const [page, setPage] = useState(1);
     const [searchQuery, setSearchQuery] = useState("");
@@ -55,10 +57,23 @@ export default function LiveOrders() {
 
     const advanceOrderStatus = async (orderId) => {
         try {
-            await OrderService.update(restaurantId, orderId, { action: "advance" });
-            refetch();
+            const res = await OrderService.update(restaurantId, orderId, { action: "advance" });
+            await refetch();
+            notify.success(res?.message || res?.data?.message || "Order status updated successfully!");
         } catch (err) {
             console.error("Failed to advance status", err);
+            notify.error(err?.response?.data?.message || err?.message || "Failed to update order status. Please try again.");
+        }
+    };
+
+    const rejectOrderStatus = async (orderId, reason) => {
+        try {
+            const res = await OrderService.update(restaurantId, orderId, { action: "reject", reason });
+            await refetch();
+            notify.success(res?.message || res?.data?.message || "Order rejected successfully.");
+        } catch (err) {
+            console.error("Failed to reject order", err);
+            notify.error(err?.response?.data?.message || err?.message || "Failed to reject order. Please try again.");
         }
     };
 
@@ -124,6 +139,7 @@ export default function LiveOrders() {
                                 <OrderCard 
                                     order={order} 
                                     onUpdateStatus={advanceOrderStatus} 
+                                    onRejectStatus={rejectOrderStatus}
                                 />
                             </div>
                         ))}

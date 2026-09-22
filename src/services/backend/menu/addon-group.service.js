@@ -1,30 +1,17 @@
-import "@/models/Image";
 import dbConnect from "@/lib/db";
 import MenuItem from "@/models/Item";
 import AddonGroup from "@/models/AddonGroup";
-import { ImageService } from "@/services/backend/images";
 import { getOrSetCache } from "@/services/backend/redis/cache.service";
 import { getAddonGroupsCacheKey, invalidateAddonGroupCache, invalidateItemCache } from "@/lib/api/helpers/cacheKeys";
 
-const formatAddonGroup = (group) => {
-  if (!group) return group;
-  const obj = group.toObject ? group.toObject() : { ...group };
-  return {
-    ...obj,
-    items: Array.isArray(obj.items)
-      ? obj.items.map((mapped) => ({
-          ...mapped,
-          item:
-            mapped && mapped.item && typeof mapped.item === "object"
-              ? {
-                  ...mapped.item,
-                  image: ImageService.formatImage(mapped.item.image),
-                }
-              : mapped?.item,
-        }))
-      : [],
-  };
-};
+const mapItem = (it, idx) => ({
+  name:        it.name        || "",
+  description: it.description || "",
+  price:       it.price       ?? 0,
+  isFree:      it.isFree      ?? false,
+  dietaryType: it.dietaryType || "veg",
+  displayOrder: it.displayOrder ?? idx,
+});
 
 export const AddonGroupService = {
   getAddonGroups: async (restaurantId) => {
@@ -34,11 +21,9 @@ export const AddonGroupService = {
     const { data: groups, isCached } = await getOrSetCache(
       cacheKey,
       async () => {
-        const rawGroups = await AddonGroup.find({ restaurant: restaurantId })
-          .populate({ path: "items.item", populate: { path: "image" } })
+        return await AddonGroup.find({ restaurant: restaurantId })
           .sort({ createdAt: -1 })
           .lean();
-        return rawGroups.map(formatAddonGroup);
       },
       3600
     );
@@ -55,35 +40,33 @@ export const AddonGroupService = {
       selectionType: data.selectionType || "multiple",
       minSelection: data.minSelection || 0,
       maxSelection: data.maxSelection || null,
-      items: data.items || [],
+      items: (data.items || []).map(mapItem),
     });
 
-    const populatedGroup = await AddonGroup.findById(newGroup._id)
-      .populate({ path: "items.item", populate: { path: "image" } })
-      .lean();
-
     await invalidateAddonGroupCache(restaurantId);
-
-    return formatAddonGroup(populatedGroup);
+    return newGroup.toObject();
   },
 
   updateAddonGroup: async (restaurantId, groupId, data) => {
     await dbConnect();
 
+    const updatePayload = { ...data };
+    if (Array.isArray(data.items)) {
+      updatePayload.items = data.items.map(mapItem);
+    }
+
     const updatedGroup = await AddonGroup.findOneAndUpdate(
       { _id: groupId, restaurant: restaurantId },
-      { $set: data },
+      { $set: updatePayload },
       { new: true }
-    )
-      .populate({ path: "items.item", populate: { path: "image" } })
-      .lean();
+    ).lean();
 
     if (!updatedGroup) throw new Error("Addon group not found");
 
     await invalidateAddonGroupCache(restaurantId);
     await invalidateItemCache(restaurantId);
 
-    return formatAddonGroup(updatedGroup);
+    return updatedGroup;
   },
 
   deleteAddonGroup: async (restaurantId, groupId) => {
@@ -103,3 +86,5 @@ export const AddonGroupService = {
     return deleted;
   }
 };
+
+

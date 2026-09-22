@@ -24,7 +24,8 @@ export function DescriptionEditor() {
     const values = {};
     if (items) {
       items.forEach(item => {
-        values[item.id] = item.description || "";
+        const id = item._id || item.id;
+        values[id] = item.description || "";
       });
     }
     return values;
@@ -117,7 +118,7 @@ export function DescriptionEditor() {
         <BulkTable 
           columns={columns} 
           data={filteredItems} 
-          rowKey="id" 
+          rowKey={(row) => row._id || row.id}
           emptyMessage="No items match your filters." 
         />
       </div>

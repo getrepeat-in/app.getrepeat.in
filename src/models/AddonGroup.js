@@ -1,5 +1,25 @@
 import mongoose, { Schema, Types } from "mongoose";
 
+const AddonItemSchema = new Schema(
+    {
+        name:        { type: String, required: true, trim: true },
+        description: { type: String, default: "" },
+        price: {
+            type: Number,
+            default: 0,
+            min: [0, "Price cannot be negative"],
+        },
+        isFree: { type: Boolean, default: false },
+        dietaryType: {
+            type: String,
+            enum: ["veg", "non-veg", "egg", "vegan"],
+            default: "veg",
+        },
+        displayOrder: { type: Number, default: 0 },
+    },
+    { _id: true }
+);
+
 const AddonGroupSchema = new Schema(
     {
         restaurant: {
@@ -15,29 +35,17 @@ const AddonGroupSchema = new Schema(
         },
         selectionType: {
             type: String,
-            enum: ['single', 'multiple'],
-            default: 'multiple',
-            required: true
+            enum: ["single", "multiple"],
+            default: "multiple",
+            required: true,
         },
-        minSelection: {
-            type: Number,
-            default: 0,
-            min: 0
-        },
-        maxSelection: {
-            type: Number,
-            default: null,
-        },
-        items: [{
-            item: { type: Types.ObjectId, ref: 'MenuItem', required: true },
-            priceOverride: { type: Number, default: null } 
-        }]
+        minSelection: { type: Number, default: 0, min: 0 },
+        maxSelection: { type: Number, default: null },
+        items: [AddonItemSchema],
     },
-    {
-        timestamps: true,
-    }
+    { timestamps: true }
 );
 
 AddonGroupSchema.index({ restaurant: 1 });
-
 export default mongoose.models.AddonGroup || mongoose.model("AddonGroup", AddonGroupSchema);
+

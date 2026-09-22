@@ -1,35 +1,5 @@
 import mongoose from "mongoose";
 
-const ImageVariantSchema = new mongoose.Schema(
-  {
-    key: {
-      type: String,
-      required: true,
-    },
-
-    width: {
-      type: Number,
-      required: true,
-    },
-
-    height: {
-      type: Number,
-      required: true,
-    },
-
-    format: {
-      type: String,
-      enum: ["avif", "webp", "jpg", "png"],
-      required: true,
-    },
-
-    sizeBytes: {
-      type: Number,
-    },
-  },
-  { _id: false }
-);
-
 const ImageAssetSchema = new mongoose.Schema(
   {
     restaurant: {
@@ -40,64 +10,21 @@ const ImageAssetSchema = new mongoose.Schema(
     },
 
     original: {
-      key: {
-        type: String,
-        required: true,
-      },
-
-      width: {
-        type: Number,
-      },
-
-      height: {
-        type: Number,
-      },
-
-      mimeType: {
-        type: String,
-      },
-
-      sizeBytes: {
-        type: Number,
-      },
+      type: String,
+      required: true,
     },
-
-    variants: {
-      thumbnail: {
-        type: [ImageVariantSchema],
-        default: [],
-      },
-
-      card: {
-        type: [ImageVariantSchema],
-        default: [],
-      },
-
-      detail: {
-        type: [ImageVariantSchema],
-        default: [],
-      },
-    },
-
-    blurHash: {
+    
+    thumbnail: {
       type: String,
       default: null,
     },
 
-    status: {
+    card: {
       type: String,
-      enum: [
-        "PENDING",
-        "PROCESSING",
-        "READY",
-        "FAILED",
-        "DELETED",
-      ],
-      default: "PENDING",
-      index: true,
+      default: null,
     },
 
-    error: {
+    detail: {
       type: String,
       default: null,
     },
@@ -109,16 +36,10 @@ const ImageAssetSchema = new mongoose.Schema(
 
 ImageAssetSchema.index({
   restaurant: 1,
-  status: 1,
-});
-
-ImageAssetSchema.index({
-  restaurant: 1,
   createdAt: -1,
 });
 
 const ImageAsset =
-  mongoose.models.ImageAsset ||
-  mongoose.model("ImageAsset", ImageAssetSchema);
+  mongoose.models.ImageAsset || mongoose.model("ImageAsset", ImageAssetSchema);
 
 export default ImageAsset;
