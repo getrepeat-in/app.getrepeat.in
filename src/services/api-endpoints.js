@@ -68,6 +68,7 @@ export const API_ENDPOINTS = {
     PAYMENTS: {
         RAZORPAY: {
             CONNECT: (resId) => `/api/restaurant/${resId}/integrations/razorpay/connect`,
+            DISCONNECT: (resId) => `/api/restaurant/${resId}/integrations/razorpay/disconnect`,
             CALLBACK: "/api/payments/razorpay/callback"
         }
     },

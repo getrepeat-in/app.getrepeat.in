@@ -1,3 +1,4 @@
+import dbConnect from "@/lib/db";
 import Restaurant from "@/models/Restaurant";
 import { getAuthUser } from "@/lib/api/helpers/auth";
 import { UserService } from "@/services/backend/user";
@@ -6,6 +7,7 @@ import { withErrorHandler, successResponse, UnauthorizedError, NotFoundError } f
 export const GET = withErrorHandler(async (req, { params }) => {
     const { slug } = await params;
     const authUser = getAuthUser(req);
+    await dbConnect();
     if (!authUser) throw new UnauthorizedError("Not authenticated");
 
     const restaurant = await Restaurant.findOne({ slug }).select("_id").lean();
@@ -20,6 +22,7 @@ export const POST = withErrorHandler(async (req, { params }) => {
     const authUser = getAuthUser(req);
     if (!authUser) throw new UnauthorizedError("Not authenticated");
 
+    await dbConnect();
     const restaurant = await Restaurant.findOne({ slug }).select("_id").lean();
     if (!restaurant) throw new NotFoundError("Restaurant not found");
 

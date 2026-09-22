@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import Loader from "@/components/global/loader";
-import { Puzzle, Plus, Loader2 } from "lucide-react";
+import { Puzzle, Plus, Loader2, Trash2 } from "lucide-react";
 import { useRestaurant } from "@/store/hooks/useRestaurant";
 import { integrationService } from "@/services/frontend/integration";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -15,6 +15,7 @@ export default function IntegrationsPage() {
   const [loading, setLoading] = useState(true);
   const [connectingRazorpay, setConnectingRazorpay] = useState(false);
   const [connectingInstagram, setConnectingInstagram] = useState(false);
+  const [disconnectingRazorpay, setDisconnectingRazorpay] = useState(false);
 
   const fetchIntegrations = async () => {
     if (!restaurantId) return;
@@ -65,6 +66,19 @@ export default function IntegrationsPage() {
     }
   };
 
+  const handleDisconnectRazorpay = async () => {
+    setDisconnectingRazorpay(true);
+    try {
+      await integrationService.disconnectRazorpay(restaurantId);
+      await fetchIntegrations();
+      notification.success("Razorpay disconnected successfully");
+    } catch (error) {
+      notification.error("Failed to disconnect Razorpay");
+    } finally {
+      setDisconnectingRazorpay(false);
+    }
+  };
+
   const handleConnectInstagram = async () => {
     try {
       setConnectingInstagram(true);
@@ -109,15 +123,28 @@ export default function IntegrationsPage() {
           <CardContent className="flex justify-between items-center">
             {integrations?.razorpay?.isLinked ? (
               <>
-                <span className="text-sm font-medium">
-                  {integrations.razorpay.isActive ? "Active" : "Disabled"}
-                </span>
-                <Switch
-                  checked={integrations.razorpay.isActive}
-                  onCheckedChange={() =>
-                    toggleIntegration("razorpay", integrations.razorpay.isActive)
-                  }
-                />
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">
+                    {integrations.razorpay.isActive ? "Active" : "Disabled"}
+                  </span>
+                  <Switch
+                    checked={integrations.razorpay.isActive}
+                    onCheckedChange={() =>
+                      toggleIntegration("razorpay", integrations.razorpay.isActive)
+                    }
+                  />
+                </div>
+                <Button 
+                  type="button"
+                  onClick={handleDisconnectRazorpay} 
+                  disabled={disconnectingRazorpay}
+                  variant="destructive"
+                  size="sm"
+                  className="h-8 rounded-md shadow-sm font-semibold text-xs"
+                >
+                  {disconnectingRazorpay ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Trash2 size={14} className="mr-1.5" strokeWidth={2.5} />}
+                  Disconnect
+                </Button>
               </>
             ) : (
               <Button 

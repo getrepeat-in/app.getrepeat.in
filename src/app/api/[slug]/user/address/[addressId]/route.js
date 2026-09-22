@@ -1,3 +1,4 @@
+import dbConnect from "@/lib/db";
 import Restaurant from "@/models/Restaurant";
 import { getAuthUser } from "@/lib/api/helpers/auth";
 import { UserService } from "@/services/backend/user";
@@ -8,6 +9,7 @@ export const PUT = withErrorHandler(async (req, { params }) => {
     const authUser = getAuthUser(req);
     if (!authUser) throw new UnauthorizedError("Not authenticated");
 
+    await dbConnect();
     const restaurant = await Restaurant.findOne({ slug }).select("_id").lean();
     if (!restaurant) throw new NotFoundError("Restaurant not found");
 
@@ -22,6 +24,7 @@ export const DELETE = withErrorHandler(async (req, { params }) => {
     const authUser = getAuthUser(req);
     if (!authUser) throw new UnauthorizedError("Not authenticated");
 
+    await dbConnect();
     const restaurant = await Restaurant.findOne({ slug }).select("_id").lean();
     if (!restaurant) throw new NotFoundError("Restaurant not found");
     

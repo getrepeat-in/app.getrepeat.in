@@ -38,6 +38,17 @@ class IntegrationService {
     }
   }
 
+  async disconnectRazorpay(restaurantId) {
+    if (!restaurantId) return null;
+    try {
+      const response = await api.delete(API_ENDPOINTS.PAYMENTS.RAZORPAY.DISCONNECT(restaurantId));
+      return response.data;
+    } catch (error) {
+      console.error("Failed to disconnect Razorpay:", error);
+      throw error;
+    }
+  }
+
   async connectInstagram(restaurantId, returnTo = "integrations") {
     if (!restaurantId) return null;
     try {
