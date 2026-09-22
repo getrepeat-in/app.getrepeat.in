@@ -184,7 +184,7 @@ export const ItemService = {
     const updatedItem = await MenuItem.findOneAndUpdate(
       { _id: itemId, restaurant: restaurantId },
       { $set: updatePayload },
-      { new: true, runValidators: true }
+      { returnDocument: 'after', runValidators: true }
     )
       .populate("image")
       .populate("addonGroups")

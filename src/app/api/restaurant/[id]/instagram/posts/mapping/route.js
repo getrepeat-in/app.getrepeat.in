@@ -21,15 +21,13 @@ export const POST = withErrorHandler(async (req, { params }) => {
     if (mappedItems.length > 3) {
         throw new BadRequestError("You can only map up to 3 items per post");
     }
-
-    // Upsert the mapping
+    
     const mapping = await InstagramPostMapping.findOneAndUpdate(
         { restaurant: id, postId },
         { $set: { mappedItems } },
-        { new: true, upsert: true }
+        { returnDocument: 'after', upsert: true }
     );
 
-    // Invalidate customer app cache for Instagram posts!
     if (restaurant.slug) {
         await deleteCache(`restaurant:slug:${restaurant.slug}:instagram:posts`);
     }

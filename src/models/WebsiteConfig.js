@@ -16,6 +16,21 @@ const SocialLinksSchema = new Schema({
   others: { type: Map, of: String, default: {} }
 }, { _id: false });
 
+const ThemeColorsSchema = new Schema({
+  primary: { type: String, default: "#000000" },
+  primaryForeground: { type: String, default: "#ffffff" },
+  secondary: { type: String, default: "#f4f4f5" },
+  secondaryForeground: { type: String, default: "#18181b" },
+  background: { type: String, default: "#ffffff" },
+  foreground: { type: String, default: "#09090b" },
+  muted: { type: String, default: "#f4f4f5" },
+  mutedForeground: { type: String, default: "#71717a" }
+}, { _id: false });
+
+const ThemeSchema = new Schema({
+  colors: { type: ThemeColorsSchema, default: () => ({}) }
+}, { _id: false });
+
 const WebsiteConfigSchema = new Schema(
   {
     restaurant: {
@@ -25,6 +40,7 @@ const WebsiteConfigSchema = new Schema(
       unique: true,
       index: true,
     },
+    theme: { type: ThemeSchema, default: () => ({}) },
 
     homepage: {
       banners: {

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useItem } from "@/store/hooks/useItem";
 import React, { useState, useMemo } from "react";
 import { BulkTable } from "../shared/bulk-table";
-import { Loader2, Undo2, Save } from "lucide-react";
+import { Loader2, Undo2, Save, Sparkles } from "lucide-react";
 import { MenuService } from "@/services/frontend/menu";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCategory } from "@/store/hooks/useCategory";
@@ -19,6 +19,7 @@ export function DescriptionEditor() {
   const notification = useNotification();
   const queryClient = useQueryClient();
   const [isSaving, setIsSaving] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const initialValues = useMemo(() => {
     const values = {};
@@ -62,6 +63,26 @@ export function DescriptionEditor() {
     }
   });
 
+  const handleGenerate = async () => {
+    if (!items || items.length === 0) return;
+    const payload = items.map(item => ({
+      id: item._id || item.id,
+      name: item.name
+    }));
+
+    setIsGenerating(true);
+    try {
+      await MenuService.bulkUpdateDescription(restaurantId, { items: payload });
+      notification.success("AI generated and saved descriptions for all items!");
+      queryClient.invalidateQueries({ queryKey: ["items", restaurantId] });
+    } catch (err) {
+      console.error("Generation error:", err);
+      notification.error(err?.response?.data?.message || "Failed to generate descriptions.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const handleDescriptionChange = (itemId, val) => {
     formik.setFieldValue(itemId, val);
   };
@@ -103,14 +124,25 @@ export function DescriptionEditor() {
             <h2 className="text-[16px] font-bold text-slate-800 tracking-tight">Dish Description Editor</h2>
             <p className="text-[13px] text-slate-500 mt-0.5">Add or modify delicious descriptions for your menu items</p>
           </div>
-          <Button 
-            onClick={formik.handleSubmit} 
-            disabled={isSaving || unsavedCount === 0}
-            className="h-8 px-4 rounded-md bg-primary hover:bg-primary/90 text-white text-xs font-semibold font-sans shadow-none flex items-center gap-1.5 transition-all"
-          >
-            {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-            Save Changes {unsavedCount > 0 && `(${unsavedCount})`}
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button 
+              onClick={handleGenerate} 
+              disabled={isGenerating || isSaving}
+              variant="outline"
+              className="h-8 px-4 rounded-md border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold font-sans shadow-sm flex items-center gap-1.5 transition-all"
+            >
+              {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-indigo-600" />}
+              {isGenerating ? "Generating..." : "Generate with AI"}
+            </Button>
+            <Button 
+              onClick={formik.handleSubmit} 
+              disabled={isSaving || unsavedCount === 0}
+              className="h-8 px-4 rounded-md bg-primary hover:bg-primary/90 text-white text-xs font-semibold font-sans shadow-none flex items-center gap-1.5 transition-all"
+            >
+              {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+              Save Changes {unsavedCount > 0 && `(${unsavedCount})`}
+            </Button>
+          </div>
         </div>
       </div>
       

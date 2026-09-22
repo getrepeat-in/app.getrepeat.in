@@ -58,7 +58,7 @@ export const AddonGroupService = {
     const updatedGroup = await AddonGroup.findOneAndUpdate(
       { _id: groupId, restaurant: restaurantId },
       { $set: updatePayload },
-      { new: true }
+      { returnDocument: 'after' }
     ).lean();
 
     if (!updatedGroup) throw new Error("Addon group not found");

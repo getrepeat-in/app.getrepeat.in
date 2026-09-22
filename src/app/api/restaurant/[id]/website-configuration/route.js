@@ -53,7 +53,7 @@ export const PUT = withErrorHandler(async (req, { params }) => {
   const updatedConfig = await WebsiteConfig.findOneAndUpdate(
     { restaurant: id },
     { $set: data },
-    { new: true, upsert: true, runValidators: true }
+    { returnDocument: 'after', upsert: true, runValidators: true }
   ).populate("homepage.banners.items.image");
 
   const cacheKey = `restaurant:website-config:${id}`;

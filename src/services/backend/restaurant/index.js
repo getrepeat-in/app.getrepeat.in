@@ -94,7 +94,7 @@ export class RestaurantService {
                     { $setOnInsert: OWNER_ROLE_DEFINITION },
                     { 
                         upsert: true, 
-                        new: true, 
+                        returnDocument: 'after', 
                         setDefaultsOnInsert: true,
                         session 
                     }
