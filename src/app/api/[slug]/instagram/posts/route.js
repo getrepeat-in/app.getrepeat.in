@@ -1,9 +1,10 @@
 import dbConnect from "@/lib/db";
-import Restaurant from "@/models/Restaurant";
-import { withErrorHandler, successResponse, BadRequestError, RestaurantNotFoundError, NotFoundError, UnauthorizedError, AppError } from "@/lib/api/response-handler";
-import { getCache, setCache } from "@/services/backend/redis/cache.service";
-import InstagramPostMapping from "@/models/InstagramPostMapping";
 import MenuItem from "@/models/Item";
+import { decrypt } from "@/lib/crypto";
+import Restaurant from "@/models/Restaurant";
+import InstagramPostMapping from "@/models/InstagramPostMapping";
+import { getCache, setCache } from "@/services/backend/redis/cache.service";
+import { withErrorHandler, successResponse, BadRequestError, RestaurantNotFoundError, NotFoundError, UnauthorizedError, AppError } from "@/lib/api/response-handler";
 
 export const GET = withErrorHandler(async (req, { params }) => {
     const { slug } = await params;
@@ -32,14 +33,15 @@ export const GET = withErrorHandler(async (req, { params }) => {
         throw new NotFoundError("Instagram account not connected");
     }
 
-    // Check if token is expired
     if (instagram.tokenExpiresAt && new Date(instagram.tokenExpiresAt) < new Date()) {
         throw new UnauthorizedError("Instagram access token has expired");
     }
 
+    const decryptedToken = decrypt(instagram.accessToken);
+
     const url = new URL("https://graph.instagram.com/me/media");
     url.searchParams.append("fields", "id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,username");
-    url.searchParams.append("access_token", instagram.accessToken);
+    url.searchParams.append("access_token", decryptedToken);
     url.searchParams.append("limit", "10");
 
     const res = await fetch(url.toString());
@@ -73,7 +75,6 @@ export const GET = withErrorHandler(async (req, { params }) => {
         mappedItems: mappingsByPostId[post.id] || []
     }));
 
-    // Cache for 10 minutes (600 seconds)
     await setCache(cacheKey, postsWithMappings, 600);
     return successResponse(postsWithMappings, "Instagram posts fetched successfully");
 });

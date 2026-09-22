@@ -14,7 +14,7 @@ import SocialLinksSection from "./fragments/SocialLinksSection";
 import { WebsiteConfigService } from "@/services/frontend/website-config";
 
 const WebsiteConfigPage = () => {
-  const { restaurantId } = useRestaurant();
+  const { restaurantId, restaurants } = useRestaurant();
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -27,6 +27,7 @@ const WebsiteConfigPage = () => {
     enabled: !!restaurantId,
   });
 
+  const activeRestaurant = restaurants?.find(r => r._id === restaurantId);
   const configData = data?.data || data;
 
   const { mutate, isPending } = useFormMutation({
@@ -140,7 +141,7 @@ const WebsiteConfigPage = () => {
         <div className="bg-white dark:bg-zinc-900 rounded-xl border border-border/40 shadow-sm p-5 md:p-8 space-y-12">
           <BannerSection formik={formik} />
           <ThemeSection formik={formik} />
-          <OrderingSection formik={formik} />
+          <OrderingSection formik={formik} isRazorpayConnected={!!activeRestaurant?.razorpay?.accountId} restaurantId={restaurantId} />
           <SocialLinksSection formik={formik} />
         </div>
       </div>

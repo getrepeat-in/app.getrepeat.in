@@ -64,5 +64,8 @@ export const API_ENDPOINTS = {
         GET_ONE: (resId, promotionId) => `/api/restaurant/${resId}/promotions/${promotionId}`,
         UPDATE: (resId, promotionId) => `/api/restaurant/${resId}/promotions/${promotionId}`,
         DELETE: (resId, promotionId) => `/api/restaurant/${resId}/promotions/${promotionId}`,
+    },
+    PAYMENTS: {
+        RAZORPAY_CONNECT: (resId) => `/api/restaurant/${resId}/payments/razorpay/connect`,
     }
 }

@@ -1,4 +1,5 @@
 import MenuItem from "@/models/Item";
+import { decrypt } from "@/lib/crypto";
 import { getRestaurant } from "@/lib/api/hooks/getRestaurant";
 import InstagramPostMapping from "@/models/InstagramPostMapping";
 import { withErrorHandler, successResponse } from "@/lib/api/response-handler";
@@ -31,9 +32,11 @@ export const GET = withErrorHandler(async (req, { params }) => {
     }
 
     try {
+        const decryptedToken = decrypt(instagram.accessToken);
+
         const url = new URL("https://graph.instagram.com/me/media");
         url.searchParams.append("fields", "id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,username");
-        url.searchParams.append("access_token", instagram.accessToken);
+        url.searchParams.append("access_token", decryptedToken);
         url.searchParams.append("limit", "50");
 
         const res = await fetch(url.toString());

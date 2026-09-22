@@ -1,8 +1,12 @@
 "use client";
 import { Switch } from "@/components/ui/switch";
-import { Utensils, ShoppingBag, Truck, Banknote, CreditCard } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import useNotification from "@/store/hooks/useNotification";
+import { PaymentService } from "@/services/frontend/payments";
+import { Utensils, ShoppingBag, Truck, Banknote, CreditCard, Link as LinkIcon } from "lucide-react";
 
-const OrderingSection = ({ formik }) => {
+const OrderingSection = ({ formik, isRazorpayConnected, restaurantId }) => {
+  const notification = useNotification();
   const acceptedTypes = formik.values.ordering?.acceptedTypes || [];
   const paymentMethods = formik.values.ordering?.paymentMethods || [];
 
@@ -24,6 +28,18 @@ const OrderingSection = ({ formik }) => {
       newMethods = newMethods.filter((m) => m !== method);
     }
     formik.setFieldValue("ordering.paymentMethods", newMethods);
+  };
+
+  const handleConnectRazorpay = async () => {
+    try {
+      notification.info("Connecting to Razorpay...");
+      const res = await PaymentService.getRazorpayConnectUrl(restaurantId);
+      if (res?.data?.url) {
+        window.location.href = res.data.url;
+      }
+    } catch (err) {
+      notification.error("Failed to initiate Razorpay connection");
+    }
   };
 
   const orderTypeOptions = [
@@ -76,21 +92,50 @@ const OrderingSection = ({ formik }) => {
           <div className="flex flex-col gap-3">
             {paymentMethodOptions.map((option) => {
               const Icon = option.icon;
+              const isOnline = option.id === "ONLINE";
+              const isDisabled = isOnline && !isRazorpayConnected;
+
               return (
-                <div key={option.id} className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-white dark:bg-zinc-900/30 transition-colors hover:border-border">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-500">
-                      <Icon className="h-5 w-5" />
+                <div key={option.id} className="flex flex-col gap-3 p-4 rounded-xl border border-border/50 bg-white dark:bg-zinc-900/30 transition-colors hover:border-border">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${isOnline ? 'bg-indigo-500/10 text-indigo-600' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-500'}`}>
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">{option.label}</p>
+                        <p className="text-xs text-muted-foreground">{option.description}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">{option.label}</p>
-                      <p className="text-xs text-muted-foreground">{option.description}</p>
-                    </div>
+                    <Switch
+                      checked={paymentMethods.includes(option.id) && !isDisabled}
+                      disabled={isDisabled}
+                      onCheckedChange={(checked) => handlePaymentMethodChange(option.id, checked)}
+                    />
                   </div>
-                  <Switch
-                    checked={paymentMethods.includes(option.id)}
-                    onCheckedChange={(checked) => handlePaymentMethodChange(option.id, checked)}
-                  />
+                  
+                  {isOnline && !isRazorpayConnected && (
+                    <div className="mt-1 pt-3 border-t border-border/40">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-amber-600 dark:text-amber-500 font-medium">Razorpay account must be connected</p>
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={handleConnectRazorpay}
+                          className="h-8 text-xs font-medium"
+                        >
+                          <LinkIcon className="mr-2 h-3 w-3" />
+                          Connect Razorpay
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  {isOnline && isRazorpayConnected && (
+                    <div className="mt-1 pt-2 border-t border-border/40">
+                       <p className="text-xs text-emerald-600 dark:text-emerald-500 font-medium">✓ Razorpay is connected</p>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -105,7 +150,6 @@ const OrderingSection = ({ formik }) => {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Packing Charges */}
           <div className="flex flex-col p-4 rounded-xl border border-border/50 bg-white dark:bg-zinc-900/30">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
@@ -163,7 +207,6 @@ const OrderingSection = ({ formik }) => {
             )}
           </div>
 
-          {/* Tax & Service Fee */}
           <div className="flex flex-col p-4 rounded-xl border border-border/50 bg-white dark:bg-zinc-900/30">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">

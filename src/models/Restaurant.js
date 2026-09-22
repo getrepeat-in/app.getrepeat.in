@@ -179,6 +179,13 @@ const RestaurantSchema = new Schema(
       connectedAt: { type: Date, default: null }
     },
 
+    razorpay: {
+      accountId: { type: String, default: null },
+      accessToken: { type: String, default: null },
+      refreshToken: { type: String, default: null },
+      connectedAt: { type: Date, default: null }
+    },
+
     createdBy: {
       type: String,
       required: true,
