@@ -20,6 +20,7 @@ const IntegrationSchema = new Schema(
       accountId: { type: String, default: null },
       accessToken: { type: String, default: null },
       refreshToken: { type: String, default: null },
+      publicToken: { type: String, default: null },
       connectedAt: { type: Date, default: null },
       isActive: { type: Boolean, default: true },
     },

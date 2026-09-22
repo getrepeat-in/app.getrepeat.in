@@ -50,6 +50,7 @@ export async function GET(req) {
           "razorpay.accountId": tokenData.razorpay_account_id,
           "razorpay.accessToken": tokenData.access_token,
           "razorpay.refreshToken": tokenData.refresh_token,
+          "razorpay.publicToken": tokenData.public_token,
           "razorpay.connectedAt": new Date()
         }
       },

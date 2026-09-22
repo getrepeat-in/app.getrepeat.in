@@ -56,12 +56,14 @@ export const POST = async (req, { params }) => {
             return errorResponse(err.message, 500);
         }
 
+        const publicToken = integration?.razorpay?.publicToken;
+
         return successResponse(
             {
                 orderId: order.id,
                 amount: order.amount,
                 currency: order.currency,
-                key: process.env.RAZORPAY_CLIENT_ID || process.env.NEXT_PUBLIC_RAZORPAY_CLIENT_ID,
+                key: publicToken || process.env.RAZORPAY_API_KEY || process.env.NEXT_PUBLIC_RAZORPAY_API_KEY,
             },
             "Razorpay order created successfully",
             201
