@@ -2,7 +2,7 @@ import { encrypt } from "@/lib/crypto";
 import dbConnect from "@/lib/db/connect";
 import { NextResponse } from "next/server";
 import Restaurant from "@/models/Restaurant";
-import { razorpayService } from "@/services/backend/payments/razorpay"p
+import { razorpayService } from "@/services/backend/payments/razorpay";
 
 export async function GET(req) {
   try {
