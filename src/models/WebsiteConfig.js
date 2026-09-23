@@ -73,10 +73,18 @@ const WebsiteConfigSchema = new Schema(
         type: String,
         enum: ["DINE_IN", "TAKEAWAY", "DELIVERY"]
       }],
+      defaultType: {
+        type: String,
+        enum: ["DINE_IN", "TAKEAWAY", "DELIVERY"]
+      },
       paymentMethods: [{
         type: String,
         enum: ["CASH", "ONLINE"]
       }],
+      defaultPaymentMethod: {
+        type: String,
+        enum: ["CASH", "ONLINE"]
+      },
       packingCharges: {
         isEnabled: { type: Boolean, default: false },
         amount: { type: Number, default: 0 }

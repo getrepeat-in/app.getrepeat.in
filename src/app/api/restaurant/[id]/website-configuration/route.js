@@ -2,12 +2,9 @@ import dbConnect from "@/lib/db";
 import Restaurant from "@/models/Restaurant";
 import WebsiteConfig from "@/models/WebsiteConfig";
 import { getRestaurant } from "@/lib/api/hooks/getRestaurant";
-import { getCache, setCache, deleteCache } from "@/services/backend/redis/cache.service";
-import { 
-  withErrorHandler, 
-  successResponse, 
-  BadRequestError 
-} from "@/lib/api/response-handler";
+import { getCache, setCache } from "@/services/backend/redis/cache.service";
+import { withErrorHandler, successResponse, BadRequestError } from "@/lib/api/response-handler";
+import { getWebsiteConfigCacheKey, invalidateWebsiteConfigCache } from "@/lib/api/helpers/cacheKeys";
 
 export const GET = withErrorHandler(async (req, { params }) => {
   const { id } = await params;
@@ -16,7 +13,7 @@ export const GET = withErrorHandler(async (req, { params }) => {
   await getRestaurant({ restaurantId: id });
   await dbConnect();
 
-  const cacheKey = `restaurant:website-config:${id}`;
+  const cacheKey = getWebsiteConfigCacheKey(id);
   const cachedConfig = await getCache(cacheKey);
 
   if (cachedConfig) {
@@ -56,13 +53,7 @@ export const PUT = withErrorHandler(async (req, { params }) => {
     { returnDocument: 'after', upsert: true, runValidators: true }
   ).populate("homepage.banners.items.image");
 
-  const cacheKey = `restaurant:website-config:${id}`;
-  await deleteCache(cacheKey);
-
-  const actualRestaurant = await Restaurant.findById(id).select("slug").lean();
-  if (actualRestaurant?.slug) {
-    await deleteCache(`restaurant:website-config:slug:${actualRestaurant.slug}`);
-  }
+  await invalidateWebsiteConfigCache(id);
 
   return successResponse(
     updatedConfig,

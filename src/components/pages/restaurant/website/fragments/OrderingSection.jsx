@@ -14,8 +14,14 @@ const OrderingSection = ({ formik, isRazorpayConnected, restaurantId }) => {
     let newTypes = [...acceptedTypes];
     if (checked) {
       if (!newTypes.includes(type)) newTypes.push(type);
+      if (newTypes.length === 1 && !formik.values.ordering?.defaultType) {
+        formik.setFieldValue("ordering.defaultType", type);
+      }
     } else {
       newTypes = newTypes.filter((t) => t !== type);
+      if (formik.values.ordering?.defaultType === type) {
+        formik.setFieldValue("ordering.defaultType", newTypes.length > 0 ? newTypes[0] : null);
+      }
     }
     formik.setFieldValue("ordering.acceptedTypes", newTypes);
   };
@@ -24,8 +30,14 @@ const OrderingSection = ({ formik, isRazorpayConnected, restaurantId }) => {
     let newMethods = [...paymentMethods];
     if (checked) {
       if (!newMethods.includes(method)) newMethods.push(method);
+      if (newMethods.length === 1 && !formik.values.ordering?.defaultPaymentMethod) {
+        formik.setFieldValue("ordering.defaultPaymentMethod", method);
+      }
     } else {
       newMethods = newMethods.filter((m) => m !== method);
+      if (formik.values.ordering?.defaultPaymentMethod === method) {
+        formik.setFieldValue("ordering.defaultPaymentMethod", newMethods.length > 0 ? newMethods[0] : null);
+      }
     }
     formik.setFieldValue("ordering.paymentMethods", newMethods);
   };
@@ -66,21 +78,38 @@ const OrderingSection = ({ formik, isRazorpayConnected, restaurantId }) => {
           <div className="flex flex-col gap-3">
             {orderTypeOptions.map((option) => {
               const Icon = option.icon;
+              const isAccepted = acceptedTypes.includes(option.id);
+              const isDefault = formik.values.ordering?.defaultType === option.id;
+
               return (
-                <div key={option.id} className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-white dark:bg-zinc-900/30 transition-colors hover:border-border">
+                <div key={option.id} className={`flex items-center justify-between p-4 rounded-xl border ${isDefault ? 'border-primary bg-primary/5 dark:bg-primary/10' : 'border-border/50 bg-white dark:bg-zinc-900/30'} transition-colors hover:border-border`}>
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
                       <Icon className="h-5 w-5" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-foreground">{option.label}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-semibold text-foreground">{option.label}</p>
+                        {isDefault && <span className="px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider bg-primary/10 text-primary rounded-full">Default</span>}
+                      </div>
                       <p className="text-xs text-muted-foreground">{option.description}</p>
                     </div>
                   </div>
-                  <Switch
-                    checked={acceptedTypes.includes(option.id)}
-                    onCheckedChange={(checked) => handleOrderTypeChange(option.id, checked)}
-                  />
+                  <div className="flex items-center gap-4">
+                    {isAccepted && !isDefault && (
+                      <button
+                        type="button"
+                        onClick={() => formik.setFieldValue("ordering.defaultType", option.id)}
+                        className="text-[11px] font-medium px-2.5 py-1 rounded-md border border-border/50 bg-white dark:bg-zinc-800 text-muted-foreground hover:text-primary hover:border-primary/30 hover:bg-primary/5 transition-all"
+                      >
+                        Set as Default
+                      </button>
+                    )}
+                    <Switch
+                      checked={isAccepted}
+                      onCheckedChange={(checked) => handleOrderTypeChange(option.id, checked)}
+                    />
+                  </div>
                 </div>
               );
             })}
@@ -94,24 +123,40 @@ const OrderingSection = ({ formik, isRazorpayConnected, restaurantId }) => {
               const Icon = option.icon;
               const isOnline = option.id === "ONLINE";
               const isDisabled = isOnline && !isRazorpayConnected;
+              const isAccepted = paymentMethods.includes(option.id) && !isDisabled;
+              const isDefault = formik.values.ordering?.defaultPaymentMethod === option.id;
 
               return (
-                <div key={option.id} className="flex flex-col gap-3 p-4 rounded-xl border border-border/50 bg-white dark:bg-zinc-900/30 transition-colors hover:border-border">
+                <div key={option.id} className={`flex flex-col gap-3 p-4 rounded-xl border ${isDefault ? 'border-primary bg-primary/5 dark:bg-primary/10' : 'border-border/50 bg-white dark:bg-zinc-900/30'} transition-colors hover:border-border`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${isOnline ? 'bg-indigo-500/10 text-indigo-600' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-500'}`}>
                         <Icon className="h-5 w-5" />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-foreground">{option.label}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-semibold text-foreground">{option.label}</p>
+                          {isDefault && <span className="px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider bg-primary/10 text-primary rounded-full">Default</span>}
+                        </div>
                         <p className="text-xs text-muted-foreground">{option.description}</p>
                       </div>
                     </div>
-                    <Switch
-                      checked={paymentMethods.includes(option.id) && !isDisabled}
-                      disabled={isDisabled}
-                      onCheckedChange={(checked) => handlePaymentMethodChange(option.id, checked)}
-                    />
+                    <div className="flex items-center gap-4">
+                      {isAccepted && !isDefault && (
+                        <button
+                          type="button"
+                          onClick={() => formik.setFieldValue("ordering.defaultPaymentMethod", option.id)}
+                          className="text-[11px] font-medium px-2.5 py-1 rounded-md border border-border/50 bg-white dark:bg-zinc-800 text-muted-foreground hover:text-primary hover:border-primary/30 hover:bg-primary/5 transition-all"
+                        >
+                          Set as Default
+                        </button>
+                      )}
+                      <Switch
+                        checked={paymentMethods.includes(option.id) && !isDisabled}
+                        disabled={isDisabled}
+                        onCheckedChange={(checked) => handlePaymentMethodChange(option.id, checked)}
+                      />
+                    </div>
                   </div>
                   
                   {isOnline && !isRazorpayConnected && (

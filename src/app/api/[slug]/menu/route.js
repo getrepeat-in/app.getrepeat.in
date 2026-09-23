@@ -1,8 +1,9 @@
 import dbConnect from "@/lib/db";
-import Restaurant from "@/models/Restaurant";
 import { MenuService } from "@/services/backend/menu";
-import { withErrorHandler, successResponse, BadRequestError, RestaurantNotFoundError } from "@/lib/api/response-handler";
+import { getMenuCacheKey } from "@/lib/api/helpers/cacheKeys";
+import { getRestaurantIdFromSlug } from "@/lib/api/hooks/getRestaurant";
 import { getCache, setCache } from "@/services/backend/redis/cache.service";
+import { withErrorHandler, successResponse, BadRequestError } from "@/lib/api/response-handler";
 
 export const GET = withErrorHandler(async (req, { params }) => {
     const { slug } = await params;
@@ -10,19 +11,16 @@ export const GET = withErrorHandler(async (req, { params }) => {
         throw new BadRequestError("Restaurant slug is required");
     }
 
-    const cacheKey = `restaurant:slug:${slug}:menu`;
+    const restaurantId = await getRestaurantIdFromSlug(slug);
+    const cacheKey = getMenuCacheKey(restaurantId);
+    
     const cachedMenu = await getCache(cacheKey);
     if (cachedMenu) {
         return successResponse(cachedMenu, "Menu fetched successfully (cached)");
     }
 
     await dbConnect();
-    const restaurant = await Restaurant.findOne({ slug }).select("_id").lean();
-    if (!restaurant) {
-        throw new RestaurantNotFoundError();
-    }
-
-    const menuData = await MenuService.getMenu(restaurant._id);
+    const menuData = await MenuService.getMenu(restaurantId);
     await setCache(cacheKey, menuData, 300);
 
     return successResponse(menuData, "Menu fetched successfully");

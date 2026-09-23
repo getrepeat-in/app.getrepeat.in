@@ -73,7 +73,9 @@ const WebsiteConfigPage = () => {
       },
       ordering: {
         acceptedTypes: configData?.ordering?.acceptedTypes || ["DINE_IN", "TAKEAWAY", "DELIVERY"],
-        paymentMethods: configData?.ordering?.paymentMethods || ["CASH", "ONLINE"],
+        defaultType: configData?.ordering?.defaultType || "DINE_IN",
+        paymentMethods: configData?.ordering?.paymentMethods || ["CASH"],
+        defaultPaymentMethod: configData?.ordering?.defaultPaymentMethod || "CASH",
         packingCharges: {
           isEnabled: configData?.ordering?.packingCharges?.isEnabled ?? false,
           amount: configData?.ordering?.packingCharges?.amount ?? 0

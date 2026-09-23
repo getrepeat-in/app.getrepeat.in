@@ -3,6 +3,7 @@ import { deleteCache, deleteCacheByPattern } from "@/services/backend/redis/cach
 export const getRestaurantCacheKey = (userId) => `restaurant:user:${userId}`;
 export const getRestaurantDetailsCacheKey = (restaurantId) => `restaurant:details:${restaurantId}`;
 export const getRestaurantSlugCacheKey = (slug) => `restaurant:slug:${slug}`;
+export const getRestaurantIdSlugCacheKey = (slug) => `restaurant:slug:${slug}:id`;
 export const getCategoriesCacheKey = (restaurantId) => `restaurant:categories:${restaurantId}`;
 export const getItemsCacheKey = (restaurantId) => `restaurant:items:${restaurantId}`;
 export const getRolesCacheKey = () => `restaurant:roles:all`;
@@ -14,18 +15,20 @@ export const getUsersCacheKey = (restaurantId, options = {}) => {
   const { status = "all", search = "", page = "", limit = "" } = options;
   return `restaurant:users:${restaurantId}:${status || "all"}:${(search || "").trim().toLowerCase()}:${page || ""}:${limit || ""}`;
 };
+
+export const getUserProfileCacheKey = (userId) => `user:profile:${userId}`;
+export const getInstagramPostsCacheKey = (restaurantId) => `restaurant:${restaurantId}:instagram:posts`;
+export const getImageSearchCacheKey = (query, page, limit) => `image-search:${query.toLowerCase()}:${page}:${limit}`;
 export const getAddonGroupsCacheKey = (restaurantId) => `restaurant:addon-groups:${restaurantId}`;
 export const getTablesCacheKey = (restaurantId) => `restaurant:tables:${restaurantId}`;
 export const getPromotionCacheKey = (restaurantId) => `restaurant:${restaurantId}:promotions`;
-
 export const getMenuCacheKey = (restaurantId) => `restaurant:${restaurantId}:menu`;
-export const getMenuSlugCacheKey = (slug) => `restaurant:slug:${slug}:menu`;
+export const getWebsiteConfigCacheKey = (restaurantId) => `restaurant:${restaurantId}:website-config`;
 
 export const invalidateMenuCache = async (restaurantId) => {
     if (restaurantId) {
         await deleteCache(getMenuCacheKey(restaurantId));
     }
-    await deleteCacheByPattern("restaurant:slug:*:menu");
 };
 
 export const invalidateRestaurantCache = async (arg1, arg2, arg3) => {
@@ -54,6 +57,7 @@ export const invalidateRestaurantCache = async (arg1, arg2, arg3) => {
         const validSlugs = slugList.filter((s) => typeof s === "string" && s.trim());
         validSlugs.forEach((s) => {
             tasks.push(deleteCache(getRestaurantSlugCacheKey(s.trim())));
+            tasks.push(deleteCache(getRestaurantIdSlugCacheKey(s.trim())));
         });
     }
 
@@ -111,7 +115,18 @@ export const invalidateOrderCache = async (restaurantId) => {
 
 export const invalidatePromotionCache = async (restaurantId) => {
     if (restaurantId) {
-        await deleteCacheByPattern(`${getPromotionCacheKey(restaurantId)}*`);
+        const baseKey = getPromotionCacheKey(restaurantId);
+        await deleteCache(baseKey);
+        await deleteCache(`${baseKey}:status:ACTIVE`);
+        await deleteCache(`${baseKey}:status:INACTIVE`);
+        
+        await deleteCacheByPattern(`${baseKey}*`);
         await invalidateMenuCache(restaurantId);
+    }
+};
+
+export const invalidateWebsiteConfigCache = async (restaurantId) => {
+    if (restaurantId) {
+        await deleteCache(getWebsiteConfigCacheKey(restaurantId));
     }
 };

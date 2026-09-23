@@ -1,9 +1,10 @@
 import dbConnect from "@/lib/db";
 import Promotion from "@/models/Promotion";
-import Restaurant from "@/models/Restaurant";
-import { withErrorHandler, successResponse, BadRequestError, RestaurantNotFoundError } from "@/lib/api/response-handler";
-import { getCache, setCache } from "@/services/backend/redis/cache.service";
 import { ImageService } from "@/services/backend/images";
+import { getPromotionCacheKey } from "@/lib/api/helpers/cacheKeys";
+import { getRestaurantIdFromSlug } from "@/lib/api/hooks/getRestaurant";
+import { getCache, setCache } from "@/services/backend/redis/cache.service";
+import { withErrorHandler, successResponse, BadRequestError } from "@/lib/api/response-handler";
 
 export const GET = withErrorHandler(async (req, { params }) => {
     const { slug } = await params;
@@ -12,7 +13,8 @@ export const GET = withErrorHandler(async (req, { params }) => {
         throw new BadRequestError("Restaurant slug is required");
     }
 
-    const cacheKey = `restaurant:slug:${slug}:promotions:active`;
+    const restaurantId = await getRestaurantIdFromSlug(slug);
+    const cacheKey = `${getPromotionCacheKey(restaurantId)}:status:ACTIVE`;
     const cachedPromotions = await getCache(cacheKey);
 
     if (cachedPromotions) {
@@ -20,19 +22,14 @@ export const GET = withErrorHandler(async (req, { params }) => {
     }
 
     await dbConnect();
-    const restaurant = await Restaurant.findOne({ slug }).select("_id").lean();
-    
-    if (!restaurant) {
-        throw new RestaurantNotFoundError();
-    }
 
     const currentDate = new Date();
     const promotions = await Promotion.find({
-        restaurant: restaurant._id,
+        restaurant: restaurantId,
         status: "ACTIVE",
         $and: [
-            { $or: [{ starts_at: null }, { starts_at: { $lte: currentDate } }] },
-            { $or: [{ ends_at: null }, { ends_at: { $gte: currentDate } }] }
+            { $or: [{ starts_at: { $eq: null } }, { starts_at: { $exists: false } }, { starts_at: { $lte: currentDate } }] },
+            { $or: [{ ends_at: { $eq: null } }, { ends_at: { $exists: false } }, { ends_at: { $gte: currentDate } }] }
         ]
     })
     .populate({

@@ -47,7 +47,7 @@ export function SidebarLayout({ children }) {
               href={storefrontUrl} 
               target="_blank" 
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-[12px] font-semibold text-primary/90 bg-primary/10 hover:bg-primary/20 px-3 py-1.5 rounded-full transition-colors shrink-0 ml-4"
+              className="flex items-center gap-1.5 text-[12px] font-semibold text-primary/90 bg-primary/10 hover:bg-primary/20 px-3 py-1.5 rounded-md transition-colors shrink-0 ml-4"
             >
               Visit Website
               <ExternalLink className="w-3.5 h-3.5" />

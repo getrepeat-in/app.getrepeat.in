@@ -2,6 +2,8 @@ import dbConnect from '@/lib/db';
 import { getUser } from './getUser';
 import Restaurant from '@/models/Restaurant';
 import { normalizeSlug } from '@/lib/api/helpers/slug';
+import { getRestaurantIdSlugCacheKey } from '@/lib/api/helpers/cacheKeys';
+import { getCache, setCache } from '@/services/backend/redis/cache.service';
 import { RestaurantNotFoundError, BadRequestError } from '@/lib/api/response-handler';
 
 export async function getRestaurant({ restaurantId = null, required = true } = {}) {
@@ -38,4 +40,27 @@ export async function getRestaurantFromSlug(slug, { required = true } = {}) {
   }
 
   return restaurant;
+}
+
+export async function getRestaurantIdFromSlug(slug) {
+  const normalizedSlug = normalizeSlug(slug);
+  if (!normalizedSlug) {
+    throw new BadRequestError("A valid restaurant slug is required.");
+  }
+
+  const cacheKey = getRestaurantIdSlugCacheKey(normalizedSlug);
+  const cachedId = await getCache(cacheKey);
+
+  if (cachedId) return cachedId;
+
+  await dbConnect();
+  const restaurant = await Restaurant.findOne({ slug: normalizedSlug }).select('_id').lean();
+  
+  if (!restaurant) {
+    throw new RestaurantNotFoundError("No restaurant found with this slug.");
+  }
+
+  const id = restaurant._id.toString();
+  await setCache(cacheKey, id, 86400); 
+  return id;
 }

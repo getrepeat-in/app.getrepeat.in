@@ -1,11 +1,12 @@
 import dbConnect from "@/lib/db";
 import MenuItem from "@/models/Item";
 import { decrypt } from "@/lib/crypto";
-import Restaurant from "@/models/Restaurant";
 import Integration from "@/models/Integration";
 import InstagramPostMapping from "@/models/InstagramPostMapping";
+import { getRestaurantIdFromSlug } from "@/lib/api/hooks/getRestaurant";
+import { getInstagramPostsCacheKey } from "@/lib/api/helpers/cacheKeys";
 import { getCache, setCache } from "@/services/backend/redis/cache.service";
-import { withErrorHandler, successResponse, BadRequestError, RestaurantNotFoundError, NotFoundError, UnauthorizedError, AppError } from "@/lib/api/response-handler";
+import { withErrorHandler, successResponse, BadRequestError, NotFoundError, UnauthorizedError, AppError } from "@/lib/api/response-handler";
 
 export const GET = withErrorHandler(async (req, { params }) => {
     const { slug } = await params;
@@ -14,7 +15,8 @@ export const GET = withErrorHandler(async (req, { params }) => {
         throw new BadRequestError("Restaurant slug is required");
     }
 
-    const cacheKey = `restaurant:slug:${slug}:instagram:posts`;
+    const restaurantId = await getRestaurantIdFromSlug(slug);
+    const cacheKey = getInstagramPostsCacheKey(restaurantId);
     const cachedPosts = await getCache(cacheKey);
 
     if (cachedPosts) {
@@ -22,13 +24,8 @@ export const GET = withErrorHandler(async (req, { params }) => {
     }
 
     await dbConnect();
-    const restaurant = await Restaurant.findOne({ slug }).select("_id").lean();
-    
-    if (!restaurant) {
-        throw new RestaurantNotFoundError();
-    }
 
-    const integration = await Integration.findOne({ restaurantId: restaurant._id }).lean();
+    const integration = await Integration.findOne({ restaurantId }).lean();
     const instagram = integration?.instagram;
 
     if (!instagram || !instagram.accessToken) {
@@ -57,7 +54,7 @@ export const GET = withErrorHandler(async (req, { params }) => {
     const posts = data.data || [];
     const postIds = posts.map(post => post.id);
     const mappings = await InstagramPostMapping.find({
-        restaurant: restaurant._id,
+        restaurant: restaurantId,
         postId: { $in: postIds }
     }).populate({
         path: "mappedItems",

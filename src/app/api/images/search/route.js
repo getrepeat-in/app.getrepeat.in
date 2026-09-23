@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getImageSearchCacheKey } from "@/lib/api/helpers/cacheKeys";
 import { getCache, setCache } from "@/services/backend/redis/cache.service";
 import { withErrorHandler, successResponse, BadRequestError } from "@/lib/api/response-handler";
 
@@ -12,7 +13,7 @@ export const GET = withErrorHandler(async (request) => {
         throw new BadRequestError("Search query is required");
     }
 
-    const cacheKey = `image-search:${query.toLowerCase()}:${page}:${limit}`;
+    const cacheKey = getImageSearchCacheKey(query, page, limit);
     const cachedData = await getCache(cacheKey);
 
     if (cachedData) {
