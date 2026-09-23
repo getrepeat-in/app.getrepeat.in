@@ -1,5 +1,6 @@
 import dbConnect from "@/lib/db";
 import Restaurant from "@/models/Restaurant";
+import Integration from "@/models/Integration";
 import { razorpayService } from "@/services/backend/payments/razorpay";
 import { backendIntegrationService } from "@/services/backend/integration";
 import { successResponse, errorResponse } from "@/lib/api/response-handler";
@@ -26,7 +27,7 @@ export const POST = async (req, { params }) => {
             return errorResponse("Restaurant not found", 404);
         }
 
-        const integrations = await backendIntegrationService.getIntegrations(restaurant._id);
+        const integrations = await backendIntegrationService.getIntegrations(restaurant._id, true);
         const accessToken = integrations?.razorpay?.accessToken;
 
         if (!accessToken || !integrations?.razorpay?.isLinked) {
@@ -61,7 +62,7 @@ export const POST = async (req, { params }) => {
                 orderId: order.id,
                 amount: order.amount,
                 currency: order.currency,
-                key: process.env.RAZORPAY_CLIENT_ID || process.env.NEXT_PUBLIC_RAZORPAY_CLIENT_ID,
+                key: integrations?.razorpay?.publicToken || integrations?.razorpay?.accountId || process.env.RAZORPAY_CLIENT_ID || process.env.NEXT_PUBLIC_RAZORPAY_CLIENT_ID,
             },
             "Razorpay order created successfully",
             201

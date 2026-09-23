@@ -1,11 +1,8 @@
 import dbConnect from "@/lib/db";
-import { decrypt } from "@/lib/crypto";
 import Restaurant from "@/models/Restaurant";
 import Integration from "@/models/Integration";
-import { OrderService } from "@/services/backend/order";
-import { razorpayService } from "@/services/backend/payments/razorpay";
+import { OrderService } from "@/services/backend/order";;
 import { successResponse, errorResponse } from "@/lib/api/response-handler";
-import { backendIntegrationService } from "@/services/backend/integration";
 
 export const POST = async (req, { params }) => {
     try {
@@ -81,7 +78,7 @@ export const POST = async (req, { params }) => {
                     tax: orderData.tax,
                     discount: orderData.discount,
                     totalAmount: orderData.totalAmount,
-                    paymentMethod: "RAZORPAY",
+                    paymentMethod: "ONLINE",
                     paymentStatus: "PAID",
                     specialInstructions: orderData.specialInstructions || "",
                     initialStatus: orderData.status || null,

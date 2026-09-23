@@ -26,7 +26,7 @@ export const POST = async (req, { params }) => {
             return errorResponse("Restaurant not found", 404);
         }
 
-        const integrations = await backendIntegrationService.getIntegrations(restaurant._id);
+        const integrations = await backendIntegrationService.getIntegrations(restaurant._id, true);
         const accessToken = integrations?.razorpay?.accessToken;
 
         if (!accessToken || !integrations?.razorpay?.isLinked) {
@@ -63,7 +63,7 @@ export const POST = async (req, { params }) => {
                 orderId: order.id,
                 amount: order.amount,
                 currency: order.currency,
-                key: publicToken || process.env.RAZORPAY_API_KEY || process.env.NEXT_PUBLIC_RAZORPAY_API_KEY,
+                key: integrations?.razorpay?.publicToken || integrations?.razorpay?.accountId || process.env.RAZORPAY_API_KEY || process.env.NEXT_PUBLIC_RAZORPAY_API_KEY,
             },
             "Razorpay order created successfully",
             201
