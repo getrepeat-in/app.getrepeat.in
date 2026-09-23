@@ -82,15 +82,15 @@ export function ManageGroups({ addonGroups, items, selectedGroups, setSelectedGr
                             key={group._id}
                             onClick={(e) => toggleSelection(group._id, e)}
                             className={cn(
-                                "group flex flex-col rounded-xl border transition-all cursor-pointer overflow-hidden",
+                                "group flex flex-col rounded-lg border transition-all cursor-pointer overflow-hidden",
                                 isSelected
                                     ? "border-primary/40 bg-primary/[0.03] shadow-[0_0_0_3px_hsl(var(--primary)/0.08)]"
                                     : "border-border/60 bg-white hover:border-border hover:shadow-sm"
                             )}
                         >
-                            <div className="flex items-center gap-3 px-3.5 py-3">
+                            <div className="flex items-start gap-3 px-3.5 py-3">
                                 <div className={cn(
-                                    "w-[18px] h-[18px] rounded-[5px] border-[1.5px] flex items-center justify-center shrink-0 transition-all",
+                                    "w-[18px] h-[18px] mt-1 rounded-[5px] border-[1.5px] flex items-center justify-center shrink-0 transition-all",
                                     isSelected
                                         ? "border-primary bg-primary shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]"
                                         : "border-border/70 bg-background"
@@ -99,17 +99,17 @@ export function ManageGroups({ addonGroups, items, selectedGroups, setSelectedGr
                                 </div>
 
                                 <div className={cn(
-                                    "size-7 rounded-lg flex items-center justify-center shrink-0 transition-colors",
+                                    "size-7 mt-0.5 rounded-lg flex items-center justify-center shrink-0 transition-colors",
                                     isSelected ? "bg-primary/10 text-primary" : "bg-slate-100 text-slate-500"
                                 )}>
                                     <Layers className="w-3.5 h-3.5" strokeWidth={2.5} />
                                 </div>
 
                                 <div className="flex-1 min-w-0">
-                                    <div className={cn("font-semibold text-[13px] truncate", isSelected ? "text-primary" : "text-foreground")}>
+                                    <div className={cn("font-semibold text-[13px] truncate leading-5", isSelected ? "text-primary" : "text-foreground")}>
                                         {group.name}
                                     </div>
-                                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
+                                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5">
                                         <div className="text-[11px] text-muted-foreground font-medium capitalize flex items-center shrink-0">
                                             {group.selectionType} · Min {group.minSelection} · Max {group.maxSelection || '∞'}
                                         </div>
@@ -133,7 +133,7 @@ export function ManageGroups({ addonGroups, items, selectedGroups, setSelectedGr
                                     </div>
                                 </div>
 
-                                <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-opacity" onClick={e => e.stopPropagation()}>
+                                <div className="opacity-0 group-hover:opacity-100 flex items-start gap-0.5 transition-opacity" onClick={e => e.stopPropagation()}>
                                     <GroupFormPopover
                                         initialData={group}
                                         onSubmit={(data) => updateGroup({ groupId: group._id, data })}

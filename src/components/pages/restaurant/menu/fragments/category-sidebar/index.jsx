@@ -23,10 +23,10 @@ export default function CategorySidebar({
 
     const [isCollapsed, setIsCollapsed] = useState(false);
     return (
-        <div className={`relative flex h-full transition-all duration-300 ${isCollapsed ? 'w-[72px]' : 'w-[280px] sm:w-[300px]'} shrink-0 z-20`}>
+        <div className={`relative flex transition-all duration-300 ${isCollapsed ? 'h-[72px] sm:h-full w-full sm:w-[72px]' : 'h-full sm:h-full w-full sm:w-[280px] lg:w-[300px]'} shrink-0 z-20 border-b sm:border-b-0 border-border/60`}>
             <button
                 onClick={() => setIsCollapsed(!isCollapsed)}
-                className="absolute -right-3 top-1/2 -translate-y-1/2 z-30 flex h-6 w-6 items-center justify-center rounded-full border border-border/70 bg-background shadow-xs hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-150"
+                className="hidden sm:flex absolute -right-3 top-1/2 -translate-y-1/2 z-30 h-6 w-6 items-center justify-center rounded-full border border-border/70 bg-background shadow-xs hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-150"
                 title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
                 {isCollapsed ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}

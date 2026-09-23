@@ -59,6 +59,31 @@ class IntegrationService {
       throw error;
     }
   }
+
+  async disconnectInstagram(restaurantId) {
+    if (!restaurantId) return null;
+    try {
+      const response = await api.delete(API_ENDPOINTS.INTEGRATIONS.INSTAGRAM_DISCONNECT(restaurantId));
+      return response.data;
+    } catch (error) {
+      console.error("Failed to disconnect Instagram:", error);
+      throw error;
+    }
+  }
+
+  async getInstagramMappedPosts(restaurantId) {
+    if (!restaurantId) return { isConnected: false, posts: [] };
+    try {
+      const response = await api.get(API_ENDPOINTS.INTEGRATIONS.INSTAGRAM_POSTS_MAPPED(restaurantId));
+      return response.data?.data || { isConnected: false, posts: [] };
+    } catch (error) {
+      if (error?.response?.status === 404 || error?.response?.status === 401) {
+        return { isConnected: false, posts: [] };
+      }
+      console.error("Failed to fetch Instagram mapped posts:", error);
+      throw error;
+    }
+  }
 }
 
 export const integrationService = new IntegrationService();

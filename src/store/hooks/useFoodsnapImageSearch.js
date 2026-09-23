@@ -7,8 +7,13 @@ export function useFoodsnapImageSearch(query, { enabled = true, limit = 20 } = {
     queryFn: async ({ pageParam = 1 }) => {
       if (!query) return { data: [], nextCursor: undefined };
       const response = await FoodsnapService.searchImages({ query, page: pageParam, limit });
+      
+      const imagesArray = Array.isArray(response.data) 
+        ? response.data 
+        : (response.data?.data || []);
+
       return {
-        data: response.data || [],
+        data: imagesArray,
         nextCursor: response.hasMore ? pageParam + 1 : undefined,
       };
     },

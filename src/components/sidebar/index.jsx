@@ -35,7 +35,7 @@ export function AppSidebar(props) {
         <SidebarFooter className="p-3 pt-1.5 group-data-[collapsible=icon]:p-1.5 group-data-[collapsible=icon]:items-center flex flex-col gap-2">
           <Link 
             href="/restaurant/onboarding" 
-            className="flex items-center gap-2 px-3 text-md font-medium rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-300 transition-colors group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 border border-transparent hover:border-neutral-200 dark:hover:border-neutral-700"
+            className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:rounded-lg shadow-sm"
           >
             <Plus className="w-4 h-4 shrink-0" />
             <span className="group-data-[collapsible=icon]:hidden">Onboard New Outlet</span>

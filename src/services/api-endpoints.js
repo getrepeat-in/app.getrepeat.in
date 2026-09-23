@@ -75,6 +75,8 @@ export const API_ENDPOINTS = {
     INTEGRATIONS: {
         GET: (resId) => `/api/restaurant/${resId}/integrations`,
         UPDATE: (resId) => `/api/restaurant/${resId}/integrations`,
-        INSTAGRAM_CONNECT: (resId) => `/api/restaurant/${resId}/integrations/instagram/auth`
+        INSTAGRAM_CONNECT: (resId) => `/api/restaurant/${resId}/integrations/instagram/auth`,
+        INSTAGRAM_DISCONNECT: (resId) => `/api/restaurant/${resId}/instagram/disconnect`,
+        INSTAGRAM_POSTS_MAPPED: (resId) => `/api/restaurant/${resId}/instagram/posts/mapped`
     }
 };

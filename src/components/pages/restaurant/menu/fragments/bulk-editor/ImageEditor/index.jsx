@@ -59,6 +59,19 @@ export function ImageEditor() {
                         ))}
                     </div>
                 )}
+                renderGridLoading={() => (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((item) => (
+                            <div key={item} className="flex flex-col bg-white border border-border/60 rounded-xl overflow-hidden shadow-sm">
+                                <div className="aspect-[4/3] w-full bg-muted/60 animate-pulse" />
+                                <div className="p-3 space-y-2.5">
+                                    <div className="h-3 w-2/3 bg-muted/70 rounded animate-pulse" />
+                                    <div className="h-2.5 w-1/2 bg-muted/50 rounded animate-pulse" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
 
                 emptyState={{
                     icon: <ImageIcon size={28} className="text-gray-400 dark:text-zinc-600" />,

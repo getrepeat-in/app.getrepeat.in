@@ -1,30 +1,17 @@
 "use client";
-import api from "@/lib/api/axiosInstance";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import DataTable from "@/components/global/table";
 import { useRestaurant } from "@/store/hooks/useRestaurant";
 import useNotification from "@/store/hooks/useNotification";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { integrationService } from "@/services/frontend/integration";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { ConfirmDeleteAlert } from "@/components/ui/confirm-delete-alert";
+import { RefreshCw, Unlink, ExternalLink, AlertTriangle } from "lucide-react";
 import { DEFAULT_SOCIAL_PAGE_SIZE, SOCIAL_EMPTY_STATE } from "./helpers/constants";
-import { Plus, RefreshCw, Unlink, ExternalLink, AlertTriangle } from "lucide-react";
 import { InstagramConnectCard, InstagramIcon, SocialPostCard, MapItemsDialog } from "./fragments";
-
-const fetchInstagramData = async (restaurantId) => {
-  if (!restaurantId) return { isConnected: false, posts: [] };
-  try {
-    const res = await api.get(`/api/restaurant/${restaurantId}/instagram/posts/mapped`);
-    return res.data?.data || { isConnected: false, posts: [] };
-  } catch (err) {
-    if (err?.response?.status === 404 || err?.response?.status === 401) {
-      return { isConnected: false, posts: [] };
-    }
-    throw err;
-  }
-};
 
 export default function SocialPage({ restaurantId: propRestaurantId }) {
   const { restaurantId: hookRestaurantId } = useRestaurant();
@@ -58,7 +45,7 @@ export default function SocialPage({ restaurantId: propRestaurantId }) {
 
   const { data, isLoading, isRefetching, isError, error: queryError, refetch } = useQuery({
     queryKey: ["instagram-posts-mapped", restaurantId],
-    queryFn: () => fetchInstagramData(restaurantId),
+    queryFn: () => integrationService.getInstagramMappedPosts(restaurantId),
     enabled: Boolean(restaurantId),
     retry: false,
     refetchOnWindowFocus: false,
@@ -78,8 +65,7 @@ export default function SocialPage({ restaurantId: propRestaurantId }) {
 
     try {
       setIsConnecting(true);
-      const res = await api.get(`/api/restaurant/${restaurantId}/instagram/auth?returnTo=social`);
-      const authData = res.data;
+      const authData = await integrationService.connectInstagram(restaurantId, "social");
 
       if (!authData?.success || !authData?.data?.url) {
         throw new Error(authData?.message || "Failed to initialize Instagram authorization");
@@ -98,8 +84,7 @@ export default function SocialPage({ restaurantId: propRestaurantId }) {
 
     try {
       setIsDisconnecting(true);
-      const res = await api.delete(`/api/restaurant/${restaurantId}/instagram/disconnect`);
-      const deleteData = res.data;
+      const deleteData = await integrationService.disconnectInstagram(restaurantId);
 
       if (!deleteData?.success) {
         throw new Error(deleteData?.message || "Failed to disconnect Instagram");
@@ -151,69 +136,57 @@ export default function SocialPage({ restaurantId: propRestaurantId }) {
         activeFilterTab={statusFilter}
         onFilterTabChange={setStatusFilter}
         actions={
-          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto">
-            {isConnected ? (
-              <>
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/60 dark:bg-zinc-800 border border-border/50 text-xs font-semibold shrink-0">
-                  <div className="h-4 w-4 rounded-full bg-pink-100 dark:bg-pink-950 flex items-center justify-center text-pink-600 dark:text-pink-400">
-                    <InstagramIcon className="h-3 w-3" />
-                  </div>
-                  <span className="text-gray-900 dark:text-zinc-100">@{username}</span>
-                  {username && (
-                    <a
-                      href={`https://instagram.com/${username}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-muted-foreground hover:text-pink-600 transition"
-                      title="View Profile"
-                    >
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
-                  )}
+          isConnected ? (
+            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto">
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/60 dark:bg-zinc-800 border border-border/50 text-xs font-semibold shrink-0">
+                <div className="h-4 w-4 rounded-full bg-pink-100 dark:bg-pink-950 flex items-center justify-center text-pink-600 dark:text-pink-400">
+                  <InstagramIcon className="h-3 w-3" />
                 </div>
-
-                {isExpired && (
-                  <Badge variant="outline" className="border-amber-400/50 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 text-[10px] gap-1 py-0.5">
-                    <AlertTriangle className="h-3 w-3" />
-                    Expired
-                  </Badge>
+                <span className="text-gray-900 dark:text-zinc-100">@{username}</span>
+                {username && (
+                  <a
+                    href={`https://instagram.com/${username}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-muted-foreground hover:text-pink-600 transition"
+                    title="View Profile"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
                 )}
+              </div>
 
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => refetch()}
-                  disabled={isRefetching}
-                  className="h-8.5 rounded-md border-gray-200 dark:border-zinc-800 shadow-2xs gap-1.5 shrink-0 cursor-pointer"
-                  title="Refresh Instagram feed"
-                >
-                  <RefreshCw className={`h-3.5 w-3.5 ${isRefetching ? "animate-spin" : ""}`} />
-                  <span className="hidden sm:inline text-xs">Refresh</span>
-                </Button>
+              {isExpired && (
+                <Badge variant="outline" className="border-amber-400/50 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 text-[10px] gap-1 py-0.5">
+                  <AlertTriangle className="h-3 w-3" />
+                  Expired
+                </Badge>
+              )}
 
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowDisconnectModal(true)}
-                  className="h-8.5 rounded-md border-red-200 dark:border-red-900/40 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 text-xs shadow-2xs gap-1.5 shrink-0 cursor-pointer"
-                  title="Disconnect account"
-                >
-                  <Unlink className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline text-xs">Disconnect</span>
-                </Button>
-              </>
-            ) : (
               <Button
-                onClick={handleConnect}
-                disabled={isConnecting}
+                variant="outline"
                 size="sm"
-                className="h-8.5 rounded-md bg-green-600 hover:bg-green-700 text-white shadow-2xs gap-1.5 font-semibold text-xs shrink-0 cursor-pointer"
+                onClick={() => refetch()}
+                disabled={isRefetching}
+                className="h-8.5 rounded-md border-gray-200 dark:border-zinc-800 shadow-2xs gap-1.5 shrink-0 cursor-pointer"
+                title="Refresh Instagram feed"
               >
-                <Plus size={14} strokeWidth={2.5} />
-                <span>Connect Instagram</span>
+                <RefreshCw className={`h-3.5 w-3.5 ${isRefetching ? "animate-spin" : ""}`} />
+                <span className="hidden sm:inline text-xs">Refresh</span>
               </Button>
-            )}
-          </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowDisconnectModal(true)}
+                className="h-8.5 rounded-md border-red-200 dark:border-red-900/40 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 text-xs shadow-2xs gap-1.5 shrink-0 cursor-pointer"
+                title="Disconnect account"
+              >
+                <Unlink className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline text-xs">Disconnect</span>
+              </Button>
+            </div>
+          ) : null
         }
         renderGrid={(paginatedPosts) => (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -242,7 +215,6 @@ export default function SocialPage({ restaurantId: propRestaurantId }) {
         }
       />
 
-      {/* Map Menu Items Dialog */}
       {selectedPost && (
         <MapItemsDialog
           isOpen={Boolean(selectedPost)}
