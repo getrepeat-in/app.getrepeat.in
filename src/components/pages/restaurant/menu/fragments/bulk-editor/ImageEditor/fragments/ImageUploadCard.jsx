@@ -3,11 +3,13 @@ import { cn, getImageUrl } from "@/lib/utils";
 import { ItemImage } from "@/components/global/item-image";
 import { UploadService } from "@/services/frontend/upload";
 import useNotification from "@/store/hooks/useNotification";
-import { Camera, Image as ImageIcon, Loader2, Upload, Trash2 } from "lucide-react";
+import { FoodsnapService } from "@/services/frontend/foodsnap";
+import { Camera, Image as ImageIcon, Loader2, Upload, Trash2, Sparkles } from "lucide-react";
 
-export function ImageUploadCard({ item, categoryPath, updateItem, restaurantId, onCardClick }) {
+export function ImageUploadCard({ item, categoryPath, updateItem, restaurantId, onCardClick, isProcessing = false }) {
     const [isDragging, setIsDragging] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+    const [isAutoApplying, setIsAutoApplying] = useState(false);
     const fileInputRef = useRef(null);
     const notification = useNotification();
 
@@ -53,6 +55,26 @@ export function ImageUploadCard({ item, categoryPath, updateItem, restaurantId, 
         }
     };
 
+    const handleAutoApply = async (e) => {
+        e.stopPropagation();
+        if (isAutoApplying || isUploading) return;
+
+        setIsAutoApplying(true);
+        try {
+            const res = await FoodsnapService.autoApplyImage({
+                item,
+                restaurantId
+            });
+            await updateItem({ itemId: item._id, data: { image: res.imageId } });
+            notification.success(`Auto-applied: ${res.imageName}`);
+        } catch (error) {
+            console.error("Auto-apply error:", error);
+            notification.error(error?.message || "Failed to auto-apply image");
+        } finally {
+            setIsAutoApplying(false);
+        }
+    };
+
     const handleRemoveImage = async (e) => {
         e.stopPropagation();
         try {
@@ -86,7 +108,12 @@ export function ImageUploadCard({ item, categoryPath, updateItem, restaurantId, 
 
     return (
         <div 
-            className="group relative flex flex-col bg-card border border-border/80 rounded-md overflow-hidden shadow-2xs hover:shadow-md hover:border-primary/40 transition-all duration-200"
+            className={cn(
+                "group relative flex flex-col bg-card border rounded-md overflow-hidden shadow-2xs hover:shadow-md transition-all duration-200",
+                isProcessing 
+                    ? "border-primary ring-2 ring-primary/40 shadow-md" 
+                    : "border-border/80 hover:border-primary/40"
+            )}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
@@ -102,6 +129,7 @@ export function ImageUploadCard({ item, categoryPath, updateItem, restaurantId, 
             <div className="relative w-full aspect-[4/3] bg-muted/40 flex items-center justify-center overflow-hidden">
                 {hasImage ? (
                     <ItemImage 
+                        key={item.image?._id || item.image?.card || item.image?.original || (typeof item.image === "string" ? item.image : "img")}
                         src={getImageUrl(item.image, true, "card")} 
                         alt={item.name} 
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -144,6 +172,20 @@ export function ImageUploadCard({ item, categoryPath, updateItem, restaurantId, 
                 >
                     <button
                         type="button"
+                        onClick={handleAutoApply}
+                        disabled={isAutoApplying || isUploading}
+                        className="flex size-8 items-center justify-center rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground backdrop-blur-md transition-transform active:scale-95 shadow-xs disabled:opacity-50"
+                        title="Auto-apply matched photo"
+                    >
+                        {isAutoApplying ? (
+                            <Loader2 className="size-4 animate-spin" />
+                        ) : (
+                            <Sparkles className="size-4" />
+                        )}
+                    </button>
+
+                    <button
+                        type="button"
                         onClick={(e) => {
                             e.stopPropagation();
                             fileInputRef.current?.click();
@@ -166,10 +208,12 @@ export function ImageUploadCard({ item, categoryPath, updateItem, restaurantId, 
                     )}
                 </div>
 
-                {isUploading && (
+                {(isUploading || isAutoApplying || isProcessing) && (
                     <div className="absolute inset-0 bg-background/85 backdrop-blur-xs flex flex-col items-center justify-center text-primary z-30">
                         <Loader2 className="size-7 animate-spin mb-1.5" />
-                        <span className="text-[11px] font-semibold uppercase tracking-wider">Uploading...</span>
+                        <span className="text-[11px] font-semibold uppercase tracking-wider">
+                            {isProcessing || isAutoApplying ? "Matching Photo..." : "Uploading..."}
+                        </span>
                     </div>
                 )}
             </div>

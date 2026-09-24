@@ -4,6 +4,7 @@ import * as argon2 from "argon2";
 import dbConnect from "@/lib/db";
 import { User } from "@/models/User";
 import { getRestaurantFromSlug } from "@/lib/api/hooks/getRestaurant";
+import { UnauthorizedError, NotFoundError, ForbiddenError, ConflictError } from "@/lib/api/response-handler";
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = "90d";
@@ -15,12 +16,12 @@ export class AuthService {
         const restaurant = await getRestaurantFromSlug(slug);
         
         if (!restaurant) {
-            throw new Error("Restaurant not found!");
+            throw new NotFoundError("Restaurant not found!");
         }
 
         const existingUser = await User.findOne({ phone, restaurant: restaurant._id });
         if (existingUser) {
-            throw new Error("A user with this phone number already exists for this restaurant");
+            throw new ConflictError("A user with this phone number already exists for this restaurant");
         }
 
         const passwordHash = await argon2.hash(password, {
@@ -53,21 +54,21 @@ export class AuthService {
         const restaurant = await getRestaurantFromSlug(slug);
         
         if (!restaurant) {
-            throw new Error("Restaurant not found!");
+            throw new NotFoundError("Restaurant not found!");
         }
 
         const user = await User.findOne({ phone, restaurant: restaurant._id }).select("+passwordHash");
         if (!user) {
-            throw new Error("Invalid phone number or password");
+            throw new UnauthorizedError("Invalid phone number or password");
         }
 
         if (user.status !== "ACTIVE") {
-            throw new Error(`Your account is ${user.status.toLowerCase()}`);
+            throw new ForbiddenError(`Your account is ${user.status.toLowerCase()}`);
         }
 
         const isPasswordValid = await argon2.verify(user.passwordHash, password);
         if (!isPasswordValid) {
-            throw new Error("Invalid phone number or password");
+            throw new UnauthorizedError("Invalid phone number or password");
         }
 
         const token = jwt.sign(
@@ -81,29 +82,29 @@ export class AuthService {
 
     static async me(slug, token) {
         if (!token) {
-            throw new Error("No token provided");
+            throw new UnauthorizedError("No token provided");
         }
         await dbConnect();
 
         const restaurant = await getRestaurantFromSlug(slug);
         if (!restaurant) {
-            throw new Error("Restaurant not found!");
+            throw new NotFoundError("Restaurant not found!");
         }
 
         let decoded;
         try {
             decoded = jwt.verify(token, JWT_SECRET);
         } catch (err) {
-            throw new Error("Invalid token");
+            throw new UnauthorizedError("Invalid token");
         }
 
         const user = await User.findOne({ _id: decoded.userId, restaurant: restaurant._id }).populate("image");
         if (!user) {
-            throw new Error("User not found");
+            throw new NotFoundError("User not found");
         }
 
         if (user.status !== "ACTIVE") {
-            throw new Error(`Your account is ${user.status.toLowerCase()}`);
+            throw new ForbiddenError(`Your account is ${user.status.toLowerCase()}`);
         }
 
         return {
@@ -120,25 +121,25 @@ export class AuthService {
 
     static async updateProfile(slug, token, data) {
         if (!token) {
-            throw new Error("No token provided");
+            throw new UnauthorizedError("No token provided");
         }
         await dbConnect();
 
         const restaurant = await getRestaurantFromSlug(slug);
         if (!restaurant) {
-            throw new Error("Restaurant not found!");
+            throw new NotFoundError("Restaurant not found!");
         }
 
         let decoded;
         try {
             decoded = jwt.verify(token, JWT_SECRET);
         } catch (err) {
-            throw new Error("Invalid token");
+            throw new UnauthorizedError("Invalid token");
         }
 
         const user = await User.findOne({ _id: decoded.userId, restaurant: restaurant._id }).populate("image");
         if (!user) {
-            throw new Error("User not found");
+            throw new NotFoundError("User not found");
         }
 
         const { name, phone, password, image } = data;

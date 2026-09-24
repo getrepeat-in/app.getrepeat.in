@@ -7,11 +7,20 @@ export function withErrorHandler(handler) {
       return await handler(...args);
     } catch (error) {
       console.error("[API Error Handler]:", error);
-      if (error instanceof AppError) {
+      if (error instanceof AppError || error?.isOperational) {
         return errorResponse(
           error.message,
-          error.statusCode,
+          error.statusCode || 400,
           error.code,
+          error.details
+        );
+      }
+
+      if (error?.statusCode || error?.status) {
+        return errorResponse(
+          error.message,
+          error.statusCode || error.status,
+          error.code || "BAD_REQUEST",
           error.details
         );
       }

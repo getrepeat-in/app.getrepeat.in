@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn, getImageUrl } from "@/lib/utils";
 import { useRestaurant } from "@/store/hooks/useRestaurant";
 
@@ -10,8 +10,14 @@ export function ItemImage({ src, alt, className }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
 
+    useEffect(() => {
+        setError(false);
+        setLoading(true);
+    }, [src]);
+
     const handleLoad = () => {
         setLoading(false);
+        setError(false);
     };
 
     const handleError = () => {

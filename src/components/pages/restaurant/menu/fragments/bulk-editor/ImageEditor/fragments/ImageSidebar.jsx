@@ -1,7 +1,8 @@
-import { Search, X } from "lucide-react";
 import { cn, getImageUrl } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import Loader from "@/components/global/loader";
+import { Search, X, Sparkles, Loader2 } from "lucide-react";
 import { UploadService } from "@/services/frontend/upload";
 import useNotification from "@/store/hooks/useNotification";
 import { FoodsnapService } from "@/services/frontend/foodsnap";
@@ -105,11 +106,28 @@ export function ImageSidebar({ item, isOpen, onClose, onUploadComplete, restaura
                         <X className="w-5 h-5 text-slate-500" />
                     </button>
 
-                    <div className="text-left space-y-0.5 mb-5 pr-10">
-                        <h2 className="text-[24px] font-[800] text-slate-900 tracking-tight">Image Suggestions</h2>
-                        <p className="text-slate-500 font-medium text-[15px]">
-                            For <span className="font-bold text-slate-900">{item?.name}</span>
-                        </p>
+                    <div className="flex flex-wrap items-center justify-between gap-3 mb-5 pr-10">
+                        <div className="text-left space-y-0.5">
+                            <h2 className="text-[24px] font-[800] text-slate-900 tracking-tight">Image Suggestions</h2>
+                            <p className="text-slate-500 font-medium text-[15px]">
+                                For <span className="font-bold text-slate-900">{item?.name}</span>
+                            </p>
+                        </div>
+                        {images.length > 0 && (
+                            <Button
+                                size="sm"
+                                disabled={!!uploadingId}
+                                onClick={() => handleSelectImage(images[0])}
+                                className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs h-9 px-3.5 rounded-xl shadow-xs cursor-pointer shrink-0"
+                            >
+                                {uploadingId === images[0]._id ? (
+                                    <Loader2 className="size-3.5 animate-spin" />
+                                ) : (
+                                    <Sparkles className="size-3.5" />
+                                )}
+                                Auto-Apply Best Match
+                            </Button>
+                        )}
                     </div>
                     
                     <div className="relative">

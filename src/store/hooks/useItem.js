@@ -26,6 +26,22 @@ export const useItem = (resId, filters = {}) => {
     const updateMutation = useMutation({
         mutationFn: ({ itemId, data }) => MenuService.item.update(resId, itemId, data),
         onSuccess: (data) => {
+            const updatedItem = data?.data;
+            if (updatedItem?._id) {
+                queryClient.setQueriesData({ queryKey: ["items", resId] }, (old) => {
+                    if (!old) return old;
+                    if (Array.isArray(old)) {
+                        return old.map(d => (d._id === updatedItem._id ? updatedItem : d));
+                    }
+                    if (Array.isArray(old.data)) {
+                        return {
+                            ...old,
+                            data: old.data.map(d => (d._id === updatedItem._id ? updatedItem : d))
+                        };
+                    }
+                    return old;
+                });
+            }
             queryClient.invalidateQueries({ queryKey: ["items", resId] });
             notification.success(data?.message || "Item updated successfully");
         },
