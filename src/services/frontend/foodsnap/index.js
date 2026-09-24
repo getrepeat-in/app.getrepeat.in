@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export const FoodsnapService = {
-  searchImages: async ({ query, page = 1, limit = 20 }) => {
+  searchImages: async ({ query, page = 1, limit = 12 }) => {
     try {
       const response = await axios.get("/api/images/search", {
         params: {

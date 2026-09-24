@@ -29,6 +29,13 @@ export function StructureOrganizer() {
         setTargetDestination(null);
     };
 
+    const standaloneItems = selectedSources.items.filter(itemId => {
+        const itemObj = items.find(i => String(i._id || i.id) === String(itemId));
+        if (!itemObj) return true;
+        const subId = itemObj.subCategory?._id || itemObj.subCategory;
+        return !selectedSources.subcategories.includes(String(subId));
+    });
+
     const handleConfirmMove = async () => {
         if (!restaurantId) return;
         const totalSelected = selectedSources.categories.length + selectedSources.subcategories.length + selectedSources.items.length;
@@ -39,14 +46,14 @@ export function StructureOrganizer() {
             return notification.error("Please select a destination.");
         }
 
-        if (selectedSources.items.length > 0 && targetDestination.type !== 'subcategory') {
+        if (standaloneItems.length > 0 && targetDestination.type !== 'subcategory') {
             return notification.error("Items must be moved into a subcategory, not directly into a main category.");
         }
 
         setIsSaving(true);
         try {
             // 1. Moving Items
-            if (selectedSources.items.length > 0) {
+            if (standaloneItems.length > 0) {
                 const targetCategoryId = targetDestination.type === 'category' ? targetDestination.id : 
                     categories.find(c => c._id === targetDestination.id)?.parentCategory || null;
                 const targetSubCategoryId = targetDestination.type === 'subcategory' ? targetDestination.id : null;
@@ -54,7 +61,7 @@ export function StructureOrganizer() {
                 await MenuService.bulkUpdateStructure(restaurantId, {
                     action: "move_items",
                     payload: {
-                        itemIds: selectedSources.items,
+                        itemIds: standaloneItems,
                         targetCategoryId: targetCategoryId || targetDestination.id, // Fallback if promoting items to root
                         targetSubCategoryId
                     }
@@ -145,6 +152,7 @@ export function StructureOrganizer() {
                     targetDestination={targetDestination}
                     setTargetDestination={setTargetDestination}
                     selectedSources={selectedSources}
+                    standaloneItems={standaloneItems}
                 />
             </div>
 

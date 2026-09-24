@@ -48,7 +48,7 @@ export default function OnboardingPage() {
           }
 
           await queryClient.invalidateQueries({ queryKey: ["restaurants"] });
-          router.push("/");
+          window.location.href = "/";
         } else {
           notification.error(
             res?.message || "Failed to create restaurant.",

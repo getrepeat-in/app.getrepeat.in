@@ -21,7 +21,20 @@ export function MainContent({
     addCategory,
     onBack
 }) {
+    const [mounted, setMounted] = React.useState(false);
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
+
     const renderContent = () => {
+        if (!mounted) {
+            return (
+                <div className="flex-1 flex items-center justify-center p-6 bg-white dark:bg-zinc-950">
+                     <p className="text-sm text-muted-foreground animate-pulse">Loading menu...</p>
+                </div>
+            );
+        }
+
         if (activeView === "MENU") {
             if (activeSubCategory) {
                 return (

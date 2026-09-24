@@ -51,6 +51,10 @@ export const MenuService = {
         const response = await axios.get(`${API_ENDPOINTS.MENU.IMPORT_ZOMATO(resId)}?${queryStr}`);
         return response.data;
     },
+    importJson: async (resId, data) => {
+        const response = await axios.post(API_ENDPOINTS.MENU.IMPORT_JSON(resId), data);
+        return response.data;
+    },
     bulkUpdatePrice: async (resId, data) => {
         const response = await axios.put(API_ENDPOINTS.MENU.BULK_UPDATE_PRICE(resId), data);
         return response.data;

@@ -1,3 +1,5 @@
+import "@/models/Item";
+import "@/models/Image";
 import dbConnect from "@/lib/db";
 import Promotion from "@/models/Promotion";
 import { ImageService } from "@/services/backend/images";

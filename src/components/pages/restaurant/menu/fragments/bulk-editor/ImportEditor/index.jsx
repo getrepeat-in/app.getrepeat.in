@@ -3,12 +3,20 @@ import { useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CsvImport } from "./fragments/CsvImport";
+import { JsonImport } from "./fragments/JsonImport";
 import { ZomatoImport } from "./fragments/ZomatoImport";
 import { SwiggyImport } from "./fragments/SwiggyImport";
 
 export function ImportEditor() {
     const [activeTool, setActiveTool] = useState(null);
     const IMPORT_OPTIONS = [
+        {
+            id: 'json',
+            name: 'AI JSON',
+            description: "Extract menu from images or PDF using AI.",
+            logo: '/assets/logo/json.png', 
+            hoverStyle: 'hover:border-blue-500/40 hover:shadow-blue-500/10'
+        },
         {
             id: 'zomato',
             name: 'Zomato',
@@ -35,6 +43,9 @@ export function ImportEditor() {
     const activeOption = IMPORT_OPTIONS.find(o => o.id === activeTool);
 
     const renderContent = () => {
+        if (activeTool === 'json') {
+            return <JsonImport />;
+        }
         if (activeTool === 'zomato') {
             return <ZomatoImport />;
         }

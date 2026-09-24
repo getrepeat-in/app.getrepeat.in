@@ -1,9 +1,9 @@
+import { Search, X } from "lucide-react";
 import { cn, getImageUrl } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
+import Loader from "@/components/global/loader";
 import { UploadService } from "@/services/frontend/upload";
 import useNotification from "@/store/hooks/useNotification";
-import { Search, Loader2, CheckCircle2, X } from "lucide-react";
-import Loader from "@/components/global/loader";
 import { FoodsnapService } from "@/services/frontend/foodsnap";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useFoodsnapImageSearch } from "@/store/hooks/useFoodsnapImageSearch";
@@ -36,7 +36,7 @@ export function ImageSidebar({ item, isOpen, onClose, onUploadComplete, restaura
         isFetching,
         isFetchingNextPage,
         isLoading
-    } = useFoodsnapImageSearch(debouncedQuery, { enabled: isOpen });
+    } = useFoodsnapImageSearch(debouncedQuery, { enabled: isOpen, limit: 12 });
 
     const images = data?.pages.flatMap(page => page.data) || [];
     const lastImageElementRef = useCallback(node => {
@@ -47,6 +47,8 @@ export function ImageSidebar({ item, isOpen, onClose, onUploadComplete, restaura
             if (entries[0].isIntersecting && hasNextPage) {
                 fetchNextPage();
             }
+        }, {
+            rootMargin: "150px"
         });
         
         if (node) observer.current.observe(node);
@@ -154,7 +156,7 @@ export function ImageSidebar({ item, isOpen, onClose, onUploadComplete, restaura
                                     <div className="relative w-full aspect-[4/3] bg-[#f8f9fa] overflow-hidden">
                                         <img 
                                             src={getImageUrl(img.image_url , true , "detail")} 
-                                            alt={img.title} 
+                                            alt={img.name || img.title} 
                                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                                             loading="lazy"
                                         />
@@ -168,8 +170,8 @@ export function ImageSidebar({ item, isOpen, onClose, onUploadComplete, restaura
                                     </div>
 
                                     <div className="p-2 flex flex-col bg-white">
-                                        <h3 className="text-[10px] font-[400] text-slate-700 truncate">
-                                            {img.title}
+                                        <h3 className="text-[11px] font-medium text-slate-800 truncate">
+                                            {img.name || img.title}
                                         </h3>
                                     </div>
                                 </div>

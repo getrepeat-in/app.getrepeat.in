@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Layers, ChevronDown, ChevronRight, CornerDownRight } from "lucide-react";
 
-export function SelectDestination({ categories, targetDestination, setTargetDestination, selectedSources }) {
+export function SelectDestination({ categories, targetDestination, setTargetDestination, selectedSources, standaloneItems = [] }) {
     const [expandedNodes, setExpandedNodes] = useState(new Set());
 
     const toggleExpand = (id, e) => {
@@ -99,6 +99,7 @@ export function SelectDestination({ categories, targetDestination, setTargetDest
     };
 
     const totalItems = selectedSources.items.length;
+    const standaloneCount = standaloneItems.length;
     const totalSub = selectedSources.subcategories.length;
     const totalCat = selectedSources.categories.length;
     let titleStr = "SELECT DESTINATION";
@@ -121,7 +122,7 @@ export function SelectDestination({ categories, targetDestination, setTargetDest
                     {titleStr}
                 </h4>
             
-                {(totalSub > 0 && totalItems === 0 && totalCat === 0) && (
+                {(totalSub > 0 && standaloneCount === 0 && totalCat === 0) && (
                     <div 
                         onClick={() => setTargetDestination({ id: 'root', type: 'main' })}
                         className={cn(

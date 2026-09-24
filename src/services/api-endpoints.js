@@ -24,6 +24,7 @@ export const API_ENDPOINTS = {
             DELETE: (resId) => `/api/restaurant/${resId}/menu/item`,
         },
         IMPORT_ZOMATO: (resId) => `/api/restaurant/${resId}/menu/import/zomato`,
+        IMPORT_JSON: (resId) => `/api/restaurant/${resId}/menu/import/json`,
         BULK_UPDATE_PRICE: (resId) => `/api/restaurant/${resId}/menu/bulk-update/price`,
         BULK_UPDATE_DESCRIPTION: (resId) => `/api/restaurant/${resId}/menu/bulk-update/description`,
         BULK_UPDATE_STRUCTURE: (resId) => `/api/restaurant/${resId}/menu/bulk-update/structure`,
