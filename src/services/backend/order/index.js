@@ -9,6 +9,36 @@ import { invalidateOrderCache } from "@/lib/api/helpers/cacheKeys";
 import { getOrSetCache } from "@/services/backend/redis/cache.service";
 import { BadRequestError, NotFoundError } from "@/lib/api/response-handler";
 import { resolveTable, validateAndCalculateItems, resolveCustomer } from "./helpers";
+import { triggerPusherEvent } from "@/lib/pusher/server";
+
+export const emitOrderRealtimeEvent = async (event, order) => {
+  if (!order) return;
+  try {
+    const restaurantId = order.restaurant?._id
+      ? order.restaurant._id.toString()
+      : order.restaurant?.toString();
+    const orderId = order._id?.toString();
+    const orderNumber = order.orderNumber;
+
+    const channels = [];
+    if (restaurantId) channels.push(`restaurant-${restaurantId}`);
+    if (orderId) channels.push(`order-${orderId}`);
+    if (orderNumber) channels.push(`order-${orderNumber}`);
+
+    if (channels.length > 0) {
+      await triggerPusherEvent(channels, event, {
+        order,
+        orderId,
+        orderNumber,
+        restaurantId,
+        orderStatus: order.orderStatus,
+        paymentStatus: order.paymentStatus,
+      });
+    }
+  } catch (err) {
+    console.error(`[Realtime] Failed to emit '${event}':`, err?.message || err);
+  }
+};
 
 const generateOrderNumber = () => {
   const timestampPart = Date.now().toString().slice(-6);
@@ -139,9 +169,7 @@ export const OrderService = {
       .populate({ path: "restaurant", select: "name logo address", populate: { path: "logo", select: "original thumbnail card detail" } });
 
     const formattedOrder = formatOrderResponse(populatedOrder);
-    
-
-
+    emitOrderRealtimeEvent("order:created", formattedOrder);
     return formattedOrder;
   },
 
@@ -476,7 +504,10 @@ export const OrderService = {
     await order.save();
     await invalidateOrderCache(order.restaurant);
 
-    return OrderService.getOrderById(order._id);
+    const updatedOrder = await OrderService.getOrderById(order._id);
+    emitOrderRealtimeEvent("order:updated", updatedOrder);
+
+    return updatedOrder;
   },
 
 
@@ -543,7 +574,10 @@ export const OrderService = {
     await order.save();
     await invalidateOrderCache(order.restaurant);
 
-    return OrderService.getOrderById(order._id);
+    const updatedOrder = await OrderService.getOrderById(order._id);
+    emitOrderRealtimeEvent("order:updated", updatedOrder);
+
+    return updatedOrder;
   },
 
   cancelOrder: async (orderId, { cancelledBy = null, restaurantId = null }) => {
@@ -572,7 +606,10 @@ export const OrderService = {
     await order.save();
     await invalidateOrderCache(order.restaurant);
 
-    return OrderService.getOrderById(order._id);
+    const updatedOrder = await OrderService.getOrderById(order._id);
+    emitOrderRealtimeEvent("order:updated", updatedOrder);
+
+    return updatedOrder;
   },
 
   rejectOrder: async (orderId, { rejectedBy = null, restaurantId = null, reason = "" }) => {
@@ -602,7 +639,10 @@ export const OrderService = {
     await order.save();
     await invalidateOrderCache(order.restaurant);
 
-    return OrderService.getOrderById(order._id);
+    const updatedOrder = await OrderService.getOrderById(order._id);
+    emitOrderRealtimeEvent("order:updated", updatedOrder);
+
+    return updatedOrder;
   },
 
   deleteOrder: async (orderId, { restaurantId = null }) => {
@@ -616,8 +656,17 @@ export const OrderService = {
       throw new NotFoundError("Order not found");
     }
 
+    const targetRestaurantId = restaurantId || order.restaurant?.toString();
     await Order.deleteOne({ _id: orderId });
     await invalidateOrderCache(order.restaurant);
+
+    if (targetRestaurantId) {
+      triggerPusherEvent(
+        [`restaurant-${targetRestaurantId}`, `order-${orderId}`],
+        "order:deleted",
+        { orderId, restaurantId: targetRestaurantId }
+      ).catch(() => {});
+    }
 
     return { success: true };
   },

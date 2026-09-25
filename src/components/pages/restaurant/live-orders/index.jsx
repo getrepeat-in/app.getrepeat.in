@@ -10,6 +10,7 @@ import { OrderService } from "@/services/frontend/order";
 import useNotification from "@/store/hooks/useNotification";
 import { useRestaurant } from "@/store/hooks/useRestaurant";
 import { LIVE_ORDER_TABS } from "./fragments/helpers/constants";
+import { useRealtimeOrders } from "@/hooks/useRealtimeOrders";
 
 export default function LiveOrders() {
     const { restaurantId } = useRestaurant();
@@ -19,6 +20,12 @@ export default function LiveOrders() {
     const [searchQuery, setSearchQuery] = useState("");
     const [appliedSearch, setAppliedSearch] = useState("");
     const [selectedOrder, setSelectedOrder] = useState(null);
+
+    const { isConnected: isRealtimeConnected } = useRealtimeOrders({
+        restaurantId,
+        playChimeOnNewOrder: false,
+        showNotificationOnNewOrder: true,
+    });
 
     const PAGE_SIZE = 24; 
 
@@ -104,6 +111,18 @@ export default function LiveOrders() {
 
                 actions={
                     <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto">
+                        <div
+                            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 select-none shadow-2xs"
+                            title="Real-time live sync active"
+                        >
+                            <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                            </span>
+                            <span className="text-[11px] font-semibold tracking-wide uppercase">
+                                Live
+                            </span>
+                        </div>
                         <Button
                             variant="outline"
                             size="sm"

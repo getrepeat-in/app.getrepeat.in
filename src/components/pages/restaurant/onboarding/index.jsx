@@ -1,5 +1,6 @@
 "use client";
 import { useFormik } from "formik";
+import { useClerk } from "@clerk/nextjs"; 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
@@ -10,14 +11,27 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useActiveUser } from "@/store/hooks/useActiveUser";
 import useNotification from "@/store/hooks/useNotification";
 import { RestaurantService } from "@/services/frontend/restaurant";
-import { Store, Link2, Phone, Mail, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Store, Link2, Phone, Mail, ArrowRight, CheckCircle2, LogOut } from "lucide-react";
 
 export default function OnboardingPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { signOut } = useClerk();
   const { user } = useActiveUser();
   const notification = useNotification();
   const [isSlugManual, setIsSlugManual] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      localStorage.removeItem("activeRestaurantId");
+      await signOut({ redirectUrl: "/sign-in" });
+    } catch (error) {
+      console.error("Failed to sign out:", error);
+      setIsLoggingOut(false);
+    }
+  };
  
   const formik = useFormik({
     initialValues: {
@@ -76,12 +90,40 @@ export default function OnboardingPage() {
 
   return (
     <div className="grid min-h-svh lg:grid-cols-2 font-sans bg-background">
-      <div className="flex flex-col gap-4 p-6 md:p-10">
-        <div className="flex flex-1 items-center justify-center">
+      <div className="flex flex-col p-6 md:p-10 min-h-full">
+        {/* Top bar with Logout */}
+        <div className="flex items-center justify-end w-full">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            className="text-xs font-medium text-muted-foreground hover:text-destructive hover:border-destructive/30 hover:bg-destructive/5 transition-all gap-1.5 h-8 px-3 rounded-md cursor-pointer"
+          >
+            {isLoggingOut ? (
+              <>
+                <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground" />
+                <span>Logging out...</span>
+              </>
+            ) : (
+              <>
+                <LogOut className="h-3.5 w-3.5" />
+                <span>Log out</span>
+              </>
+            )}
+          </Button>
+        </div>
+
+        <div className="flex flex-1 items-center justify-center py-6">
           <div className="w-full max-w-md">
             <div className="flex flex-col gap-8">
               <div className="flex flex-col pb-2 items-center gap-2 text-center">
-                <img src="/assets/nearby-3.png" alt="Nearby Logo" className="h-32 sm:h-40 w-auto object-contain -mt-8 -mb-4 mix-blend-multiply contrast-125" style={{ filter: 'drop-shadow(0 0 0 white)' }} />
+                <img
+                  src="/assets/logo/getrepeat-logo.webp"
+                  alt="GetRepeat Logo"
+                  className="h-10 sm:h-12 w-auto object-contain mb-2"
+                />
               </div>
 
               <form onSubmit={formik.handleSubmit} className="flex flex-col gap-6">
@@ -208,9 +250,26 @@ export default function OnboardingPage() {
                   </Button>
                 </div>
                 
-                <div className="flex items-center justify-center gap-2 mt-2 text-sm font-medium text-muted-foreground">
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
-                  Secured & encrypted by Clerk
+                <div className="flex flex-col items-center justify-center gap-2 mt-2">
+                  <div className="flex items-center justify-center gap-2 text-sm font-medium text-muted-foreground">
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    Secured & encrypted by Clerk
+                  </div>
+                  <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+                    {user?.email ? (
+                      <span>Signed in as <span className="font-semibold text-foreground/80">{user.email}</span>.</span>
+                    ) : (
+                      <span>Want to use a different account?</span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      disabled={isLoggingOut}
+                      className="font-semibold text-primary hover:underline hover:text-primary/90 cursor-pointer disabled:opacity-50"
+                    >
+                      Log out
+                    </button>
+                  </div>
                 </div>
               </form>
             </div>
