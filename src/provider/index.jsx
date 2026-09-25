@@ -6,6 +6,7 @@ import { AppClerkProvider } from "./clerk";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import NotificationBanner from "@/components/global/notification-banner";
+import { NewOrderAlertModal } from "@/components/global/new-order-modal";
 
 export function Providers({ children }) {
   const [queryClient] = useState(
@@ -26,6 +27,7 @@ export function Providers({ children }) {
           <TooltipProvider>
             <NotificationBanner />
             {children}
+            <NewOrderAlertModal />
           </TooltipProvider>
         </QueryClientProvider>
       </AppClerkProvider>

@@ -25,7 +25,7 @@ export default function OrdersManagement() {
     const { isConnected: isRealtimeConnected } = useRealtimeOrders({
         restaurantId,
         playChimeOnNewOrder: false,
-        showNotificationOnNewOrder: true,
+        showNotificationOnNewOrder: false,
     });
     const [dateRange, setDateRange] = useState({
         from: startOfDay(new Date()),

@@ -79,5 +79,8 @@ export const API_ENDPOINTS = {
         INSTAGRAM_CONNECT: (resId) => `/api/restaurant/${resId}/integrations/instagram/auth`,
         INSTAGRAM_DISCONNECT: (resId) => `/api/restaurant/${resId}/instagram/disconnect`,
         INSTAGRAM_POSTS_MAPPED: (resId) => `/api/restaurant/${resId}/instagram/posts/mapped`
+    },
+    REPORTS: {
+        GET_ANALYTICS: (resId) => `/api/restaurant/${resId}/reports`,
     }
 };

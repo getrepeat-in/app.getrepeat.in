@@ -48,7 +48,13 @@ export const PATCH = withErrorHandler(async (req, { params }) => {
     updatedByStaff,
   });
 
-  return successResponse(updatedOrder, "Order updated successfully");
+  const rawStatus = updatedOrder?.orderStatus || "";
+  const status = rawStatus.replace(/_/g, " ");
+  const message = status
+    ? `Order updated successfully: ${status}`
+    : "Order updated successfully";
+
+  return successResponse(updatedOrder, message);
 });
 
 export const DELETE = withErrorHandler(async (req, { params }) => {

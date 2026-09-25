@@ -1,4 +1,4 @@
-import { LayoutDashboard, Settings, Users, User, TableProperties, ClipboardList, Globe, Tags, Camera, Puzzle } from "lucide-react";
+import { LayoutDashboard, Settings, Users, User, TableProperties, ClipboardList, Globe, Tags, Camera, Puzzle, BarChart3, Radio } from "lucide-react";
 
 export const APP_SIDEBAR_CONFIG = {
   navUserItems: [
@@ -6,6 +6,21 @@ export const APP_SIDEBAR_CONFIG = {
   navMain: {
     title: "MANAGE",
     items: [
+      {
+        title: "Live Orders",
+        url: "/",
+        icon: <Radio />,
+      },
+      {
+        title: "Reports",
+        url: "/restaurant/reports",
+        icon: <BarChart3 />,
+      },
+      {
+        title: "Orders",
+        url: "/restaurant/orders",
+        icon: <ClipboardList />,
+      },
       {
         title: "Menu",
         url: "/restaurant/menu",
@@ -25,11 +40,6 @@ export const APP_SIDEBAR_CONFIG = {
         title: "Tables",
         url: "/restaurant/tables",
         icon: <TableProperties />,
-      },
-      {
-        title: "Orders",
-        url: "/restaurant/orders",
-        icon: <ClipboardList />,
       },
       {
         title: "Customers",

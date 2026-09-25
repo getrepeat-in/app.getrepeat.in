@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
+import { format } from "date-fns";
 import {
   Bell,
   Volume2,
@@ -19,6 +20,10 @@ import {
   ChevronLeft,
   ChevronRight,
   CheckCheck,
+  Utensils,
+  Mail,
+  Layers,
+  Tag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { OrderService } from "@/services/frontend/order";
@@ -30,6 +35,29 @@ import {
   getRestaurantChannelName,
   PUSHER_EVENTS,
 } from "@/lib/pusher/client";
+
+const getDietaryBadge = (dietaryType) => {
+  const type = dietaryType?.toLowerCase();
+  if (type === "non-veg") {
+    return (
+      <div className="w-3.5 h-3.5 rounded-xs border border-red-600 flex items-center justify-center shrink-0 mt-0.5" title="Non-Veg">
+        <div className="w-1.5 h-1.5 rounded-full bg-red-600" />
+      </div>
+    );
+  }
+  if (type === "egg") {
+    return (
+      <div className="w-3.5 h-3.5 rounded-xs border border-amber-500 flex items-center justify-center shrink-0 mt-0.5" title="Egg">
+        <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+      </div>
+    );
+  }
+  return (
+    <div className="w-3.5 h-3.5 rounded-xs border border-emerald-600 flex items-center justify-center shrink-0 mt-0.5" title="Veg">
+      <div className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+    </div>
+  );
+};
 
 export function NewOrderAlertModal() {
   const { restaurantId } = useRestaurant();
@@ -43,7 +71,7 @@ export function NewOrderAlertModal() {
   const [showRejectReason, setShowRejectReason] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
 
-  const currentOrder = orderQueue[currentIndex] || null;
+  const currentOrder = orderQueue[currentIndex] || orderQueue[0] || null;
 
   // 1. Independent Continuous Ringer Effect:
   // Keeps ringing as long as there are pending orders in queue and not muted.
@@ -58,6 +86,34 @@ export function NewOrderAlertModal() {
       stopOrderRinger();
     };
   }, [orderQueue.length, isMuted]);
+
+  // Request browser notification permission once
+  useEffect(() => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      if (Notification.permission === "default") {
+        Notification.requestPermission().catch(() => {});
+      }
+    }
+  }, []);
+
+  // Flashing Browser Tab Title when new orders are waiting
+  useEffect(() => {
+    if (orderQueue.length === 0 || typeof document === "undefined") return;
+
+    const originalTitle = document.title;
+    let isFlashing = false;
+    const interval = setInterval(() => {
+      document.title = isFlashing
+        ? `(${orderQueue.length}) 🔔 NEW ORDER RECEIVED!`
+        : originalTitle;
+      isFlashing = !isFlashing;
+    }, 1000);
+
+    return () => {
+      clearInterval(interval);
+      document.title = originalTitle;
+    };
+  }, [orderQueue.length]);
 
   // 2. Pusher Real-Time Listener Effect:
   // Subscribes once to the restaurant channel and never cancels the ringer on queue changes.
@@ -77,6 +133,30 @@ export function NewOrderAlertModal() {
       const order = data?.order || data;
       if (!order || !order._id) return;
 
+      const orderNum = order?.orderNumber || "New Order";
+      const amount = order?.totalAmount ? ` ₹${order.totalAmount}` : "";
+
+      // Global toast banner
+      notification.success(`🔔 Order #${orderNum} received!${amount}`, {
+        duration: 5000,
+      });
+
+      // Browser push notification if tab is in background or permitted
+      if (
+        typeof window !== "undefined" &&
+        "Notification" in window &&
+        Notification.permission === "granted"
+      ) {
+        try {
+          new Notification(`🔔 New Order #${orderNum}!`, {
+            body: `Total: ₹${order?.totalAmount || 0} • ${order?.items?.length || 0} item(s)`,
+            icon: "/favicon.ico",
+          });
+        } catch (e) {
+          // ignore notification errors
+        }
+      }
+
       // Invalidate dashboard caches immediately
       queryClient.invalidateQueries({ queryKey: ["live-orders", restaurantId] });
       queryClient.invalidateQueries({ queryKey: ["orders", restaurantId] });
@@ -93,7 +173,7 @@ export function NewOrderAlertModal() {
     return () => {
       channel.unbind(PUSHER_EVENTS.ORDER_CREATED, handleNewOrder);
     };
-  }, [restaurantId, queryClient]);
+  }, [restaurantId, queryClient, notification]);
 
   const handleMuteToggle = () => {
     setIsMuted((prev) => !prev);
@@ -140,7 +220,7 @@ export function NewOrderAlertModal() {
 
       const remainingCount = orderQueue.length - 1;
       notification.success(
-        `Order #${targetOrder.orderNumber} accepted! Moved to Preparing.${
+        `Order #${targetOrder.orderNumber} updated successfully: PREPARING${
           remainingCount > 0 ? ` (${remainingCount} more waiting)` : ""
         }`,
         { duration: 4000 }
@@ -182,7 +262,7 @@ export function NewOrderAlertModal() {
       });
 
       notification.success(
-        `Order #${targetOrder.orderNumber} has been rejected.`,
+        `Order #${targetOrder.orderNumber} updated successfully: REJECTED`,
         { duration: 4000 }
       );
 
@@ -221,7 +301,7 @@ export function NewOrderAlertModal() {
       );
 
       notification.success(
-        `All ${ordersToProcess.length} orders accepted! Moved to Preparing.`,
+        `All ${ordersToProcess.length} orders updated successfully: PREPARING`,
         { duration: 4500 }
       );
 
@@ -239,24 +319,23 @@ export function NewOrderAlertModal() {
     }
   };
 
-  if (!currentOrder || orderQueue.length === 0) return null;
-
-  const totalAmount = currentOrder.totalAmount || 0;
-  const items = currentOrder.items || [];
-  const orderType = currentOrder.orderType || "DINE_IN";
-  const table = currentOrder.table;
+  const totalAmount = currentOrder?.totalAmount || 0;
+  const items = currentOrder?.items || [];
+  const orderType = currentOrder?.orderType || "DINE_IN";
+  const table = currentOrder?.table;
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm">
-        <motion.div
-          key="new-order-modal"
-          initial={{ opacity: 0, scale: 0.94, y: 16 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.94, y: 16 }}
-          transition={{ type: "spring", damping: 26, stiffness: 360 }}
-          className="relative w-full max-w-lg bg-card text-card-foreground border border-border/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] ring-1 ring-black/5"
-        >
+      {currentOrder && orderQueue.length > 0 && (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm">
+          <motion.div
+            key={currentOrder._id || "new-order-modal"}
+            initial={{ opacity: 0, scale: 0.94, y: 16 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.94, y: 16 }}
+            transition={{ type: "spring", damping: 26, stiffness: 360 }}
+            className="relative w-full max-w-xl bg-card text-card-foreground border border-border/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] ring-1 ring-black/5"
+          >
           {/* Top Ringing Alert Banner - Solid Primary Color */}
           <div className="bg-primary px-5 py-4 text-primary-foreground flex items-center justify-between shrink-0 shadow-xs">
             <div className="flex items-center gap-3.5">
@@ -371,24 +450,27 @@ export function NewOrderAlertModal() {
             </div>
           )}
 
-          {/* Modal Body */}
           <div className="p-4 sm:p-5 overflow-y-auto space-y-4 text-foreground">
-            {/* Order Type & Meta Info Header */}
             <div className="flex items-center justify-between gap-2 p-3 bg-muted/40 rounded-xl border border-border/60">
               <div className="flex items-center gap-2">
                 <span className="px-3 py-1 text-xs font-bold rounded-lg bg-primary/10 text-primary border border-primary/20 tracking-wider uppercase">
                   {orderType.replace(/_/g, " ")}
                 </span>
                 {table?.tableNumber && (
-                  <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-muted text-foreground border border-border">
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-muted text-foreground border border-border flex items-center gap-1">
+                    <Utensils className="w-3 h-3 text-muted-foreground" />
                     Table {table.tableNumber} {table.zone ? `• ${table.zone}` : ""}
                   </span>
                 )}
               </div>
 
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span>Placed just now</span>
+                <Clock className="w-3.5 h-3.5 text-emerald-500" />
+                <span>
+                  {currentOrder.createdAt
+                    ? `Placed at ${format(new Date(currentOrder.createdAt), "hh:mm a")}`
+                    : "Placed just now"}
+                </span>
               </div>
             </div>
 
@@ -403,9 +485,14 @@ export function NewOrderAlertModal() {
                   <span className="font-bold text-foreground truncate block">
                     {currentOrder.customer?.name || "Guest Customer"}
                   </span>
+                  {currentOrder.customer?.email && (
+                    <span className="text-[11px] text-muted-foreground truncate block">
+                      {currentOrder.customer.email}
+                    </span>
+                  )}
                 </div>
               </div>
-              {currentOrder.customer?.phone && (
+              {currentOrder.customer?.phone ? (
                 <a
                   href={`tel:${currentOrder.customer.phone}`}
                   className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/30 border border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all group cursor-pointer"
@@ -420,69 +507,166 @@ export function NewOrderAlertModal() {
                     </span>
                   </div>
                 </a>
+              ) : (
+                <div className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/30 border border-border/60 text-muted-foreground">
+                  <div className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                    <Phone className="w-3.5 h-3.5" />
+                  </div>
+                  <span className="text-[11px]">No phone provided</span>
+                </div>
               )}
             </div>
 
-            {/* Delivery Address (if Delivery) */}
             {orderType === "DELIVERY" && currentOrder.deliveryAddress && (
-              <div className="p-3 rounded-xl bg-blue-50/70 dark:bg-blue-950/20 border border-blue-200/70 dark:border-blue-900/40 text-xs flex items-start gap-2.5">
+              <div className="p-3.5 rounded-xl bg-blue-50/70 dark:bg-blue-950/20 border border-blue-200/70 dark:border-blue-900/40 text-xs flex items-start gap-2.5">
                 <div className="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 mt-0.5">
                   <MapPin className="w-3.5 h-3.5" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <span className="font-bold text-blue-900 dark:text-blue-200 block mb-0.5 text-xs">
-                    Delivery Address
-                  </span>
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="font-bold text-blue-900 dark:text-blue-200 text-xs">
+                      Delivery Address
+                    </span>
+                    {currentOrder.deliveryAddress.label && (
+                      <span className="px-1.5 py-0.2 rounded text-[10px] uppercase font-bold bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                        {currentOrder.deliveryAddress.label}
+                      </span>
+                    )}
+                  </div>
                   <span className="text-blue-800/90 dark:text-blue-300 leading-relaxed block text-xs">
-                    {currentOrder.deliveryAddress.street},{" "}
-                    {currentOrder.deliveryAddress.city}{" "}
+                    {currentOrder.deliveryAddress.street}, {currentOrder.deliveryAddress.city}
+                    {currentOrder.deliveryAddress.state ? `, ${currentOrder.deliveryAddress.state}` : ""}{" "}
                     {currentOrder.deliveryAddress.zipCode}
                   </span>
+                  {currentOrder.deliveryAddress.instructions && (
+                    <span className="text-[11px] text-blue-700 dark:text-blue-400 italic block mt-1">
+                      <span className="font-semibold not-italic">Delivery Note: </span>
+                      "{currentOrder.deliveryAddress.instructions}"
+                    </span>
+                  )}
                 </div>
               </div>
             )}
 
-            {/* Ordered Items List */}
+            {orderType === "DINE_IN" && table && (
+              <div className="p-3 rounded-xl bg-purple-50/70 dark:bg-purple-950/20 border border-purple-200/70 dark:border-purple-900/40 text-xs flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center text-purple-600 dark:text-purple-400 shrink-0">
+                  <Utensils className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <span className="font-bold text-purple-900 dark:text-purple-200 block text-xs">
+                    Table {table.tableNumber} {table.label ? `(${table.label})` : ""}
+                  </span>
+                  {table.zone && (
+                    <span className="text-purple-700 dark:text-purple-300 text-[11px]">
+                      Zone: {table.zone}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs font-bold text-muted-foreground uppercase tracking-wider px-1">
                 <span>Items Ordered ({items.length})</span>
                 <span>Subtotal</span>
               </div>
-              <div className="divide-y divide-border/50 rounded-xl border border-border/70 bg-muted/20 max-h-48 overflow-y-auto">
-                {items.map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center justify-between p-3 text-xs gap-3"
-                  >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <span className="px-2 py-0.5 rounded-md bg-primary/10 text-primary font-bold text-xs shrink-0">
-                        {item.quantity}x
-                      </span>
-                      <div className="truncate">
-                        <span className="font-semibold text-foreground block truncate">
-                          {item.menuItem?.name || item.name || "Item"}
-                        </span>
-                        {item.selectedVariant && (
-                          <span className="text-[11px] text-muted-foreground block">
-                            {item.selectedVariant.name}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <span className="font-bold shrink-0 text-foreground">
-                      ₹{((item.price || item.menuItem?.base_price || 0) * (item.quantity || 1)).toFixed(2)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
+              <div className="divide-y divide-border/60 rounded-xl border border-border/70 bg-card max-h-60 overflow-y-auto">
+                {items.map((item, idx) => {
+                  const variantName = item.variant?.name || item.selectedVariant?.name;
+                  const variantPrice = item.variant?.price || item.selectedVariant?.price;
+                  const addons = Array.isArray(item.addons) ? item.addons : [];
+                  const itemNote = item.specialInstructions;
+                  const dietary = item.dietaryType || item.menuItem?.dietaryType;
+                  const lineTotal =
+                    item.totalPrice ||
+                    (item.unitPrice
+                      ? item.unitPrice * item.quantity
+                      : (item.price || item.menuItem?.base_price || 0) * (item.quantity || 1));
 
-            {/* Special Instructions (if any) */}
+                  return (
+                    <div key={idx} className="p-3 text-xs space-y-1.5">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-2.5 min-w-0">
+                          {getDietaryBadge(dietary)}
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary font-bold text-[11px] shrink-0">
+                                {item.quantity}x
+                              </span>
+                              <span className="font-bold text-foreground text-xs leading-snug">
+                                {item.name || item.menuItem?.name || "Item"}
+                              </span>
+                            </div>
+
+                            {variantName && variantName.trim() !== "" && (
+                              <div className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-muted/80 border border-border/60 text-[11px] font-semibold text-muted-foreground">
+                                <span>Variant:</span>
+                                <span className="text-foreground font-bold">{variantName}</span>
+                                {variantPrice > 0 && (
+                                  <span className="opacity-80">
+                                    (₹{Number(variantPrice).toFixed(2)})
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="text-right shrink-0">
+                          <span className="font-black text-foreground text-xs block">
+                            ₹{Number(lineTotal).toFixed(2)}
+                          </span>
+                          {item.quantity > 1 && item.unitPrice && (
+                            <span className="text-[10px] text-muted-foreground block">
+                              @ ₹{Number(item.unitPrice).toFixed(2)}/ea
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {addons.length > 0 && (
+                        <div className="ml-6 space-y-1 pt-1">
+                          <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider block">
+                            Add-ons:
+                          </span>
+                          <div className="flex flex-col gap-1">
+                            {addons.map((addon, aIdx) => (
+                              <div
+                                key={aIdx}
+                                className="flex items-center justify-between px-2 py-1 rounded-md bg-muted/40 border border-border/50 text-[11px]"
+                              >
+                                <span className="font-medium text-foreground/90">
+                                  + {addon.name}
+                                </span>
+                                <span className="font-bold text-foreground shrink-0">
+                                  {addon.price > 0
+                                    ? `₹${Number(addon.price).toFixed(2)}`
+                                    : "FREE"}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {itemNote && (
+                        <div className="ml-6 mt-1 px-2 py-1 rounded bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/40 text-[11px] text-amber-900 dark:text-amber-200 italic flex items-start gap-1.5">
+                          <span className="font-semibold not-italic">Note:</span>
+                          <span>"{itemNote}"</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              </div>
+              
             {currentOrder.specialInstructions && (
               <div className="p-3 bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-900/50 rounded-xl text-xs text-amber-950 dark:text-amber-200 flex items-start gap-2.5">
                 <FileText className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                 <div>
-                  <span className="font-bold block mb-0.5 text-amber-900 dark:text-amber-300">Special Note:</span>
+                  <span className="font-bold block mb-0.5 text-amber-900 dark:text-amber-300">Order Note:</span>
                   <span className="italic leading-relaxed">
                     "{currentOrder.specialInstructions}"
                   </span>
@@ -490,20 +674,61 @@ export function NewOrderAlertModal() {
               </div>
             )}
 
-            {/* Payment & Amount Summary */}
-            <div className="flex items-center justify-between p-3.5 rounded-xl bg-primary/5 border border-primary/20">
-              <div className="flex items-center gap-2 text-xs">
-                <Receipt className="w-4 h-4 text-primary" />
-                <span className="font-semibold text-muted-foreground uppercase text-[11px]">
-                  Payment:
-                </span>
-                <span className="font-bold px-2 py-0.5 rounded-md bg-card text-foreground border border-border text-[11px]">
-                  {currentOrder.paymentMethod || "CASH"} ({currentOrder.paymentStatus || "PENDING"})
-                </span>
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-3.5 space-y-2.5 text-xs">
+              <div className="flex items-center justify-between pb-2 border-b border-primary/10">
+                <div className="flex items-center gap-2">
+                  <Receipt className="w-4 h-4 text-primary shrink-0" />
+                  <span className="font-bold text-foreground uppercase tracking-wide text-[11px]">
+                    Bill Summary
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="px-2 py-0.5 rounded-md bg-card border border-border font-bold text-[11px] text-foreground">
+                    {currentOrder.paymentMethod || "CASH"}
+                  </span>
+                  <span
+                    className={`px-2 py-0.5 rounded-md text-[11px] font-bold uppercase ${
+                      currentOrder.paymentStatus?.toLowerCase() === "paid" ||
+                      currentOrder.paymentStatus?.toLowerCase() === "completed"
+                        ? "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+                        : "bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800"
+                    }`}
+                  >
+                    {currentOrder.paymentStatus || "PENDING"}
+                  </span>
+                </div>
               </div>
-              <div className="text-right">
-                <span className="text-[10px] text-muted-foreground uppercase block font-semibold">
-                  Total Bill
+
+              <div className="space-y-1.5 text-muted-foreground text-[11px]">
+                {currentOrder.subtotal != null && currentOrder.subtotal > 0 && (
+                  <div className="flex justify-between">
+                    <span>Items Subtotal</span>
+                    <span className="font-semibold text-foreground">
+                      ₹{Number(currentOrder.subtotal).toFixed(2)}
+                    </span>
+                  </div>
+                )}
+                {currentOrder.tax != null && currentOrder.tax > 0 && (
+                  <div className="flex justify-between">
+                    <span>Taxes & Charges</span>
+                    <span className="font-semibold text-foreground">
+                      +₹{Number(currentOrder.tax).toFixed(2)}
+                    </span>
+                  </div>
+                )}
+                {currentOrder.discount != null && currentOrder.discount > 0 && (
+                  <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
+                    <span>Discount</span>
+                    <span className="font-semibold">
+                      -₹{Number(currentOrder.discount).toFixed(2)}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between pt-2 border-t border-primary/10">
+                <span className="font-bold text-foreground text-xs uppercase tracking-wide">
+                  Total Payable
                 </span>
                 <span className="text-2xl font-black text-primary tracking-tight">
                   ₹{Number(totalAmount).toFixed(2)}
@@ -511,7 +736,6 @@ export function NewOrderAlertModal() {
               </div>
             </div>
 
-            {/* Reject Reason Selector Drawer/Panel */}
             {showRejectReason && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
@@ -563,7 +787,6 @@ export function NewOrderAlertModal() {
             )}
           </div>
 
-          {/* Action Buttons Footer */}
           <div className="p-4 bg-muted/30 border-t border-border/60 flex flex-col gap-2 shrink-0">
             {!showRejectReason ? (
               <>
@@ -599,7 +822,6 @@ export function NewOrderAlertModal() {
                   </Button>
                 </div>
 
-                {/* Accept All Shortcut when multiple orders are waiting */}
                 {orderQueue.length > 1 && (
                   <Button
                     type="button"
@@ -625,7 +847,8 @@ export function NewOrderAlertModal() {
             )}
           </div>
         </motion.div>
-      </div>
+        </div>
+      )}
     </AnimatePresence>
   );
 }

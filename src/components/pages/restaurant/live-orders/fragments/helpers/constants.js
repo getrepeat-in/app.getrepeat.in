@@ -14,13 +14,19 @@ export const ORDER_TAB_FILTERS = [
     { key: "accepted", label: "Accepted", statuses: ["ACCEPTED"] },
     { key: "preparing", label: "Preparing", statuses: ["PREPARING"] },
     { key: "ready", label: "Ready", statuses: ["READY"] },
+    { key: "intransit", label: "In-Transit", statuses: ["IN_TRANSIT"] },
+    { key: "picked_up", label: "Picked Up", statuses: ["PICKED_UP"] },
+    { key: "served", label: "Served", statuses: ["SERVED"] },
 ];
 
 export const STATUS_CONFIG = {
     PLACED: { label: "Placed", color: "bg-indigo-500", actionLabel: "Accept Order", actionColor: "bg-blue-600 hover:bg-blue-700" },
     ACCEPTED: { label: "Accepted", color: "bg-indigo-500", actionLabel: "Start Preparing", actionColor: "bg-blue-600 hover:bg-blue-700" },
     PREPARING: { label: "Preparing", color: "bg-blue-500", actionLabel: "Order Ready", actionColor: "bg-emerald-600 hover:bg-emerald-700" },
-    READY: { label: "Ready", color: "bg-emerald-500", actionLabel: "Complete Order", actionColor: "bg-gray-900 hover:bg-gray-800" },
+    READY: { label: "Ready", color: "bg-emerald-500", actionLabel: "Dispatch/Complete", actionColor: "bg-gray-900 hover:bg-gray-800" },
+    IN_TRANSIT: { label: "In Transit", color: "bg-purple-500", actionLabel: "Mark Delivered", actionColor: "bg-gray-900 hover:bg-gray-800" },
+    PICKED_UP: { label: "Picked Up", color: "bg-teal-500", actionLabel: "Complete Order", actionColor: "bg-gray-900 hover:bg-gray-800" },
+    SERVED: { label: "Served", color: "bg-blue-500", actionLabel: "Complete Order", actionColor: "bg-gray-900 hover:bg-gray-800" },
     COMPLETED: { label: "Completed", color: "bg-gray-500" },
     CANCELLED: { label: "Cancelled", color: "bg-red-500" },
     REJECTED: { label: "Rejected", color: "bg-red-500" },
@@ -36,4 +42,4 @@ export const LIVE_ORDER_TABS = ORDER_TAB_FILTERS.filter(
     (tab) => tab.key !== "completed" && tab.key !== "cancelled"
 );
 
-export const LIVE_ORDER_STATUSES = "PLACED,ACCEPTED,PREPARING,READY";
+export const LIVE_ORDER_STATUSES = "PLACED,ACCEPTED,PREPARING,READY,IN_TRANSIT,PICKED_UP,SERVED";

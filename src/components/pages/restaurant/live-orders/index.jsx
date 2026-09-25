@@ -24,7 +24,7 @@ export default function LiveOrders() {
     const { isConnected: isRealtimeConnected } = useRealtimeOrders({
         restaurantId,
         playChimeOnNewOrder: false,
-        showNotificationOnNewOrder: true,
+        showNotificationOnNewOrder: false,
     });
 
     const PAGE_SIZE = 24; 
@@ -40,7 +40,7 @@ export default function LiveOrders() {
             if (activeTab && activeTab.statuses.length > 0) {
                 params.status = activeTab.statuses.join(",");
             } else if (filter === "all") {
-                params.status = "PLACED,ACCEPTED,PREPARING,READY_FOR_PICKUP,OUT_FOR_DELIVERY";
+                params.status = "PLACED,ACCEPTED,PREPARING,READY,IN_TRANSIT,PICKED_UP,SERVED";
             }
 
             if (appliedSearch) {
@@ -66,7 +66,13 @@ export default function LiveOrders() {
         try {
             const res = await OrderService.update(restaurantId, orderId, { action: "advance" });
             await refetch();
-            notify.success(res?.message || res?.data?.message || "Order status updated successfully!");
+            const updated = res?.data || res;
+            const rawStatus = updated?.orderStatus || "";
+            const status = rawStatus ? rawStatus.replace(/_/g, " ") : "";
+            const fallbackMsg = status
+                ? `Order updated successfully: ${status}`
+                : "Order updated successfully";
+            notify.success(res?.message || res?.data?.message || fallbackMsg);
         } catch (err) {
             console.error("Failed to advance status", err);
             notify.error(err?.response?.data?.message || err?.message || "Failed to update order status. Please try again.");
@@ -77,7 +83,7 @@ export default function LiveOrders() {
         try {
             const res = await OrderService.update(restaurantId, orderId, { action: "reject", reason });
             await refetch();
-            notify.success(res?.message || res?.data?.message || "Order rejected successfully.");
+            notify.success(res?.message || res?.data?.message || "Order updated successfully: REJECTED");
         } catch (err) {
             console.error("Failed to reject order", err);
             notify.error(err?.response?.data?.message || err?.message || "Failed to reject order. Please try again.");
