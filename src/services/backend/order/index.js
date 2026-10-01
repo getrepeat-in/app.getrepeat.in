@@ -124,9 +124,18 @@ export const OrderService = {
     const resolvedCustomerId = await resolveCustomer(customer, customerInfo);
     const orderNumber = generateOrderNumber();
 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const tokenNumber = (await Order.countDocuments({
+      restaurant: restaurantId,
+      createdAt: { $gte: today }
+    })) + 1;
+
     const newOrder = await Order.create({
       restaurant: restaurantId,
       orderNumber,
+      tokenNumber,
       orderType,
       table: resolvedTableId,
       deliveryAddress: orderType === "DELIVERY" ? deliveryAddress : undefined,

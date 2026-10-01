@@ -1,6 +1,6 @@
 import React from 'react';
 import { SearchX } from "lucide-react";
-import { EmptyState } from "@/components/global/empty-state";
+import EmptyState from "@/components/global/empty-state";
 
 export function BulkTable({ title, subtitle, columns, data, rowKey, emptyMessage = "No items found." }) {
     if (!data || data.length === 0) {

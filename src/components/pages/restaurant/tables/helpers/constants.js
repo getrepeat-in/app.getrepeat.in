@@ -57,7 +57,11 @@ export const QR_DOWNLOAD_SIZE = 400;
 export const QR_ERROR_CORRECTION = "H";
 export const QR_COLORS = { dark: "#1a1a1a", light: "#ffffff" };
 
-export const buildQRUrl = (qrToken) => {
+export const buildQRUrl = (qrToken, slug) => {
+    const path = `/menu?token=${qrToken}`;
+    if (slug) {
+        return `https://${slug}.getrepeat.in${path}`;
+    }
     if (typeof window === "undefined") return "";
-    return `${window.location.origin}/menu?token=${qrToken}`;
+    return `${window.location.origin}${path}`;
 };

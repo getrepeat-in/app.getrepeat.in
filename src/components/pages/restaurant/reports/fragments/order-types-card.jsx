@@ -12,7 +12,6 @@ export function OrderTypesCard({
   if (isLoading) {
     return (
       <div className="rounded-xl bg-card border border-border/70 p-4 sm:p-5 shadow-xs space-y-4">
-        {/* Header Skeleton */}
         <div className="flex items-center justify-between gap-2 pb-2 border-b border-border/40">
           <div className="flex items-center gap-2">
             <Skeleton className="w-4 h-4 rounded" />
@@ -21,39 +20,24 @@ export function OrderTypesCard({
           <Skeleton className="h-5 w-16 rounded-full" />
         </div>
 
-        {/* Multi-segment bar skeleton */}
-        <div className="space-y-1.5">
-          <Skeleton className="h-2.5 w-full rounded-full" />
-          <div className="flex items-center justify-between px-0.5">
-            <Skeleton className="h-2.5 w-16 rounded" />
-            <Skeleton className="h-2.5 w-16 rounded" />
-            <Skeleton className="h-2.5 w-16 rounded" />
-          </div>
-        </div>
-
-        {/* Channel Cards Skeleton */}
-        <div className="flex flex-col gap-2">
+        <div className="space-y-4 mt-4">
           {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="p-2.5 sm:p-3 rounded-xl border border-border/40 flex items-center justify-between gap-2.5 bg-muted/20"
-            >
-              <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                <Skeleton className="w-8 h-8 rounded-lg shrink-0" />
-                <div className="space-y-1 flex-1">
-                  <Skeleton className="h-3 w-20 rounded" />
-                  <Skeleton className="h-2.5 w-28 rounded" />
+            <div key={i} className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Skeleton className="w-6 h-6 rounded-md shrink-0" />
+                  <Skeleton className="h-4 w-24 rounded" />
                 </div>
+                <Skeleton className="h-4 w-16 rounded" />
               </div>
-              <div className="flex flex-col items-end space-y-1 shrink-0">
-                <Skeleton className="h-3 w-14 rounded" />
-                <Skeleton className="h-2 w-10 rounded" />
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-2 w-full rounded-full" />
+                <Skeleton className="h-3 w-8 rounded" />
               </div>
             </div>
           ))}
         </div>
 
-        {/* Footer Skeleton */}
         <div className="pt-2 border-t border-border/40 flex justify-center">
           <Skeleton className="h-3 w-32 rounded" />
         </div>
@@ -80,9 +64,10 @@ export function OrderTypesCard({
     normalizedTypes[0]
   );
 
+  const maxCount = Math.max(...normalizedTypes.map((t) => t.count));
+
   return (
     <div className="rounded-xl bg-card border border-border/70 p-4 sm:p-5 shadow-xs space-y-4">
-      {/* Header: Title & Count Badge */}
       <div className="flex items-center justify-between gap-2 pb-2 border-b border-border/40">
         <h3 className="font-semibold text-sm sm:text-base text-foreground flex items-center gap-2 truncate">
           <PieChart className="w-4 h-4 text-primary shrink-0" />
@@ -93,77 +78,52 @@ export function OrderTypesCard({
         </span>
       </div>
 
-      {/* Visual Multi-Segment Bar */}
-      {totalOrders > 0 && (
-        <div className="space-y-1.5">
-          <div className="h-2.5 w-full rounded-full bg-muted overflow-hidden flex shadow-inner">
-            {normalizedTypes.map((ot) => {
-              if (ot.percentage <= 0) return null;
-              return (
-                <div
-                  key={ot.type}
-                  style={{ width: `${ot.percentage}%` }}
-                  className={`h-full ${ot.color} transition-all`}
-                  title={`${ot.label}: ${ot.count} orders (${ot.percentage.toFixed(1)}%)`}
-                />
-              );
-            })}
-          </div>
+      <div className="space-y-4 mt-2">
+        {normalizedTypes
+          .sort((a, b) => b.count - a.count)
+          .map((ot) => {
+            const Icon = ot.icon;
+            const barWidth = maxCount > 0 ? (ot.count / maxCount) * 100 : 0;
 
-          <div className="flex items-center justify-between text-[11px] text-muted-foreground px-0.5 flex-wrap gap-1">
-            {normalizedTypes
-              .filter((ot) => ot.percentage > 0)
-              .map((ot) => (
-                <div key={ot.type} className="flex items-center gap-1.5 shrink-0">
-                  <span className={`w-2 h-2 rounded-full ${ot.color}`} />
-                  <span className="font-medium text-[10.5px]">
-                    {ot.type.replace("_", " ")}: {ot.percentage.toFixed(0)}%
-                  </span>
+            return (
+              <div key={ot.type} className="flex flex-col gap-1.5 group">
+                <div className="flex items-center justify-between min-w-0">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className={`p-1.5 rounded-md border shrink-0 ${ot.bgLight} ${ot.textColor}`}>
+                      <Icon className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="font-semibold text-sm text-foreground leading-tight truncate">
+                        {ot.label}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground font-medium leading-tight">
+                        {ot.count} {ot.count === 1 ? "order" : "orders"}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end shrink-0">
+                    <span className="font-bold text-sm text-foreground tabular-nums leading-none">
+                      {formatCurrency(ot.revenue)}
+                    </span>
+                    <span className="text-[11px] font-semibold text-muted-foreground mt-1 leading-none">
+                      {ot.percentage.toFixed(1)}%
+                    </span>
+                  </div>
                 </div>
-              ))}
-          </div>
-        </div>
-      )}
 
-      {/* Channel Cards */}
-      <div className="flex flex-col gap-2">
-        {normalizedTypes.map((ot) => {
-          const Icon = ot.icon;
-          return (
-            <div
-              key={ot.type}
-              className={`p-2.5 sm:p-3 rounded-xl border flex items-center justify-between gap-2.5 ${ot.bgLight}`}
-            >
-              <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                <div
-                  className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg ${ot.color}/15 flex items-center justify-center shrink-0 ${ot.textColor}`}
-                >
-                  <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <span className="font-semibold text-foreground text-xs block truncate leading-tight">
-                    {ot.label}
-                  </span>
-                  <span className="text-[10.5px] text-muted-foreground block mt-0.5 truncate">
-                    {ot.count} orders ({ot.percentage.toFixed(0)}%)
-                  </span>
+                <div className="flex items-center gap-3">
+                  <div className="h-2 flex-1 rounded-full bg-muted/60 overflow-hidden relative">
+                    <div
+                      className={`absolute left-0 top-0 h-full ${ot.color} rounded-full transition-all duration-1000 ease-out group-hover:brightness-110`}
+                      style={{ width: `${barWidth}%` }}
+                    />
+                  </div>
                 </div>
               </div>
-
-              <div className="text-right shrink-0">
-                <span className="font-bold text-foreground text-xs tabular-nums block leading-tight">
-                  {formatCurrency(ot.revenue)}
-                </span>
-                <span className="text-[10px] text-muted-foreground block mt-0.5">
-                  {ot.count > 0 ? `Avg ${formatCurrency(ot.revenue / ot.count, 0)}` : "₹0"}
-                </span>
-              </div>
-            </div>
-          );
-        })}
+            );
+          })}
       </div>
 
-      {/* Most Popular Channel Footer */}
       <div className="pt-2 border-t border-border/40 text-[11px] text-muted-foreground text-center">
         <span>Most popular: </span>
         <span className="font-semibold text-foreground">

@@ -2,13 +2,19 @@
 import { useState } from "react";
 import { getImageUrl } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import KotTemplate from "@/templates/KotTemplate";
+import BillTemplate from "@/templates/BillTemplate"
 import { ORDER_TYPE_MAP } from "../helpers/constants";
 import { ItemImage } from "@/components/global/item-image";
+import { useRestaurant } from "@/store/hooks/useRestaurant";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { getStatusConfig, getDietaryConfig, getElapsedTime, formatTime } from "../helpers"
 import { Clock, Phone, Printer, FileText, ChevronDown, ChevronUp, XCircle, CheckCircle, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 export const OrderCard = ({ order, onUpdateStatus, onRejectStatus }) => {
+    const { restaurantId, restaurants } = useRestaurant();
+    const activeRestaurant = restaurants?.find(r => r._id === restaurantId);
     if (!order) return null;
 
     const { _id, orderNumber, orderStatus, customer, restaurant, items = [], totalAmount, createdAt, paymentStatus, orderType = "DINE_IN", table, specialInstructions } = order;
@@ -136,12 +142,30 @@ export const OrderCard = ({ order, onUpdateStatus, onRejectStatus }) => {
                                     <span className="text-gray-900 dark:text-gray-100 text-[14px] font-extrabold tracking-tight leading-none truncate">{displayId}</span>
                                 </div>
                                 <div className="flex items-center gap-1.5 shrink-0">
-                                    <button onClick={(e) => e.stopPropagation()} className="text-[11px] font-semibold text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-zinc-700 rounded-md px-2 py-1 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors flex items-center gap-1">
-                                        <Printer className="w-3 h-3" /> KOT
-                                    </button>
-                                    <button onClick={(e) => e.stopPropagation()} className="text-[11px] font-semibold text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-zinc-700 rounded-md px-2 py-1 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors flex items-center gap-1">
-                                        <FileText className="w-3 h-3" /> ORDER
-                                    </button>
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <button onClick={(e) => e.stopPropagation()} className="text-[11px] font-semibold text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-zinc-700 rounded-md px-2 py-1 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors flex items-center gap-1 cursor-pointer">
+                                                <Printer className="w-3 h-3" /> KOT
+                                            </button>
+                                        </PopoverTrigger>
+                                        <PopoverContent side="bottom" className="w-auto p-0 border-none shadow-2xl bg-transparent z-50">
+                                            <div className="max-h-[80vh] overflow-y-auto p-2 bg-gray-200 dark:bg-zinc-800 rounded-lg">
+                                                <KotTemplate order={order} restaurant={activeRestaurant} />
+                                            </div>
+                                        </PopoverContent>
+                                    </Popover>
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <button onClick={(e) => e.stopPropagation()} className="text-[11px] font-semibold text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-zinc-700 rounded-md px-2 py-1 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors flex items-center gap-1 cursor-pointer">
+                                                <FileText className="w-3 h-3" /> ORDER
+                                            </button>
+                                        </PopoverTrigger>
+                                        <PopoverContent side="bottom" className="w-auto p-0 border-none shadow-2xl bg-transparent z-50">
+                                            <div className="max-h-[80vh] overflow-y-auto p-2 bg-gray-200 dark:bg-zinc-800 rounded-lg">
+                                                <BillTemplate order={order} restaurant={activeRestaurant} />
+                                            </div>
+                                        </PopoverContent>
+                                    </Popover>
                                 </div>
                             </div>
                         </div>

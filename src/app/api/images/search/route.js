@@ -32,7 +32,7 @@ export const GET = withErrorHandler(async (request) => {
         params: {
             page,
             limit,
-            search: formattedQuery,
+            q: formattedQuery,
         }
     });
 

@@ -35,6 +35,7 @@ export const renderTabContent = (activeTab, data) => {
     phone: resData?.phone || "",
     email: resData?.email || "",
     domain: resData?.domain || "",
+    upiId: resData?.upiId || "",
   };
 
   const locationTab = resData?.address || {};

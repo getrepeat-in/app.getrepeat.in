@@ -115,6 +115,12 @@ const RestaurantSchema = new Schema(
       ],
     },
 
+    upiId: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+
     currency: {
       type: String,
       uppercase: true,

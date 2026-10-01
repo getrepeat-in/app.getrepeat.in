@@ -2,12 +2,19 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { OrderTimeline } from "./order-timeline";
+import KotTemplate from "@/templates/KotTemplate";
+import BillTemplate from "@/templates/BillTemplate";
+import { useRestaurant } from "@/store/hooks/useRestaurant";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { StatusBadge, PaymentBadge } from "../helpers/badges";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Printer, Receipt as ReceiptIcon, User, Phone, Mail, MapPin } from "lucide-react";
 
 export const OrderDetailsDrawer = ({ isOpen, onClose, order }) => {
     const [isAddressExpanded, setIsAddressExpanded] = useState(false);
+    const { restaurantId, restaurants } = useRestaurant();
+    const activeRestaurant = restaurants?.find(r => r._id === restaurantId);
+    console.log("activeRestaurant" , activeRestaurant)
     
     if (!order) return null;
 
@@ -91,12 +98,26 @@ export const OrderDetailsDrawer = ({ isOpen, onClose, order }) => {
                         <div className="flex justify-between items-center border-b border-gray-100 dark:border-zinc-800 pb-3 mb-4">
                             <h3 className="text-[11px] font-bold tracking-widest text-gray-500 dark:text-gray-400 uppercase">Order Details</h3>
                             <div className="flex gap-2">
-                                <button className="text-blue-600 dark:text-blue-400 border border-blue-600 dark:border-blue-400/50 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded px-2.5 py-1 text-[11px] font-bold tracking-wide flex items-center gap-1.5 transition-colors">
-                                    <Printer size={12} strokeWidth={2.5} /> KOT
-                                </button>
-                                <button className="text-blue-600 dark:text-blue-400 border border-blue-600 dark:border-blue-400/50 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded px-2.5 py-1 text-[11px] font-bold tracking-wide flex items-center gap-1.5 transition-colors">
-                                    <ReceiptIcon size={12} strokeWidth={2.5} /> BILL
-                                </button>
+                                <Popover>
+                                    <PopoverTrigger className="text-blue-600 dark:text-blue-400 border border-blue-600 dark:border-blue-400/50 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded px-2.5 py-1 text-[11px] font-bold tracking-wide flex items-center gap-1.5 transition-colors">
+                                        <Printer size={12} strokeWidth={2.5} /> KOT
+                                    </PopoverTrigger>
+                                    <PopoverContent side="left" className="w-auto p-0 border-none shadow-2xl bg-transparent">
+                                        <div className="max-h-[80vh] overflow-y-auto p-2 bg-gray-200 dark:bg-zinc-800 rounded-lg">
+                                            <KotTemplate order={order} restaurant={activeRestaurant} />
+                                        </div>
+                                    </PopoverContent>
+                                </Popover>
+                                <Popover>
+                                    <PopoverTrigger className="text-blue-600 dark:text-blue-400 border border-blue-600 dark:border-blue-400/50 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded px-2.5 py-1 text-[11px] font-bold tracking-wide flex items-center gap-1.5 transition-colors">
+                                        <ReceiptIcon size={12} strokeWidth={2.5} /> BILL
+                                    </PopoverTrigger>
+                                    <PopoverContent side="left" className="w-auto p-0 border-none shadow-2xl bg-transparent">
+                                        <div className="overflow-y-auto p-2 bg-gray-200 dark:bg-zinc-800 rounded-lg">
+                                            <BillTemplate order={order} restaurant={activeRestaurant} />
+                                        </div>
+                                    </PopoverContent>
+                                </Popover>
                             </div>
                         </div>
                         

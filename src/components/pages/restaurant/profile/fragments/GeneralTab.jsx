@@ -10,7 +10,7 @@ import { useRestaurant } from "@/store/hooks/useRestaurant";
 import useNotification from "@/store/hooks/useNotification";
 import { useFormMutation } from "@/store/hooks/useFormMutation";
 import { RestaurantService } from "@/services/frontend/restaurant";
-import { Store, Link2, Phone, Mail, Image as ImageIcon, Save, Loader2, Upload } from "lucide-react";
+import { Store, Link2, Phone, Mail, Image as ImageIcon, Save, Loader2, Upload, Coins } from "lucide-react";
 
 const GeneralTab = ({ generalData }) => {
   const { restaurantId } = useRestaurant();
@@ -34,6 +34,7 @@ const GeneralTab = ({ generalData }) => {
       domain: generalData?.domain || "",
       phone: generalData?.phone || "",
       email: generalData?.email || "",
+      upiId: generalData?.upiId || "",
     },
     enableReinitialize: true,
     onSubmit: (values, { resetForm }) => {
@@ -197,7 +198,7 @@ const GeneralTab = ({ generalData }) => {
             </div>
           </div>
 
-          <div className="relative group md:col-span-2">
+          <div className="relative group">
             <div className="absolute -top-2.5 left-3.5 px-1.5 bg-white dark:bg-zinc-900 z-10">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-primary transition-colors">Custom Domain</span>
             </div>
@@ -212,6 +213,26 @@ const GeneralTab = ({ generalData }) => {
                 onChange={formik.handleChange} 
                 onBlur={formik.handleBlur}
                 placeholder="e.g. therusticspoon.com" 
+                className="border-0 focus-visible:ring-0 shadow-none h-11.5 sm:h-12 bg-transparent text-sm sm:text-base px-3.5 w-full" 
+              />
+            </div>
+          </div>
+
+          <div className="relative group">
+            <div className="absolute -top-2.5 left-3.5 px-1.5 bg-white dark:bg-zinc-900 z-10">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-focus-within:text-primary transition-colors">UPI ID (Payments)</span>
+            </div>
+            <div className="relative flex items-center border border-gray-200 dark:border-zinc-800 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-primary transition-all bg-white dark:bg-zinc-900 shadow-2xs">
+              <div className="pl-3.5 flex items-center pointer-events-none">
+                <Coins className="h-4.5 w-4.5 text-primary/90 shrink-0" />
+              </div>
+              <Input 
+                id="upiId" 
+                name="upiId"
+                value={formik.values.upiId} 
+                onChange={formik.handleChange} 
+                onBlur={formik.handleBlur}
+                placeholder="restaurant@upi" 
                 className="border-0 focus-visible:ring-0 shadow-none h-11.5 sm:h-12 bg-transparent text-sm sm:text-base px-3.5 w-full" 
               />
             </div>

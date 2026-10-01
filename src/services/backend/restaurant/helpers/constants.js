@@ -7,6 +7,7 @@ export const ALLOWED_UPDATE_FIELDS = new Set([
   "domain",
   "email",
   "gstNumber",
+  "upiId",
   "currency",
   "status",
   "openingHours",

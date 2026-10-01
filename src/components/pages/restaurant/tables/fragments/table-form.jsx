@@ -69,35 +69,6 @@ export default function TableFormSheet({ isOpen, onClose, table }) {
 
                     <div className="p-6 space-y-6">
                         <form onSubmit={formik.handleSubmit} className="space-y-5">
-                            <Field label="Zone" icon={MapPin} error={formik.touched.zone && formik.errors.zone}>
-                                <div className="space-y-2">
-                                    <FormInput
-                                        type="text"
-                                        name="zone"
-                                        placeholder="e.g. AC, Non-AC, Rooftop…"
-                                        value={formik.values.zone}
-                                        onChange={formik.handleChange}
-                                        onBlur={formik.handleBlur}
-                                    />
-                                    <div className="flex flex-wrap gap-1.5">
-                                        {ZONE_SUGGESTIONS.map((z) => (
-                                            <button
-                                                type="button"
-                                                key={z}
-                                                onClick={() => formik.setFieldValue("zone", z)}
-                                                className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all
-                                                    ${formik.values.zone === z
-                                                        ? "bg-primary/90 text-white border-orange-500"
-                                                        : "bg-white dark:bg-zinc-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-zinc-700 hover:border-orange-300 hover:text-primary"
-                                                    }`}
-                                            >
-                                                {z}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </Field>
-
                             <div className="grid grid-cols-2 gap-4">
                                 <Field label="Table No." icon={Hash} error={formik.touched.tableNumber && formik.errors.tableNumber}>
                                     <FormInput

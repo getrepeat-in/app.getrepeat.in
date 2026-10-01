@@ -82,6 +82,9 @@ const OrderSchema = new Schema({
     index: true,
     unique: true,
   },
+  tokenNumber: {
+    type: Number,
+  },
   orderType: {
     type: String,
     enum: ORDER_TYPES,

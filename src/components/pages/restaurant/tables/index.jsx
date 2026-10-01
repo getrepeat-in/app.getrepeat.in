@@ -2,17 +2,20 @@
 
 import QRCodeLib from "qrcode";
 import { getImageUrl } from "@/lib/utils";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { TableFormSheet } from "./fragments";
-import GlobalButton from "@/components/global/button";
 import { useTable } from "@/store/hooks/useTable";
 import DataTable from "@/components/global/table";
+import GlobalButton from "@/components/global/button";
 import { useRestaurant } from "@/store/hooks/useRestaurant";
 import { Plus, Users, RefreshCw, MapPin } from "lucide-react";
 import { ConfirmDeleteAlert } from "@/components/ui/confirm-delete-alert";
 import { TABLE_STATUS_FILTERS, DEFAULT_PAGE_SIZE, buildQRUrl, QR_COLORS, QR_ERROR_CORRECTION, TableNumberCell, TableStatusBadge, TableActiveBadge, TableQRCell, TableActionsCell } from "./helpers";
 
 export default function TablesManagement() {
+    const [isMounted, setIsMounted] = useState(false);
+    useEffect(() => setIsMounted(true), []);
+
     const { restaurants, restaurantId } = useRestaurant();
     const activeRestaurant = restaurants?.find(r => r._id === restaurantId);
     const { tables, isLoading, error, deleteTable, isDeleting, refetch } = useTable(restaurantId);
@@ -43,39 +46,67 @@ export default function TablesManagement() {
 
     const handleDownloadQR = async (table) => {
         try {
-            const qrUrl = buildQRUrl(table.qrToken);
-            const qrDataUrl = await QRCodeLib.toDataURL(qrUrl, {
-                width: 600,
-                margin: 1,
-                color: QR_COLORS,
-                errorCorrectionLevel: QR_ERROR_CORRECTION,
-            });
-
             const canvas = document.createElement("canvas");
             canvas.width = 600;
-            canvas.height = 780;
+            canvas.height = 840;
             const ctx = canvas.getContext("2d");
 
-            ctx.fillStyle = "#ffffff";
+            const drawRoundedRect = (x, y, w, h, r) => {
+                ctx.beginPath();
+                ctx.moveTo(x + r, y);
+                ctx.lineTo(x + w - r, y);
+                ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+                ctx.lineTo(x + w, y + h - r);
+                ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+                ctx.lineTo(x + r, y + h);
+                ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+                ctx.lineTo(x, y + r);
+                ctx.quadraticCurveTo(x, y, x + r, y);
+                ctx.closePath();
+                ctx.fill();
+            };
+
+            const rawPrimary = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
+            let brandColor = "#ea580c";
+            
+            if (rawPrimary) {
+                if (rawPrimary.startsWith("hsl") || rawPrimary.startsWith("rgb") || rawPrimary.startsWith("lab") || rawPrimary.startsWith("#")) {
+                    brandColor = rawPrimary;
+                } else if (rawPrimary.includes(",")) {
+                    brandColor = `hsl(${rawPrimary})`;
+                } else {
+                    brandColor = `hsl(${rawPrimary.split(' ').filter(Boolean).join(', ')})`;
+                }
+            }
+
+            // Draw a beautiful warm gradient background
+            const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            try {
+                gradient.addColorStop(0, brandColor);
+            } catch (e) {
+                console.warn("Failed to apply primary color, falling back", e);
+                brandColor = "#ea580c"; // Fallback to safe hex
+                gradient.addColorStop(0, brandColor);
+            }
+            gradient.addColorStop(1, "#431407");
+
+            ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
-            ctx.fillStyle = primaryColor || "#ea580c";
-            ctx.fillRect(0, 0, canvas.width, 160);
-
-            ctx.fillStyle = "#ffffff";
+            // Large rotated text "MENU" on the left edge
+            ctx.save();
+            ctx.translate(50, canvas.height / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
+            ctx.font = "900 160px sans-serif";
             ctx.textAlign = "center";
-            ctx.font = "bold 24px sans-serif";
-            ctx.fillText("SCAN TO ORDER", canvas.width / 2, 60);
+            ctx.textBaseline = "middle";
+            ctx.fillText("MENU", 0, 0);
+            ctx.restore();
 
-            ctx.font = "bold 52px sans-serif";
-            ctx.fillText(`Table ${table.tableNumber}`, canvas.width / 2, 130);
-
-            const img = new window.Image();
-            img.src = qrDataUrl;
-            await new Promise((resolve) => { img.onload = resolve; });
-            ctx.drawImage(img, 75, 180, 450, 450);
-
+            // Draw Logo at top
+            let logoLoaded = false;
+            let finalLogoImg = null;
             const logoUrl = activeRestaurant?.logo ? getImageUrl(activeRestaurant.logo, false, "original") : null;
             if (logoUrl) {
                 try {
@@ -89,25 +120,74 @@ export default function TablesManagement() {
                     const logoImg = new window.Image();
                     logoImg.src = logoDataUrl;
                     await new Promise((resolve) => { logoImg.onload = resolve; });
-                    ctx.fillStyle = "#ffffff";
-                    ctx.fillRect(250, 355, 100, 100);
-                    ctx.drawImage(logoImg, 260, 365, 80, 80);
+                    finalLogoImg = logoImg;
+                    
+                    // Add subtle glow behind logo
+                    ctx.save();
+                    ctx.shadowColor = "rgba(255,255,255,0.3)";
+                    ctx.shadowBlur = 20;
+                    ctx.drawImage(logoImg, canvas.width / 2 - 45, 60, 90, 90);
+                    ctx.restore();
+                    logoLoaded = true;
                 } catch (e) {
                     console.error("Failed to load logo", e);
                 }
             }
 
-            ctx.fillStyle = "#fff7ed";
-            ctx.fillRect(0, 680, canvas.width, 100);
+            // Restaurant Name
+            ctx.fillStyle = "#ffffff";
+            ctx.textAlign = "center";
+            ctx.font = "bold 36px sans-serif";
+            ctx.fillText(activeRestaurant?.name || "Our Restaurant", canvas.width / 2, logoLoaded ? 190 : 120);
 
-            ctx.fillStyle = primaryColor || "#ea580c";
-            ctx.font = "bold 26px sans-serif";
-            ctx.fillText("📱 Scan & Order Instantly", canvas.width / 2, 725);
-            
-            ctx.fillStyle = "#fff7ed";
-            ctx.font = "normal 16px sans-serif";
-            ctx.globalAlpha = 0.8;
-            ctx.fillText(`Capacity: ${table.capacity} seats`, canvas.width / 2, 755);
+            // Subtitle
+            ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+            ctx.font = "bold 16px sans-serif";
+            ctx.fillText("SCAN TO ORDER", canvas.width / 2, logoLoaded ? 220 : 150);
+
+            // Draw a white rounded box for the QR code
+            ctx.save();
+            ctx.shadowColor = "rgba(0, 0, 0, 0.25)";
+            ctx.shadowBlur = 40;
+            ctx.shadowOffsetY = 20;
+            ctx.fillStyle = "#ffffff";
+            drawRoundedRect(100, 270, 400, 480, 40);
+            ctx.restore();
+
+            // Text inside white box: "Table X"
+            ctx.fillStyle = brandColor;
+            ctx.font = "900 48px sans-serif";
+            ctx.fillText(`Table ${table.tableNumber}`, canvas.width / 2, 345);
+
+            // Draw QR Code
+            const qrUrl = buildQRUrl(table.qrToken, activeRestaurant?.slug);
+            const qrDataUrl = await QRCodeLib.toDataURL(qrUrl, {
+                width: 320,
+                margin: 0,
+                color: { dark: "#1a1a1a", light: "#ffffff" },
+                errorCorrectionLevel: QR_ERROR_CORRECTION,
+            });
+            const img = new window.Image();
+            img.src = qrDataUrl;
+            await new Promise((resolve) => { img.onload = resolve; });
+            ctx.drawImage(img, 140, 380, 320, 320);
+
+            if (finalLogoImg) {
+                ctx.fillStyle = "#ffffff";
+                // Center of 320x320 at (140,380) is (300, 540). Draw 76x76 box
+                ctx.fillRect(262, 502, 76, 76);
+                ctx.drawImage(finalLogoImg, 266, 506, 68, 68);
+            }
+
+            // Text under QR code in white box
+            ctx.fillStyle = "#64748b";
+            ctx.font = "500 16px sans-serif";
+            ctx.fillText("Point your camera to order", canvas.width / 2, 730);
+
+            // Bottom Footer
+            ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
+            ctx.font = "normal 14px sans-serif";
+            ctx.fillText(`Capacity: ${table.capacity} seats`, canvas.width / 2, 790);
 
             const a = document.createElement("a");
             a.href = canvas.toDataURL("image/png");
@@ -135,8 +215,7 @@ export default function TablesManagement() {
             const q = searchQuery.toLowerCase();
             data = data.filter((t) => 
                 String(t.tableNumber)?.toLowerCase().includes(q) ||
-                t.label?.toLowerCase().includes(q) ||
-                t.zone?.toLowerCase().includes(q)
+                t.label?.toLowerCase().includes(q)
             );
         }
         return data;
@@ -149,17 +228,7 @@ export default function TablesManagement() {
             sortable: true,
             render: (table) => <TableNumberCell table={table} />
         },
-        {
-            header: "Zone",
-            key: "zone",
-            sortable: true,
-            render: (table) => (
-                <div className="flex items-center gap-1.5">
-                    <MapPin size={11} className="text-gray-400 dark:text-zinc-500 shrink-0" />
-                    <span className="text-xs font-medium text-gray-700 dark:text-zinc-300">{table.zone || "General"}</span>
-                </div>
-            )
-        },
+
         {
             header: "Capacity",
             key: "capacity",
@@ -186,7 +255,7 @@ export default function TablesManagement() {
         {
             header: "QR Token / Link",
             key: "qrToken",
-            render: (table) => <TableQRCell qrToken={table.qrToken} />
+            render: (table) => <TableQRCell qrToken={table.qrToken} slug={activeRestaurant?.slug} />
         },
         {
             header: "Actions",
@@ -208,14 +277,14 @@ export default function TablesManagement() {
         <div className="flex flex-col bg-white dark:bg-zinc-900 m-2 sm:m-4 p-3 sm:p-4 md:p-5 space-y-4 sm:space-y-6 rounded-md border border-border/40 shadow-xs min-w-0">
             <DataTable
                 title="Table Management"
-                subtitle="Configure and manage tables, zones, and QR ordering codes"
+                subtitle="Configure and manage tables and QR ordering codes"
                 columns={columns}
                 data={filteredTables}
-                isLoading={isLoading}
+                isLoading={!isMounted || isLoading}
                 error={error}
                 
                 searchable
-                searchPlaceholder="Search table number, label, zone..."
+                searchPlaceholder="Search table number or label..."
                 searchQuery={searchQuery}
                 onSearchChange={setSearchQuery}
 

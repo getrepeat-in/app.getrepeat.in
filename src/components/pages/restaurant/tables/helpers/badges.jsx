@@ -42,9 +42,9 @@ export const TableActiveBadge = ({ isActive }) => (
     </span>
 );
 
-export const TableQRCell = ({ qrToken }) => {
+export const TableQRCell = ({ qrToken, slug }) => {
     const [copied, setCopied] = useState(false);
-    const qrUrl = buildQRUrl(qrToken);
+    const qrUrl = buildQRUrl(qrToken, slug);
 
     const handleCopy = (e) => {
         e.stopPropagation();

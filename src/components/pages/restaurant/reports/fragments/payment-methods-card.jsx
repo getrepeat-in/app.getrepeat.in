@@ -1,11 +1,7 @@
 "use client";
 import React from "react";
-import {
-  Wallet,
-  CheckCircle2,
-  Clock,
-} from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Wallet, CheckCircle2, Clock } from "lucide-react";
 import { PAYMENT_METHOD_CONFIG, formatCurrency } from "../helpers";
 
 export function PaymentMethodsCard({
@@ -17,7 +13,6 @@ export function PaymentMethodsCard({
   if (isLoading) {
     return (
       <div className="rounded-xl bg-card border border-border/70 p-4 sm:p-5 shadow-xs space-y-4">
-        {/* Header Skeleton */}
         <div className="flex items-center justify-between gap-2 pb-2 border-b border-border/40">
           <div className="flex items-center gap-2">
             <Skeleton className="w-4 h-4 rounded" />
@@ -26,38 +21,24 @@ export function PaymentMethodsCard({
           <Skeleton className="h-5 w-24 rounded-full" />
         </div>
 
-        {/* 4 Method Bento Grid Skeleton */}
-        <div className="grid grid-cols-2 gap-0 border border-border/40 rounded-lg overflow-hidden bg-muted/10">
-          {[1, 2, 3, 4].map((i, idx) => {
-            const isRightCol = idx % 2 !== 0;
-            const isBottomRow = idx >= 2;
-            return (
-              <div
-                key={i}
-                className={`p-3 space-y-3 ${
-                  !isRightCol ? "border-r border-border/40" : ""
-                } ${!isBottomRow ? "border-b border-border/40" : ""}`}
-              >
+        <div className="space-y-4 mt-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="space-y-2">
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Skeleton className="w-7 h-7 rounded-md shrink-0" />
-                  <div className="space-y-1">
-                    <Skeleton className="h-3 w-16 rounded" />
-                    <Skeleton className="h-2 w-10 rounded" />
-                  </div>
+                  <Skeleton className="w-6 h-6 rounded-md shrink-0" />
+                  <Skeleton className="h-4 w-24 rounded" />
                 </div>
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <Skeleton className="h-4 w-16 rounded" />
-                    <Skeleton className="h-2 w-6 rounded" />
-                  </div>
-                  <Skeleton className="h-1 w-full rounded-full" />
-                </div>
+                <Skeleton className="h-4 w-16 rounded" />
               </div>
-            );
-          })}
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-2 w-full rounded-full" />
+                <Skeleton className="h-3 w-8 rounded" />
+              </div>
+            </div>
+          ))}
         </div>
 
-        {/* Settlement Footer Skeleton */}
         <div className="pt-3 border-t border-border/50 flex items-center justify-between gap-2">
           <Skeleton className="h-3.5 w-24 rounded" />
           <Skeleton className="h-5 w-20 rounded-full" />
@@ -66,7 +47,6 @@ export function PaymentMethodsCard({
     );
   }
 
-  // Ensure default methods exist even if 0
   const normalizedMethods = ["CASH", "UPI", "CARD", "ONLINE"].map((key) => {
     const found = paymentMethods.find(
       (pm) => pm.method?.toUpperCase() === key
@@ -87,7 +67,6 @@ export function PaymentMethodsCard({
 
   return (
     <div className="rounded-xl bg-card border border-border/70 p-4 sm:p-5 shadow-xs space-y-4">
-      {/* Header: Title & Total Badge (No description, responsive) */}
       <div className="flex items-center justify-between gap-2 pb-2 border-b border-border/40">
         <h3 className="font-semibold text-sm sm:text-base text-foreground flex items-center gap-2 min-w-0">
           <Wallet className="w-4 h-4 text-primary shrink-0" />
@@ -98,59 +77,75 @@ export function PaymentMethodsCard({
         </span>
       </div>
 
-      {/* Payment Methods Bento Grid */}
-      <div className="grid grid-cols-2 gap-0 border border-border/40 rounded-lg overflow-hidden bg-muted/10">
-        {normalizedMethods.map((pm, idx) => {
-          const Icon = pm.icon;
-          const barWidth = maxRevenue > 0 ? (pm.revenue / maxRevenue) * 100 : 0;
-          const isRightCol = idx % 2 !== 0;
-          const isBottomRow = idx >= 2;
+      <div className="flex flex-col items-center sm:flex-row sm:items-start gap-8 mt-6">
+        <div className="relative shrink-0 w-44 h-44 flex items-center justify-center">
+          <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
+            <circle cx="50" cy="50" r="40" fill="none" strokeWidth="16" className="stroke-muted/20" />
+            
+            {(() => {
+              const radius = 40;
+              const circumference = 2 * Math.PI * radius;
+              let currentOffset = 0;
+              
+              return normalizedMethods
+                .filter(pm => pm.revenue > 0)
+                .map((pm) => {
+                  const fraction = totalRevenue > 0 ? pm.revenue / totalRevenue : 0;
+                  const strokeLength = fraction * circumference;
+                  const offset = currentOffset;
+                  currentOffset += strokeLength;
+                  
+                  return (
+                    <circle
+                      key={pm.method}
+                      cx="50"
+                      cy="50"
+                      r={radius}
+                      fill="none"
+                      strokeWidth="16"
+                      stroke="currentColor"
+                      strokeDasharray={`${strokeLength} ${circumference}`}
+                      strokeDashoffset={-offset}
+                      className={`${pm.textColor} transition-all duration-1000 ease-out hover:opacity-80 cursor-pointer`}
+                    >
+                      <title>{`${pm.label}: ${formatCurrency(pm.revenue)} (${pm.percentage.toFixed(1)}%)`}</title>
+                    </circle>
+                  );
+              });
+            })()}
+          </svg>
+          
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+            <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Total</span>
+            <span className="font-bold text-sm text-foreground truncate max-w-[80%]">{formatCurrency(totalRevenue, 0)}</span>
+          </div>
+        </div>
 
-          return (
-            <div
-              key={pm.method}
-              className={`p-3 relative flex flex-col justify-between gap-3 hover:bg-muted/30 transition-colors ${
-                !isRightCol ? "border-r border-border/40" : ""
-              } ${!isBottomRow ? "border-b border-border/40" : ""}`}
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                <div
-                  className={`p-1.5 rounded-md border shrink-0 ${pm.bgLight} ${pm.textColor}`}
-                >
-                  <Icon className="w-3.5 h-3.5" />
+        <div className="flex flex-col gap-3 flex-1 min-w-0 w-full">
+          {normalizedMethods
+            .filter(pm => pm.revenue > 0 || totalRevenue === 0)
+            .sort((a, b) => b.revenue - a.revenue)
+            .map((pm) => {
+              const Icon = pm.icon;
+              return (
+                <div key={pm.method} className="flex items-center gap-3 min-w-0 p-2 rounded-lg bg-muted/30">
+                  <div className={`p-2 rounded-lg border shrink-0 ${pm.bgLight} ${pm.textColor}`}>
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-semibold text-sm text-foreground leading-none truncate">
+                      {pm.label}
+                    </span>
+                    <span className="text-xs text-muted-foreground font-medium mt-1.5 leading-none truncate">
+                      {pm.count} {pm.count === 1 ? "order" : "orders"}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex flex-col min-w-0">
-                  <span className="font-semibold text-xs text-foreground leading-tight truncate">
-                    {pm.label}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground leading-tight">
-                    {pm.count} {pm.count === 1 ? "order" : "orders"}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <div className="flex items-end justify-between">
-                  <span className="font-bold text-sm text-foreground tabular-nums leading-none">
-                    {formatCurrency(pm.revenue)}
-                  </span>
-                  <span className="text-[10px] font-medium text-muted-foreground leading-none">
-                    {pm.percentage.toFixed(1)}%
-                  </span>
-                </div>
-                <div className="h-1 w-full rounded-full bg-muted/60 overflow-hidden relative">
-                  <div
-                    className={`absolute left-0 top-0 h-full ${pm.color} rounded-full transition-all duration-1000 ease-out`}
-                    style={{ width: `${barWidth}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-          );
-        })}
+              );
+            })}
+        </div>
       </div>
 
-      {/* Settlement Status Strip */}
       <div className="pt-3 border-t border-border/50 flex flex-wrap items-center justify-between gap-2 text-xs">
         <span className="text-muted-foreground font-medium flex items-center gap-1.5 shrink-0">
           <Clock className="w-3.5 h-3.5" />
