@@ -4,6 +4,7 @@ import { getRestaurant } from "@/lib/api/hooks/getRestaurant";
 import { validateRequiredFields } from "@/lib/api/helpers/validator";
 import { getCache, setCache } from "@/services/backend/redis/cache.service";
 import { getPromotionCacheKey, invalidatePromotionCache } from "@/lib/api/helpers/cacheKeys";
+import { captureServerEvent } from "@/lib/posthog-server";
 import { 
   withErrorHandler, 
   successResponse, 
@@ -53,7 +54,7 @@ export const POST = withErrorHandler(async (req, { params }) => {
   const { id } = await params;
   if (!id) throw new BadRequestError("Restaurant ID is required!");
 
-  await getRestaurant({ restaurantId: id });
+  const { user } = await getRestaurant({ restaurantId: id });
   await dbConnect();
 
   const data = await req.json();
@@ -117,5 +118,10 @@ export const POST = withErrorHandler(async (req, { params }) => {
   });
 
   await invalidatePromotionCache(id);
+  await captureServerEvent({
+    distinctId: user.id,
+    event: "promotion_created",
+    properties: { restaurant_id: id, promotion_type: type },
+  });
   return successResponse(newPromotion, "Promotion created successfully", 201);
 });

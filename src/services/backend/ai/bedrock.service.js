@@ -1,13 +1,29 @@
 import { safeParseModelJson } from "./helpers";
 import { SYSTEM_PROMPT, GENERATE_DESCRIPTION_PROMPT } from "./helpers/constants";
-import { BedrockRuntimeClient, ConverseCommand } from "@aws-sdk/client-bedrock-runtime";
+import {
+    getBedrockRuntime,
+    withMenuDescriptionGeneration,
+} from "./bedrock-observability";
 
 class BedrockAIService {
     constructor() {
-        this.client = new BedrockRuntimeClient({
-            region: "us-east-1",
-        });
-        this.modelId = "amazon.nova-lite-v1:0"; 
+        this.client = null;
+        this.modelId = "amazon.nova-lite-v1:0";
+    }
+
+    async getClient() {
+        if (!this.client) {
+            const { BedrockRuntimeClient } = await getBedrockRuntime();
+            this.client = new BedrockRuntimeClient({
+                region: "us-east-1",
+            });
+        }
+
+        return this.client;
+    }
+
+    withMenuDescriptionGeneration({ distinctId }, callback) {
+        return withMenuDescriptionGeneration({ distinctId }, callback);
     }
 
     async generateMenuDescriptions(items = []) {
@@ -24,6 +40,10 @@ class BedrockAIService {
         const prompt = GENERATE_DESCRIPTION_PROMPT({ cleanedItems });
 
         try {
+            const [{ ConverseCommand }, client] = await Promise.all([
+                getBedrockRuntime(),
+                this.getClient(),
+            ]);
             const command = new ConverseCommand({
                 modelId: this.modelId,
                 system: [{ text: systemPrompt }],
@@ -39,7 +59,7 @@ class BedrockAIService {
                 },
             });
 
-            const response = await this.client.send(command);
+            const response = await client.send(command);
             const content = response?.output?.message?.content || [];
             const rawText = content.map((block) => block.text || "").join("\n");
             try {
@@ -47,7 +67,7 @@ class BedrockAIService {
                 if (Array.isArray(parsed?.items)) {
                     return parsed.items;
                 }
-            } catch (e) {
+            } catch {
                 console.warn("[BedrockAIService] Strict JSON parsing failed, attempting safe parse.");
             }
 

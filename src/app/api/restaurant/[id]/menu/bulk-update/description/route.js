@@ -9,7 +9,7 @@ export const PUT = withErrorHandler(async (req, { params }) => {
     throw new BadRequestError("Restaurant ID is required!");
   }
 
-  await getRestaurant({ restaurantId });
+  const { user } = await getRestaurant({ restaurantId });
   const data = await req.json();
   const { items } = data;
   if (!Array.isArray(items) || items.length === 0) {
@@ -27,16 +27,23 @@ export const PUT = withErrorHandler(async (req, { params }) => {
     chunks.push(itemsForAI.slice(i, i + chunkSize));
   }
 
-  let allGeneratedItems = [];
-  for (const chunk of chunks) {
-    const generatedChunk = await bedrockAIService.generateMenuDescriptions(chunk);
-    const mappedChunk = generatedChunk.map(g => ({
-      id: g.item_id,
-      description: g.description
-    }));
-    
-    allGeneratedItems.push(...mappedChunk);
-  }
+  const allGeneratedItems = await bedrockAIService.withMenuDescriptionGeneration(
+    { distinctId: user.id },
+    async () => {
+      const generatedItems = [];
+      for (const chunk of chunks) {
+        const generatedChunk = await bedrockAIService.generateMenuDescriptions(chunk);
+        const mappedChunk = generatedChunk.map(g => ({
+          id: g.item_id,
+          description: g.description
+        }));
+
+        generatedItems.push(...mappedChunk);
+      }
+
+      return generatedItems;
+    },
+  );
 
   if (allGeneratedItems.length === 0) {
     throw new BadRequestError("Failed to generate descriptions for the provided items.");

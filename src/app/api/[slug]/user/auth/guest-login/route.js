@@ -1,6 +1,6 @@
-import { withErrorHandler, successResponse, ValidationError } from "@/lib/api/response-handler";
 import { AuthService } from "@/services/backend/auth.service"; 
 import { validateRequiredFields } from "@/lib/api/helpers/validator";
+import { withErrorHandler, successResponse, ValidationError } from "@/lib/api/response-handler";
 
 const POST_GUEST_LOGIN_REQUIRED_FIELDS = ["name", "phone"];
 
