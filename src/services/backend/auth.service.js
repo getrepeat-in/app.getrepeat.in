@@ -40,7 +40,7 @@ export class AuthService {
         });
 
         const token = jwt.sign(
-            { userId: newUser._id, restaurantId: restaurant._id, phone: newUser.phone },
+            { userId: newUser._id, restaurantId: restaurant._id, phone: newUser.phone, isGuest: newUser.isGuest },
             JWT_SECRET,
             { expiresIn: JWT_EXPIRES_IN }
         );
@@ -72,12 +72,41 @@ export class AuthService {
         }
 
         const token = jwt.sign(
-            { userId: user._id, restaurantId: restaurant._id, phone: user.phone },
+            { userId: user._id, restaurantId: restaurant._id, phone: user.phone, isGuest: user.isGuest },
             JWT_SECRET,
             { expiresIn: JWT_EXPIRES_IN }
         );
 
         return { token };
+    }
+
+    static async guestLogin(slug, { name, phone }) {
+        await dbConnect();
+
+        const restaurant = await getRestaurantFromSlug(slug);
+        
+        if (!restaurant) {
+            throw new NotFoundError("Restaurant not found!");
+        }
+
+        let user = await User.findOne({ phone, restaurant: restaurant._id });
+        if (!user) {
+            user = await User.create({
+                name,
+                phone,
+                isGuest: true,
+                image: restaurant.logo || null,
+                restaurant: restaurant._id
+            });
+        }
+
+        const token = jwt.sign(
+            { userId: user._id, restaurantId: restaurant._id, phone: user.phone, isGuest: user.isGuest },
+            JWT_SECRET,
+            { expiresIn: JWT_EXPIRES_IN }
+        );
+
+        return { token, isGuest: user.isGuest };
     }
 
     static async me(slug, token) {
@@ -113,6 +142,7 @@ export class AuthService {
             phone: user.phone,
             restaurant: user.restaurant,
             status: user.status,
+            isGuest: user.isGuest,
             avatar: user.image || "https://api.dicebear.com/7.x/avataaars/svg?seed=" + user.phone,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt
@@ -154,6 +184,7 @@ export class AuthService {
                 timeCost: 2,
                 parallelism: 1
             });
+            user.isGuest = false; // Completing account
         }
 
         await user.save();
@@ -164,6 +195,7 @@ export class AuthService {
             phone: user.phone,
             restaurant: user.restaurant,
             status: user.status,
+            isGuest: user.isGuest,
             avatar: user.image || "https://api.dicebear.com/7.x/avataaars/svg?seed=" + user.phone,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt

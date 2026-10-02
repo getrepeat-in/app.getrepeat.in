@@ -29,6 +29,11 @@ const userSchema = new Schema(
       select: false,
     },
 
+    isGuest: {
+      type: Boolean,
+      default: false,
+    },
+
     image: {
       type: Types.ObjectId,
       ref: "ImageAsset",
