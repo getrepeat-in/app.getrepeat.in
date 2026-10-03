@@ -18,7 +18,7 @@ export const PATCH = withErrorHandler(async (req, { params }) => {
     const body = await req.json();
     const { platform, isActive } = body;
 
-    if (!["razorpay", "instagram"].includes(platform)) {
+    if (!["razorpay", "instagram", "metaPixel"].includes(platform)) {
         return successResponse(null, "Invalid platform", 400);
     }
 
@@ -26,3 +26,5 @@ export const PATCH = withErrorHandler(async (req, { params }) => {
 
     return successResponse(null, `${platform} integration updated successfully`);
 });
+
+

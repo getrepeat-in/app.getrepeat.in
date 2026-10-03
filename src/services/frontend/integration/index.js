@@ -84,6 +84,30 @@ class IntegrationService {
       throw error;
     }
   }
+
+  async connectMetaPixel(restaurantId, pixelId) {
+    if (!restaurantId || !pixelId) return null;
+    try {
+      const response = await api.post(`${API_ENDPOINTS.INTEGRATIONS.GET(restaurantId)}/meta-pixel/connect`, {
+        pixelId,
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Failed to connect Meta Pixel:", error);
+      throw error;
+    }
+  }
+
+  async disconnectMetaPixel(restaurantId) {
+    if (!restaurantId) return null;
+    try {
+      const response = await api.delete(`${API_ENDPOINTS.INTEGRATIONS.GET(restaurantId)}/meta-pixel/disconnect`);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to disconnect Meta Pixel:", error);
+      throw error;
+    }
+  }
 }
 
 export const integrationService = new IntegrationService();

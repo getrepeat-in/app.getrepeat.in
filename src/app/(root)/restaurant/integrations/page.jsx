@@ -3,6 +3,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import Loader from "@/components/global/loader";
 import { Puzzle, Plus, Loader2, Trash2 } from "lucide-react";
 import { useRestaurant } from "@/store/hooks/useRestaurant";
@@ -16,6 +17,11 @@ export default function IntegrationsPage() {
   const [connectingRazorpay, setConnectingRazorpay] = useState(false);
   const [connectingInstagram, setConnectingInstagram] = useState(false);
   const [disconnectingRazorpay, setDisconnectingRazorpay] = useState(false);
+  
+  const [connectingMetaPixel, setConnectingMetaPixel] = useState(false);
+  const [disconnectingMetaPixel, setDisconnectingMetaPixel] = useState(false);
+  const [pixelIdInput, setPixelIdInput] = useState("");
+  const [showMetaPixelForm, setShowMetaPixelForm] = useState(false);
 
   const fetchIntegrations = async () => {
     if (!restaurantId) return;
@@ -90,6 +96,33 @@ export default function IntegrationsPage() {
       console.error("Failed to connect Instagram:", error);
     } finally {
       setConnectingInstagram(false);
+    }
+  };
+
+  const handleConnectMetaPixel = async () => {
+    if (!pixelIdInput.trim()) return;
+    try {
+      setConnectingMetaPixel(true);
+      await integrationService.connectMetaPixel(restaurantId, pixelIdInput.trim());
+      await fetchIntegrations();
+      setPixelIdInput("");
+      setShowMetaPixelForm(false);
+    } catch (error) {
+      console.error("Failed to connect Meta Pixel:", error);
+    } finally {
+      setConnectingMetaPixel(false);
+    }
+  };
+
+  const handleDisconnectMetaPixel = async () => {
+    try {
+      setDisconnectingMetaPixel(true);
+      await integrationService.disconnectMetaPixel(restaurantId);
+      await fetchIntegrations();
+    } catch (error) {
+      console.error("Failed to disconnect Meta Pixel:", error);
+    } finally {
+      setDisconnectingMetaPixel(false);
     }
   };
 
@@ -199,6 +232,88 @@ export default function IntegrationsPage() {
                 {connectingInstagram ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Plus size={14} className="mr-1.5" strokeWidth={2.5} />}
                 Connect Instagram
               </Button>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <div className="relative h-6 w-6">
+                <Image src="/assets/logo/meta.png" alt="Meta logo" fill className="object-contain" sizes="24px" />
+              </div>
+              Meta Pixel
+            </CardTitle>
+            <CardDescription>
+              {integrations?.metaPixel?.isLinked
+                ? `Connected with Pixel ID: ${integrations.metaPixel.pixelId}`
+                : "You have not connected Meta Pixel yet."}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex justify-between items-center">
+            {integrations?.metaPixel?.isLinked ? (
+              <>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">
+                    {integrations.metaPixel.isActive ? "Active" : "Disabled"}
+                  </span>
+                  <Switch
+                    checked={integrations.metaPixel.isActive}
+                    onCheckedChange={() =>
+                      toggleIntegration("metaPixel", integrations.metaPixel.isActive)
+                    }
+                  />
+                </div>
+                <Button 
+                  type="button"
+                  onClick={handleDisconnectMetaPixel} 
+                  disabled={disconnectingMetaPixel}
+                  variant="destructive"
+                  size="sm"
+                  className="h-8 rounded-md shadow-sm font-semibold text-xs"
+                >
+                  {disconnectingMetaPixel ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Trash2 size={14} className="mr-1.5" strokeWidth={2.5} />}
+                  Disconnect
+                </Button>
+              </>
+            ) : !showMetaPixelForm ? (
+              <Button 
+                type="button"
+                onClick={() => setShowMetaPixelForm(true)} 
+                size="sm"
+                className="h-8 rounded-md bg-blue-600 hover:bg-blue-700 text-white shadow-sm font-semibold text-xs"
+              >
+                <Plus size={14} className="mr-1.5" strokeWidth={2.5} />
+                Connect Meta Pixel
+              </Button>
+            ) : (
+              <div className="flex w-full items-center gap-2">
+                <Input
+                  value={pixelIdInput}
+                  onChange={(e) => setPixelIdInput(e.target.value)}
+                  placeholder="Enter Pixel ID"
+                  className="h-8 text-xs flex-1"
+                  autoFocus
+                />
+                <Button 
+                  type="button"
+                  onClick={handleConnectMetaPixel} 
+                  disabled={connectingMetaPixel || !pixelIdInput.trim()}
+                  size="sm"
+                  className="h-8 rounded-md bg-blue-600 hover:bg-blue-700 text-white shadow-sm font-semibold text-xs shrink-0"
+                >
+                  {connectingMetaPixel ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus size={14} strokeWidth={2.5} />}
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => setShowMetaPixelForm(false)}
+                  variant="outline"
+                  size="sm"
+                  className="h-8 rounded-md shadow-sm font-semibold text-xs shrink-0"
+                >
+                  Cancel
+                </Button>
+              </div>
             )}
           </CardContent>
         </Card>

@@ -24,6 +24,11 @@ const IntegrationSchema = new Schema(
       connectedAt: { type: Date, default: null },
       isActive: { type: Boolean, default: true },
     },
+    metaPixel: {
+      pixelId: { type: String, default: null },
+      connectedAt: { type: Date, default: null },
+      isActive: { type: Boolean, default: true },
+    },
   },
   {
     timestamps: true, 

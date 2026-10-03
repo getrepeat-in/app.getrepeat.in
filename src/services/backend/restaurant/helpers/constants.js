@@ -12,6 +12,7 @@ export const ALLOWED_UPDATE_FIELDS = new Set([
   "status",
   "openingHours",
   "instagram",
+  "integrations",
 ]);
 
 export const DEFAULT_ALLOWED_OUTLETS = 1;

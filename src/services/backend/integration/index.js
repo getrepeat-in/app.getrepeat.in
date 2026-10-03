@@ -31,6 +31,12 @@ class BackendIntegrationService {
           accessToken: integration?.instagram?.accessToken || null,
         }),
       },
+      metaPixel: {
+        isLinked: !!integration?.metaPixel?.pixelId,
+        pixelId: integration?.metaPixel?.pixelId || null,
+        connectedAt: integration?.metaPixel?.connectedAt || null,
+        isActive: integration?.metaPixel?.isActive ?? true,
+      },
     };
   }
 
@@ -46,6 +52,40 @@ class BackendIntegrationService {
     }
 
     integration[platform].isActive = Boolean(isActive);
+    await integration.save();
+    return integration;
+  }
+  async connectMetaPixel(restaurantId, pixelId) {
+    const restaurant = await Restaurant.findById(restaurantId);
+    if (!restaurant) {
+      throw new NotFoundError("Restaurant not found");
+    }
+
+    let integration = await Integration.findOne({ restaurantId });
+    if (!integration) {
+      integration = new Integration({ restaurantId });
+    }
+
+    integration.metaPixel = {
+      pixelId,
+      connectedAt: new Date(),
+      isActive: true,
+    };
+    await integration.save();
+    return integration;
+  }
+
+  async disconnectMetaPixel(restaurantId) {
+    const integration = await Integration.findOne({ restaurantId });
+    if (!integration) {
+      throw new NotFoundError("Integrations not found");
+    }
+    
+    integration.metaPixel = {
+      pixelId: null,
+      connectedAt: null,
+      isActive: false,
+    };
     await integration.save();
     return integration;
   }
