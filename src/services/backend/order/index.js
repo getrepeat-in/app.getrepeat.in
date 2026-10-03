@@ -1,15 +1,16 @@
 import crypto from "crypto";
 import mongoose from "mongoose";
 import dbConnect from "@/lib/db";
+import Table from "@/models/Table";
 import { User } from "@/models/User";
 import Restaurant from "@/models/Restaurant";
+import { triggerPusherEvent } from "@/lib/pusher/server";
 import { ImageService } from "@/services/backend/images";
 import Order, { OrderStatus, PaymentStatus } from "@/models/Order";
-import { invalidateOrderCache } from "@/lib/api/helpers/cacheKeys";
 import { getOrSetCache } from "@/services/backend/redis/cache.service";
 import { BadRequestError, NotFoundError } from "@/lib/api/response-handler";
 import { resolveTable, validateAndCalculateItems, resolveCustomer } from "./helpers";
-import { triggerPusherEvent } from "@/lib/pusher/server";
+import { invalidateOrderCache, invalidateTableCache } from "@/lib/api/helpers/cacheKeys"; 
 
 export const emitOrderRealtimeEvent = async (event, order) => {
   if (!order) return;
@@ -37,6 +38,19 @@ export const emitOrderRealtimeEvent = async (event, order) => {
     }
   } catch (err) {
     console.error(`[Realtime] Failed to emit '${event}':`, err?.message || err);
+  }
+};
+
+const checkAndFreeTable = async (tableId, restaurantId, currentOrderId) => {
+  if (!tableId) return;
+  const activeOrders = await Order.countDocuments({
+    table: tableId,
+    orderStatus: { $nin: [OrderStatus.COMPLETED, OrderStatus.CANCELLED, OrderStatus.REJECTED] },
+    _id: { $ne: currentOrderId }
+  });
+  if (activeOrders === 0) {
+    await Table.findByIdAndUpdate(tableId, { status: "available" });
+    await invalidateTableCache(restaurantId);
   }
 };
 
@@ -167,6 +181,11 @@ export const OrderService = {
 
     await invalidateOrderCache(restaurantId);
 
+    if (orderType === "DINE_IN" && resolvedTableId) {
+      await Table.findByIdAndUpdate(resolvedTableId, { status: "occupied" });
+      await invalidateTableCache(restaurantId);
+    }
+
     const populatedOrder = await Order.findById(newOrder._id)
       .populate({
         path: "items.menuItem",
@@ -182,9 +201,6 @@ export const OrderService = {
     return formattedOrder;
   },
 
-  /**
-   * Get single order by ID
-   */
   getOrderById: async (orderId, { restaurantId = null, customerId = null } = {}) => {
     await dbConnect();
 
@@ -211,9 +227,6 @@ export const OrderService = {
     return formatOrderResponse(order);
   },
 
-  /**
-   * Get single order by Order Number
-   */
   getOrderByNumber: async (orderNumber, { restaurantId = null } = {}) => {
     await dbConnect();
 
@@ -480,7 +493,6 @@ export const OrderService = {
 
     const { orderStatus, orderType } = order;
 
-    // Unified per-type transition map — single orderStatus field, no fulfillmentStatus
     const TRANSITION_MAP = {
       DINE_IN:   [OrderStatus.PLACED, OrderStatus.ACCEPTED, OrderStatus.PREPARING, OrderStatus.READY, OrderStatus.SERVED, OrderStatus.COMPLETED],
       TAKEAWAY:  [OrderStatus.PLACED, OrderStatus.ACCEPTED, OrderStatus.PREPARING, OrderStatus.READY, OrderStatus.PICKED_UP, OrderStatus.COMPLETED],
@@ -513,17 +525,16 @@ export const OrderService = {
     await order.save();
     await invalidateOrderCache(order.restaurant);
 
+    if (order.orderStatus === OrderStatus.COMPLETED && order.orderType === "DINE_IN" && order.table) {
+      await checkAndFreeTable(order.table, order.restaurant, order._id);
+    }
+
     const updatedOrder = await OrderService.getOrderById(order._id);
     emitOrderRealtimeEvent("order:updated", updatedOrder);
 
     return updatedOrder;
   },
 
-
-  /**
-   * Central dispatcher for all order update actions.
-   * Routes to the appropriate service method based on the action field.
-   */
   processOrderUpdate: async (orderId, { action, reason, paymentStatus, paymentMethod, restaurantId, updatedByStaff }) => {
     const ACTION_HANDLERS = {
       advance: () => OrderService.advanceOrderState(orderId, { updatedByStaff, restaurantId }),
@@ -615,6 +626,10 @@ export const OrderService = {
     await order.save();
     await invalidateOrderCache(order.restaurant);
 
+    if (order.orderType === "DINE_IN" && order.table) {
+      await checkAndFreeTable(order.table, order.restaurant, order._id);
+    }
+
     const updatedOrder = await OrderService.getOrderById(order._id);
     emitOrderRealtimeEvent("order:updated", updatedOrder);
 
@@ -647,6 +662,10 @@ export const OrderService = {
 
     await order.save();
     await invalidateOrderCache(order.restaurant);
+
+    if (order.orderType === "DINE_IN" && order.table) {
+      await checkAndFreeTable(order.table, order.restaurant, order._id);
+    }
 
     const updatedOrder = await OrderService.getOrderById(order._id);
     emitOrderRealtimeEvent("order:updated", updatedOrder);
