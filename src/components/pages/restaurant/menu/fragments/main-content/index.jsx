@@ -1,4 +1,5 @@
 import React from "react";
+import Loader from "@/components/global/loader";
 import { Button } from "@/components/ui/button";
 import MenuItemList from "../items/menu-item-list";
 import EmptyState from "@/components/global/empty-state";
@@ -30,7 +31,7 @@ export function MainContent({
         if (!mounted) {
             return (
                 <div className="flex-1 flex items-center justify-center p-6 bg-white dark:bg-zinc-950">
-                     <p className="text-sm text-muted-foreground animate-pulse">Loading menu...</p>
+                     <Loader />
                 </div>
             );
         }
@@ -47,7 +48,7 @@ export function MainContent({
 
             if (!isCategoriesLoading && (!categories || categories.length === 0)) {
                 return (
-                    <div className="flex-1 flex items-center justify-center w-full p-4 h-full dark:bg-zinc-950">
+                    <div className="flex-1 flex items-center justify-center w-full p-1 h-full dark:bg-zinc-950">
                         <EmptyState
                             icon={UtensilsCrossed}
                             title="No Categories Found"
@@ -67,7 +68,7 @@ export function MainContent({
             }
 
             return (
-                <div className="flex-1 flex items-center justify-center p-6 bg-white dark:bg-zinc-950">
+                <div className="flex-1 flex items-center justify-center p-2 bg-white dark:bg-zinc-950">
                     <EmptyState
                         icon={FolderTree}
                         className={"h-full w-full"}

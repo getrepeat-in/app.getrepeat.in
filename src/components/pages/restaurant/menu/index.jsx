@@ -17,8 +17,9 @@ const Menu = () => {
     const [showMobileSidebar, setShowMobileSidebar] = useState(true);
 
     return (
-        <div className="flex flex-col bg-white dark:bg-zinc-900 m-2 sm:m-4 p-3 sm:p-4 space-y-3 rounded-md border border-border/40 shadow-xs min-w-0 h-[calc(100vh-60px)]">
+        <div className="flex flex-col bg-white dark:bg-zinc-900 sm:m-4 p-0 sm:p-4 space-y-0 sm:space-y-3 sm:rounded-md sm:border border-border/40 sm:shadow-xs min-w-0 h-[calc(100vh-68px)] sm:h-[calc(100vh-60px)]">
             <MenuHeader 
+                className="px-3 pt-3 pb-3 sm:p-0"
                 activeView={activeView}
                 activeBulkMode={activeBulkMode}
                 onBackToMenu={() => {
@@ -31,8 +32,8 @@ const Menu = () => {
                     setShowMobileSidebar(true);
                 }}
             />
-            <div className="flex flex-row flex-1 bg-white overflow-hidden border border-border/60 rounded-md min-h-0 bg-background">
-                <div className={cn("w-full sm:w-auto h-full sm:h-auto sm:block shrink-0 z-20 border-r border-border/60", showMobileSidebar ? "block" : "hidden")}>
+            <div className="flex flex-row flex-1 bg-white overflow-hidden sm:border border-border/60 sm:rounded-md min-h-0 bg-background border-t border-b">
+                <div className={cn("w-full sm:w-auto h-full sm:h-auto sm:block shrink-0 z-20 sm:border-r border-border/60", showMobileSidebar ? "block" : "hidden")}>
                     <CategorySidebar 
                         activeCategory={activeCategory} 
                         setActiveCategory={setActiveCategory}
@@ -51,7 +52,7 @@ const Menu = () => {
                     />
                 </div>
                 
-                <div className={cn("bg-background flex-1 flex flex-col p-3 min-w-0 min-h-0 overflow-hidden", !showMobileSidebar ? "flex" : "hidden sm:flex")}>
+                <div className={cn("bg-background flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden", !showMobileSidebar ? "flex" : "hidden sm:flex")}>
                     <div className="bg-white flex-1 flex flex-col min-h-0 overflow-hidden rounded-md">
                         <MainContent 
                             activeView={activeView}

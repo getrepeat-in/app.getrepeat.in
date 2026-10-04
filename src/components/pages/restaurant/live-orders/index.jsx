@@ -1,7 +1,7 @@
 "use client";
 import { OrderCard } from "./fragments";
-import { RefreshCw } from "lucide-react";
 import { useState, useMemo } from "react";
+import { RefreshCw, Radio } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import DataTable from "@/components/global/table";
@@ -9,8 +9,8 @@ import { OrderDetailsDrawer } from "../orders/fragments";
 import { OrderService } from "@/services/frontend/order";
 import useNotification from "@/store/hooks/useNotification";
 import { useRestaurant } from "@/store/hooks/useRestaurant";
-import { LIVE_ORDER_TABS } from "./fragments/helpers/constants";
 import { useRealtimeOrders } from "@/hooks/useRealtimeOrders";
+import { LIVE_ORDER_TABS } from "./fragments/helpers/constants";
 
 export default function LiveOrders() {
     const { restaurantId } = useRestaurant();
@@ -93,7 +93,14 @@ export default function LiveOrders() {
     return (
         <div className="flex flex-col bg-white dark:bg-zinc-900 m-2 sm:m-4 p-3 sm:p-4 md:p-5 space-y-4 sm:space-y-6 rounded-md border border-border/40 shadow-xs min-w-0">
             <DataTable
-                title="Orders Management"
+                title={
+                    <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 border border-primary/20 shadow-xs">
+                            <Radio className="w-4 h-4" />
+                        </div>
+                        <span>Orders Management</span>
+                    </div>
+                }
                 subtitle="Track and manage live customer orders in real-time"
                 columns={[]} 
                 rows={data?.data?.orders || []}

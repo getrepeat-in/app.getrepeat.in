@@ -244,7 +244,7 @@ const GeneralTab = ({ generalData }) => {
         <Button 
           type="submit" 
           disabled={isPending || !formik.dirty} 
-          className="h-9 px-5 rounded-md font-semibold text-xs sm:text-sm shadow-2xs transition-all active:scale-[0.98] bg-primary hover:bg-primary/90 text-white gap-2"
+          className="w-full sm:w-auto h-11 sm:h-9 px-5 rounded-md font-semibold text-sm shadow-2xs transition-all active:scale-[0.98] bg-primary hover:bg-primary/90 text-white gap-2"
         >
           {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           {isPending ? "Saving changes..." : "Save General Info"}

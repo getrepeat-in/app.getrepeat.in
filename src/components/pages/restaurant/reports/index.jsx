@@ -116,18 +116,17 @@ export default function ReportsManagement() {
 
   return (
     <div className="flex flex-col m-2 sm:m-4 p-3 sm:p-5 md:p-6 space-y-6 bg-white dark:bg-zinc-900 rounded-xl border border-border/40 shadow-xs min-w-0 text-foreground">
-      {/* Page Header & Actions */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-border/50 pb-5">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 border border-primary/20 shadow-xs">
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 border border-primary/20 shadow-xs">
               <BarChart3 className="w-5 h-5" />
             </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-                Sales & Performance Reports
+                Sales & Analytics
               </h1>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p className="text-xs hidden md:block text-muted-foreground mt-0.5">
                 Real-time metrics, payment mode settlement, and revenue velocity for{" "}
                 <span className="font-medium text-foreground">{restaurantName}</span>
               </p>

@@ -1,5 +1,6 @@
 "use client";
 import { AppSidebar } from "./index";
+import { MobileNav } from "./mobile-nav";
 import { ExternalLink } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { Breadcrumbs } from "../global/breadcrumb";
@@ -32,7 +33,7 @@ export function SidebarLayout({ children }) {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset className="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50/30 dark:bg-zinc-950">
+      <SidebarInset className="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50/30 dark:bg-zinc-950 relative">
         <header className="flex h-16 shrink-0 items-center justify-between border-b border-border/40 px-4 sm:px-6 bg-white dark:bg-zinc-900 transition-[width,height] ease-linear min-w-0">
           <div className="flex items-center gap-2 min-w-0">
             <SidebarTrigger className="-ml-1 sm:-ml-2 shrink-0" />
@@ -55,9 +56,10 @@ export function SidebarLayout({ children }) {
           )}
         </header>
         
-        <div className="flex-1 overflow-auto min-w-0">
+        <div className="flex-1 overflow-auto min-w-0 pb-[68px] sm:pb-0">
           {children}
         </div>
+        <MobileNav />
       </SidebarInset>
     </SidebarProvider>
   );

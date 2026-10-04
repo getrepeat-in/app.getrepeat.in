@@ -1,5 +1,4 @@
 import { useFormik } from "formik";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -47,14 +46,14 @@ const TimingTab = ({ timingsData }) => {
     },
   });
 
-  const handleApplyToAll = () => {
-    const monday = formik.values.days?.[0];
-    if (!monday) return;
+  const handleApplyToAll = (sourceIndex) => {
+    const sourceDay = formik.values.days?.[sourceIndex];
+    if (!sourceDay) return;
     const updated = formik.values.days.map((d) => ({
       ...d,
-      isOpen: monday.isOpen,
-      openTime: monday.openTime,
-      closeTime: monday.closeTime,
+      isOpen: sourceDay.isOpen,
+      openTime: sourceDay.openTime,
+      closeTime: sourceDay.closeTime,
     }));
     formik.setFieldValue("days", updated);
   };
@@ -62,17 +61,16 @@ const TimingTab = ({ timingsData }) => {
   return (
     <form onSubmit={formik.handleSubmit} className="flex flex-col">     
       <div className="space-y-6"> 
-        {/* Master Open / Offline Toggle */}
-        <div className={`relative overflow-hidden flex flex-row items-center justify-between rounded-xl border p-5 sm:p-6 shadow-xs transition-all duration-300 ${formik.values.currentlyOpen ? 'border-emerald-200 bg-gradient-to-r from-emerald-50/80 via-emerald-50/40 to-transparent dark:from-emerald-950/30 dark:to-emerald-900/10 dark:border-emerald-900/50' : 'border-border/60 bg-muted/20'}`}>
-          <div className="flex items-center gap-4 z-10">
-            <div className={`p-3.5 rounded-xl shadow-xs transition-colors duration-300 ${formik.values.currentlyOpen ? 'bg-emerald-500 text-white shadow-emerald-500/20' : 'bg-muted text-muted-foreground'}`}>
-              <Power className={`h-5 w-5 ${formik.values.currentlyOpen ? 'animate-pulse' : ''}`} />
+        <div className={`relative overflow-hidden flex flex-row items-start justify-between gap-3 sm:gap-4 rounded-xl border p-4 sm:p-6 shadow-xs transition-all duration-300 ${formik.values.currentlyOpen ? 'border-emerald-200 bg-gradient-to-r from-emerald-50/80 via-emerald-50/40 to-transparent dark:from-emerald-950/30 dark:to-emerald-900/10 dark:border-emerald-900/50' : 'border-border/60 bg-muted/20'}`}>
+          <div className="flex items-start gap-3 sm:gap-4 z-10 flex-1 min-w-0">
+            <div className={`p-2.5 sm:p-3.5 rounded-xl shrink-0 shadow-xs transition-colors duration-300 ${formik.values.currentlyOpen ? 'bg-emerald-500 text-white shadow-emerald-500/20' : 'bg-muted text-muted-foreground'}`}>
+              <Power className={`h-4 w-4 sm:h-5 sm:w-5 ${formik.values.currentlyOpen ? 'animate-pulse' : ''}`} />
             </div>
-            <div className="space-y-0.5">
-              <Label className="text-base sm:text-lg font-bold tracking-tight text-foreground">
+            <div className="flex flex-col min-w-0">
+              <Label className="text-base sm:text-lg font-bold tracking-tight text-foreground truncate pr-2">
                 Currently {formik.values.currentlyOpen ? 'Accepting Orders' : 'Offline'}
               </Label>
-              <p className="text-xs sm:text-sm text-muted-foreground">
+              <p className="text-[11px] sm:text-sm text-muted-foreground truncate pr-2 mt-0.5">
                 {formik.values.currentlyOpen 
                   ? 'Your restaurant is live and accepting incoming orders.' 
                   : 'Toggle to temporarily pause new customer orders.'}
@@ -82,11 +80,10 @@ const TimingTab = ({ timingsData }) => {
           <Switch 
             checked={formik.values.currentlyOpen} 
             onCheckedChange={(val) => formik.setFieldValue('currentlyOpen', val)} 
-            className="scale-110 z-10 data-[state=checked]:bg-emerald-500" 
+            className="shrink-0 z-10 mt-1 sm:mt-1.5 data-[state=checked]:bg-emerald-500" 
           />
         </div>
 
-        {/* Weekly Schedule Section */}
         <div className="space-y-4 pt-1">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border/50">
             <div className="flex items-center gap-2.5">
@@ -95,22 +92,9 @@ const TimingTab = ({ timingsData }) => {
               </div>
               <div>
                 <h4 className="text-base font-bold tracking-tight text-foreground">Weekly Schedule</h4>
-                <p className="text-xs text-muted-foreground">Configure open hours and closed days for each day of the week</p>
+                <p className="text-xs hidden md:block text-muted-foreground">Configure open hours and closed days for each day of the week</p>
               </div>
             </div>
-
-            {formik.values.days?.[0]?.isOpen && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleApplyToAll}
-                className="text-xs font-semibold h-8 rounded-lg cursor-pointer gap-1.5 self-start sm:self-auto border-border hover:bg-muted text-muted-foreground hover:text-foreground shadow-2xs"
-              >
-                <Copy className="w-3.5 h-3.5" />
-                <span>Apply Monday to all</span>
-              </Button>
-            )}
           </div>
           
           <div className="space-y-2.5">
@@ -123,7 +107,6 @@ const TimingTab = ({ timingsData }) => {
                     : 'border-border/40 bg-muted/20 opacity-75'
                 }`}
               >
-                {/* Day Name & Toggle */}
                 <div className="flex items-center gap-3 min-w-[150px]">
                   <Switch 
                     checked={schedule?.isOpen} 
@@ -144,40 +127,50 @@ const TimingTab = ({ timingsData }) => {
                   </div>
                 </div>
 
-                {/* Timing Selectors */}
                 {schedule?.isOpen ? (
-                  <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-                    {/* Opens Input */}
-                    <div className="flex items-center gap-2 bg-muted/40 hover:bg-muted/70 transition-colors border border-border/70 rounded-lg px-3 py-1.5 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary">
-                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                        Opens
-                      </span>
-                      <input 
-                        type="time" 
-                        name={`days[${idx}].openTime`}
-                        value={schedule?.openTime || ""}
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
-                        className="w-28 sm:w-32 text-xs sm:text-sm font-semibold bg-transparent border-0 outline-none text-foreground cursor-pointer" 
-                      />
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3 w-full md:w-auto mt-1 md:mt-0">
+                    <div className="flex flex-row items-center gap-2.5 w-full sm:w-auto">
+                      <div className="flex flex-1 flex-col sm:flex-row items-start sm:items-center justify-center sm:justify-start gap-1 sm:gap-3 bg-muted/40 hover:bg-muted/70 transition-colors border border-border/70 rounded-xl sm:rounded-lg px-3 py-2 sm:py-1.5 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary">
+                        <span className="text-[9px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                          Opens
+                        </span>
+                        <input 
+                          type="time" 
+                          name={`days[${idx}].openTime`}
+                          value={schedule?.openTime || ""}
+                          onChange={formik.handleChange}
+                          onBlur={formik.handleBlur}
+                          className="w-full sm:w-32 text-xs sm:text-sm font-semibold bg-transparent border-0 outline-none text-foreground cursor-pointer" 
+                        />
+                      </div>
+                      
+                      <span className="hidden sm:inline text-muted-foreground font-bold text-xs shrink-0">–</span>
+                      <div className="flex flex-1 flex-col sm:flex-row items-start sm:items-center justify-center sm:justify-start gap-1 sm:gap-3 bg-muted/40 hover:bg-muted/70 transition-colors border border-border/70 rounded-xl sm:rounded-lg px-3 py-2 sm:py-1.5 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary">
+                        <span className="text-[9px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                          Closes
+                        </span>
+                        <input 
+                          type="time" 
+                          name={`days[${idx}].closeTime`}
+                          value={schedule?.closeTime || ""}
+                          onChange={formik.handleChange}
+                          onBlur={formik.handleBlur}
+                          className="w-full sm:w-32 text-xs sm:text-sm font-semibold bg-transparent border-0 outline-none text-foreground cursor-pointer" 
+                        />
+                      </div>
                     </div>
-                    
-                    <span className="text-muted-foreground font-bold text-xs">–</span>
-                    
-                    {/* Closes Input */}
-                    <div className="flex items-center gap-2 bg-muted/40 hover:bg-muted/70 transition-colors border border-border/70 rounded-lg px-3 py-1.5 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary">
-                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                        Closes
-                      </span>
-                      <input 
-                        type="time" 
-                        name={`days[${idx}].closeTime`}
-                        value={schedule?.closeTime || ""}
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
-                        className="w-28 sm:w-32 text-xs sm:text-sm font-semibold bg-transparent border-0 outline-none text-foreground cursor-pointer" 
-                      />
-                    </div>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleApplyToAll(idx)}
+                      className="h-10 sm:h-9 px-3 text-[11px] sm:text-xs font-semibold shrink-0 gap-1.5 shadow-2xs bg-white dark:bg-zinc-900 border-border hover:bg-muted text-muted-foreground hover:text-foreground w-full sm:w-auto mt-1 sm:mt-0"
+                      title="Apply these timings to all days"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                      <span className="sm:hidden xl:inline">Apply to all</span>
+                    </Button>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2 text-xs text-muted-foreground py-1">

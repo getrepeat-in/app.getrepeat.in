@@ -49,7 +49,7 @@ export default function MenuItemList({ activeCategoryId, activeSubCategoryId }) 
 
     if (combinedItems.length === 0) {
         return (
-            <div className="flex-1 flex bg-white m-3 items-center h-[100%] justify-center p-2">
+            <div className="flex-1 flex bg-white m-2 items-center h-[100%] justify-center p-2">
                 <EmptyState
                     className={"w-full h-full"}
                     icon={UtensilsCrossed}
@@ -67,7 +67,7 @@ export default function MenuItemList({ activeCategoryId, activeSubCategoryId }) 
     }
 
     return (
-        <div className="flex-1 bg-white m-3 flex flex-col min-w-0 overflow-y-auto p-3 sm:p-4 space-y-3 pb-16">
+        <div className="flex-1 bg-white flex flex-col min-w-0 overflow-y-auto p-3 sm:p-4 space-y-3 pb-16">
             {combinedItems.map((item) => (
                 <MenuItemRow
                     key={item.id}
