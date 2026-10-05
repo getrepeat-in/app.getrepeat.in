@@ -58,7 +58,7 @@ export const QR_ERROR_CORRECTION = "H";
 export const QR_COLORS = { dark: "#1a1a1a", light: "#ffffff" };
 
 export const buildQRUrl = (qrToken, slug) => {
-    const path = `/menu?token=${qrToken}`;
+    const path = `/?token=${qrToken}`;
     if (slug) {
         return `https://${slug}.getrepeat.in${path}`;
     }
