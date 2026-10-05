@@ -1,63 +1,17 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { format } from "date-fns";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import { useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { format } from "date-fns";
-import {
-  Bell,
-  Volume2,
-  VolumeX,
-  X,
-  CheckCircle2,
-  XCircle,
-  MapPin,
-  Phone,
-  User,
-  Clock,
-  AlertTriangle,
-  Receipt,
-  FileText,
-  ChevronLeft,
-  ChevronRight,
-  CheckCheck,
-  Utensils,
-  Mail,
-  Layers,
-  Tag,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { OrderService } from "@/services/frontend/order";
 import useNotification from "@/store/hooks/useNotification";
 import { useRestaurant } from "@/store/hooks/useRestaurant";
 import { startOrderRinger, stopOrderRinger } from "@/lib/sound/orderChime";
-import {
-  getPusherClient,
-  getRestaurantChannelName,
-  PUSHER_EVENTS,
-} from "@/lib/pusher/client";
+import { getPusherClient, getRestaurantChannelName, PUSHER_EVENTS } from "@/lib/pusher/client";
+import { Bell, Volume2, VolumeX, CheckCircle2, XCircle, MapPin, Phone, User, Clock, AlertTriangle, Receipt, FileText, ChevronLeft, ChevronRight, CheckCheck, Utensils } from "lucide-react";
+import { DietaryBadge } from "@/components/global/dietary-badge";
 
-const getDietaryBadge = (dietaryType) => {
-  const type = dietaryType?.toLowerCase();
-  if (type === "non-veg") {
-    return (
-      <div className="w-3.5 h-3.5 rounded-xs border border-red-600 flex items-center justify-center shrink-0 mt-0.5" title="Non-Veg">
-        <div className="w-1.5 h-1.5 rounded-full bg-red-600" />
-      </div>
-    );
-  }
-  if (type === "egg") {
-    return (
-      <div className="w-3.5 h-3.5 rounded-xs border border-amber-500 flex items-center justify-center shrink-0 mt-0.5" title="Egg">
-        <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-      </div>
-    );
-  }
-  return (
-    <div className="w-3.5 h-3.5 rounded-xs border border-emerald-600 flex items-center justify-center shrink-0 mt-0.5" title="Veg">
-      <div className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
-    </div>
-  );
-};
 
 export function NewOrderAlertModal() {
   const { restaurantId } = useRestaurant();
@@ -73,8 +27,29 @@ export function NewOrderAlertModal() {
 
   const currentOrder = orderQueue[currentIndex] || orderQueue[0] || null;
 
-  // 1. Independent Continuous Ringer Effect:
-  // Keeps ringing as long as there are pending orders in queue and not muted.
+  useEffect(() => {
+    if (!restaurantId) return;
+
+    const fetchPendingOrders = async () => {
+      try {
+        const response = await OrderService.getAll(restaurantId, { status: "PLACED" });
+        const orders = response?.data?.orders || response?.data || response?.orders || response || [];
+        const pendingOrders = Array.isArray(orders) ? orders.filter(o => o.orderStatus === "PLACED") : [];
+        
+        if (pendingOrders.length > 0) {
+          setOrderQueue(prev => {
+            const newOrders = pendingOrders.filter(po => !prev.some(o => o._id === po._id));
+            return [...prev, ...newOrders];
+          });
+        }
+      } catch (err) {
+        console.error("Failed to fetch initial pending orders:", err);
+      }
+    };
+
+    fetchPendingOrders();
+  }, [restaurantId]);
+
   useEffect(() => {
     if (orderQueue.length > 0 && !isMuted) {
       startOrderRinger();
@@ -87,7 +62,6 @@ export function NewOrderAlertModal() {
     };
   }, [orderQueue.length, isMuted]);
 
-  // Request browser notification permission once
   useEffect(() => {
     if (typeof window !== "undefined" && "Notification" in window) {
       if (Notification.permission === "default") {
@@ -96,7 +70,6 @@ export function NewOrderAlertModal() {
     }
   }, []);
 
-  // Flashing Browser Tab Title when new orders are waiting
   useEffect(() => {
     if (orderQueue.length === 0 || typeof document === "undefined") return;
 
@@ -115,8 +88,6 @@ export function NewOrderAlertModal() {
     };
   }, [orderQueue.length]);
 
-  // 2. Pusher Real-Time Listener Effect:
-  // Subscribes once to the restaurant channel and never cancels the ringer on queue changes.
   useEffect(() => {
     if (!restaurantId) return;
 
@@ -134,14 +105,12 @@ export function NewOrderAlertModal() {
       if (!order || !order._id) return;
 
       const orderNum = order?.orderNumber || "New Order";
-      const amount = order?.totalAmount ? ` ₹${order.totalAmount}` : "";
 
-      // Global toast banner
+      const amount = order
       notification.success(`🔔 Order #${orderNum} received!${amount}`, {
         duration: 5000,
       });
 
-      // Browser push notification if tab is in background or permitted
       if (
         typeof window !== "undefined" &&
         "Notification" in window &&
@@ -153,16 +122,13 @@ export function NewOrderAlertModal() {
             icon: "/favicon.ico",
           });
         } catch (e) {
-          // ignore notification errors
         }
       }
 
-      // Invalidate dashboard caches immediately
       queryClient.invalidateQueries({ queryKey: ["live-orders", restaurantId] });
       queryClient.invalidateQueries({ queryKey: ["orders", restaurantId] });
 
       setOrderQueue((prev) => {
-        // Prevent duplicate entries of the same order
         if (prev.some((o) => o._id === order._id)) return prev;
         return [...prev, order];
       });
@@ -226,8 +192,8 @@ export function NewOrderAlertModal() {
         { duration: 4000 }
       );
 
-      await queryClient.invalidateQueries({ queryKey: ["live-orders", restaurantId] });
-      await queryClient.invalidateQueries({ queryKey: ["orders", restaurantId] });
+      queryClient.invalidateQueries({ queryKey: ["live-orders", restaurantId] });
+      queryClient.invalidateQueries({ queryKey: ["orders", restaurantId] });
 
       setShowRejectReason(false);
       setRejectReason("");
@@ -266,8 +232,8 @@ export function NewOrderAlertModal() {
         { duration: 4000 }
       );
 
-      await queryClient.invalidateQueries({ queryKey: ["live-orders", restaurantId] });
-      await queryClient.invalidateQueries({ queryKey: ["orders", restaurantId] });
+      queryClient.invalidateQueries({ queryKey: ["live-orders", restaurantId] });
+      queryClient.invalidateQueries({ queryKey: ["orders", restaurantId] });
 
       setShowRejectReason(false);
       setRejectReason("");
@@ -305,8 +271,8 @@ export function NewOrderAlertModal() {
         { duration: 4500 }
       );
 
-      await queryClient.invalidateQueries({ queryKey: ["live-orders", restaurantId] });
-      await queryClient.invalidateQueries({ queryKey: ["orders", restaurantId] });
+      queryClient.invalidateQueries({ queryKey: ["live-orders", restaurantId] });
+      queryClient.invalidateQueries({ queryKey: ["orders", restaurantId] });
 
       handleDismissAll();
     } catch (err) {
@@ -387,19 +353,9 @@ export function NewOrderAlertModal() {
                   <Volume2 className="w-4.5 h-4.5 text-white" />
                 )}
               </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleDismissAll}
-                className="h-8.5 w-8.5 text-white/90 hover:text-white hover:bg-white/20 rounded-lg transition-colors cursor-pointer"
-                title="Dismiss All"
-              >
-                <X className="w-4.5 h-4.5 text-white" />
-              </Button>
             </div>
           </div>
 
-          {/* Multi-Order Concurrent Queue Strip (when >1 order is waiting) */}
           {orderQueue.length > 1 && (
             <div className="flex items-center justify-between px-3 py-2 bg-muted/60 border-b border-border/70 text-xs">
               <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 flex-1 mr-2">
@@ -588,7 +544,7 @@ export function NewOrderAlertModal() {
                     <div key={idx} className="p-3 text-xs space-y-1.5">
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-start gap-2.5 min-w-0">
-                          {getDietaryBadge(dietary)}
+                          <DietaryBadge dietaryType={dietary} />
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary font-bold text-[11px] shrink-0">
@@ -757,9 +713,13 @@ export function NewOrderAlertModal() {
                     <button
                       key={r}
                       type="button"
-                      onClick={() => handleRejectCurrent(r)}
+                      onClick={() => setRejectReason(r)}
                       disabled={isProcessing}
-                      className="px-2.5 py-1.5 rounded-md text-left text-[11px] font-medium bg-card border border-border hover:border-red-400 hover:bg-red-50/50 dark:hover:bg-red-950/50 transition-colors cursor-pointer"
+                      className={`px-2.5 py-1.5 rounded-md text-left text-[11px] font-medium border transition-colors cursor-pointer ${
+                        rejectReason === r
+                          ? "bg-red-100 dark:bg-red-900/60 border-red-400 text-red-900 dark:text-red-200"
+                          : "bg-card border-border hover:border-red-400 hover:bg-red-50/50 dark:hover:bg-red-950/50"
+                      }`}
                     >
                       {r}
                     </button>

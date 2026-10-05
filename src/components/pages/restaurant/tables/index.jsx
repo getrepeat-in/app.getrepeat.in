@@ -1,16 +1,15 @@
 "use client";
-
 import QRCodeLib from "qrcode";
 import { getImageUrl } from "@/lib/utils";
-import { useState, useMemo, useEffect } from "react";
 import { TableFormSheet } from "./fragments";
 import { useTable } from "@/store/hooks/useTable";
 import DataTable from "@/components/global/table";
+import { useState, useMemo, useEffect } from "react";
 import GlobalButton from "@/components/global/button";
+import { Plus, Users, RefreshCw } from "lucide-react";
 import { useRestaurant } from "@/store/hooks/useRestaurant";
-import { Plus, Users, RefreshCw, MapPin } from "lucide-react";
 import { ConfirmDeleteAlert } from "@/components/ui/confirm-delete-alert";
-import { TABLE_STATUS_FILTERS, DEFAULT_PAGE_SIZE, buildQRUrl, QR_COLORS, QR_ERROR_CORRECTION, TableNumberCell, TableStatusBadge, TableActiveBadge, TableQRCell, TableActionsCell } from "./helpers";
+import { TABLE_STATUS_FILTERS, DEFAULT_PAGE_SIZE, buildQRUrl, QR_ERROR_CORRECTION, TableNumberCell, TableStatusBadge, TableActiveBadge, TableQRCell, TableActionsCell } from "./helpers";
 
 export default function TablesManagement() {
     const [isMounted, setIsMounted] = useState(false);
@@ -79,62 +78,65 @@ export default function TablesManagement() {
                 }
             }
 
-            // Draw a beautiful warm gradient background
-            const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            const gradient = ctx.createRadialGradient(
+                canvas.width / 2, 0, 0,
+                canvas.width / 2, canvas.height / 3, canvas.height * 1.2
+            );
             try {
                 gradient.addColorStop(0, brandColor);
             } catch (e) {
-                console.warn("Failed to apply primary color, falling back", e);
-                brandColor = "#ea580c"; // Fallback to safe hex
+                brandColor = "#ea580c";
                 gradient.addColorStop(0, brandColor);
             }
-            gradient.addColorStop(1, "#431407");
+            gradient.addColorStop(1, "#290c03");
 
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Large rotated text "MENU" on the left edge
             ctx.save();
-            ctx.translate(50, canvas.height / 2);
+            ctx.globalCompositeOperation = "screen";
+            const glow = ctx.createRadialGradient(canvas.width, canvas.height, 0, canvas.width/2, canvas.height/2, 600);
+            glow.addColorStop(0, "rgba(255, 120, 50, 0.15)");
+            glow.addColorStop(1, "rgba(0, 0, 0, 0)");
+            ctx.fillStyle = glow;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.restore();
+
+            ctx.save();
+            ctx.translate(65, canvas.height / 2);
             ctx.rotate(-Math.PI / 2);
-            ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
-            ctx.font = "900 160px sans-serif";
+            ctx.fillStyle = "rgba(255, 255, 255, 0.06)";
+            ctx.font = "900 180px sans-serif";
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
             ctx.fillText("MENU", 0, 0);
             ctx.restore();
 
-            // Draw Logo at top
             let logoLoaded = false;
             let finalLogoImg = null;
             const logoUrl = activeRestaurant?.logo ? getImageUrl(activeRestaurant.logo, false, "original") : null;
             if (logoUrl) {
                 try {
-                    const res = await fetch(logoUrl);
-                    const blob = await res.blob();
-                    const logoDataUrl = await new Promise((resolve) => {
-                        const reader = new FileReader();
-                        reader.onloadend = () => resolve(reader.result);
-                        reader.readAsDataURL(blob);
-                    });
                     const logoImg = new window.Image();
-                    logoImg.src = logoDataUrl;
-                    await new Promise((resolve) => { logoImg.onload = resolve; });
+                    logoImg.crossOrigin = "anonymous";
+                    
+                    await new Promise((resolve, reject) => {
+                        logoImg.onload = resolve;
+                        logoImg.onerror = reject;
+                        logoImg.src = logoUrl;
+                    });
                     finalLogoImg = logoImg;
                     
-                    // Add subtle glow behind logo
                     ctx.save();
-                    ctx.shadowColor = "rgba(255,255,255,0.3)";
-                    ctx.shadowBlur = 20;
-                    ctx.drawImage(logoImg, canvas.width / 2 - 45, 60, 90, 90);
+                    ctx.shadowColor = "rgba(0,0,0,0.5)";
+                    ctx.shadowBlur = 30;
+                    ctx.drawImage(logoImg, canvas.width / 2 - 50, 55, 100, 100);
                     ctx.restore();
                     logoLoaded = true;
                 } catch (e) {
-                    console.error("Failed to load logo", e);
+                    console.warn("Failed to load logo, skipping", e);
                 }
             }
 
-            // Restaurant Name
             ctx.fillStyle = "#ffffff";
             ctx.textAlign = "center";
             ctx.font = "bold 36px sans-serif";
@@ -145,48 +147,106 @@ export default function TablesManagement() {
             ctx.font = "bold 16px sans-serif";
             ctx.fillText("SCAN TO ORDER", canvas.width / 2, logoLoaded ? 220 : 150);
 
-            // Draw a white rounded box for the QR code
             ctx.save();
-            ctx.shadowColor = "rgba(0, 0, 0, 0.25)";
-            ctx.shadowBlur = 40;
-            ctx.shadowOffsetY = 20;
+            ctx.shadowColor = "rgba(0, 0, 0, 0.4)";
+            ctx.shadowBlur = 50;
+            ctx.shadowOffsetY = 25;
             ctx.fillStyle = "#ffffff";
             drawRoundedRect(100, 270, 400, 480, 40);
             ctx.restore();
 
-            // Text inside white box: "Table X"
             ctx.fillStyle = brandColor;
             ctx.font = "900 48px sans-serif";
+            ctx.textAlign = "center";
             ctx.fillText(`Table ${table.tableNumber}`, canvas.width / 2, 345);
 
-            // Draw QR Code
             const qrUrl = buildQRUrl(table.qrToken, activeRestaurant?.slug);
-            const qrDataUrl = await QRCodeLib.toDataURL(qrUrl, {
-                width: 320,
-                margin: 0,
-                color: { dark: "#1a1a1a", light: "#ffffff" },
-                errorCorrectionLevel: QR_ERROR_CORRECTION,
-            });
-            const img = new window.Image();
-            img.src = qrDataUrl;
-            await new Promise((resolve) => { img.onload = resolve; });
-            ctx.drawImage(img, 140, 380, 320, 320);
+            const qr = QRCodeLib.create(qrUrl, { errorCorrectionLevel: QR_ERROR_CORRECTION });
+            const size = qr.modules.size;
+            const data = qr.modules.data;
+            
+            const qrCanvas = document.createElement("canvas");
+            const qrSize = 320;
+            const margin = 10;
+            qrCanvas.width = qrSize;
+            qrCanvas.height = qrSize;
+            const qrCtx = qrCanvas.getContext("2d");
+            
+            qrCtx.fillStyle = "#ffffff";
+            qrCtx.fillRect(0, 0, qrSize, qrSize);
+            
+            const moduleSize = (qrSize - margin * 2) / size;
+            
+            const drawModuleRoundedRect = (context, x, y, w, h, r) => {
+                context.beginPath();
+                context.moveTo(x + r, y);
+                context.lineTo(x + w - r, y);
+                context.quadraticCurveTo(x + w, y, x + w, y + r);
+                context.lineTo(x + w, y + h - r);
+                context.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+                context.lineTo(x + r, y + h);
+                context.quadraticCurveTo(x, y + h, x, y + h - r);
+                context.lineTo(x, y + r);
+                context.quadraticCurveTo(x, y, x + r, y);
+                context.closePath();
+            };
+            
+            const drawPositionPattern = (xModule, yModule, color) => {
+                const x = margin + xModule * moduleSize;
+                const y = margin + yModule * moduleSize;
+                const s7 = moduleSize * 7;
+                const s1 = moduleSize * 1;
+                const s3 = moduleSize * 3;
+                const s5 = moduleSize * 5;
+                
+                qrCtx.fillStyle = color;
+                drawModuleRoundedRect(qrCtx, x, y, s7, s7, moduleSize * 1.5);
+                qrCtx.fill();
+                
+                qrCtx.fillStyle = "#ffffff";
+                drawModuleRoundedRect(qrCtx, x + s1, y + s1, s5, s5, moduleSize * 0.75);
+                qrCtx.fill();
+                
+                qrCtx.fillStyle = color;
+                drawModuleRoundedRect(qrCtx, x + s1 * 2, y + s1 * 2, s3, s3, moduleSize * 0.75);
+                qrCtx.fill();
+            };
+            
+            const isPositionPattern = (r, c) => {
+                return (r < 7 && c < 7) || (r < 7 && c >= size - 7) || (r >= size - 7 && c < 7);
+            };
+            
+            qrCtx.fillStyle = "#18181b"; 
+            for (let r = 0; r < size; r++) {
+                for (let c = 0; c < size; c++) {
+                    if (data[r * size + c] && !isPositionPattern(r, c)) {
+                        drawModuleRoundedRect(qrCtx, margin + c * moduleSize, margin + r * moduleSize, moduleSize, moduleSize, moduleSize * 0.35);
+                        qrCtx.fill();
+                    }
+                }
+            }
+            
+            // Rich colored corners
+            const patternColor = brandColor === "#ea580c" ? "#9f3131" : brandColor;
+            drawPositionPattern(0, 0, patternColor);
+            drawPositionPattern(size - 7, 0, patternColor);
+            drawPositionPattern(0, size - 7, patternColor);
+            
+            ctx.drawImage(qrCanvas, 140, 380, 320, 320);
 
             if (finalLogoImg) {
                 ctx.fillStyle = "#ffffff";
-                // Center of 320x320 at (140,380) is (300, 540). Draw 76x76 box
                 ctx.fillRect(262, 502, 76, 76);
                 ctx.drawImage(finalLogoImg, 266, 506, 68, 68);
             }
 
-            // Text under QR code in white box
             ctx.fillStyle = "#64748b";
-            ctx.font = "500 16px sans-serif";
-            ctx.fillText("Point your camera to order", canvas.width / 2, 730);
+            ctx.font = "600 16px sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText("Point your camera to order", canvas.width / 2, 725);
 
-            // Bottom Footer
-            ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
-            ctx.font = "normal 14px sans-serif";
+            ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+            ctx.font = "500 15px sans-serif";
             ctx.fillText(`Capacity: ${table.capacity} seats`, canvas.width / 2, 790);
 
             const a = document.createElement("a");

@@ -1,16 +1,12 @@
 import dbConnect from "@/lib/db";
 import Table from "@/models/Table";
+import WebsiteConfig from "@/models/WebsiteConfig";
+import { captureServerEvent } from "@/lib/posthog-server";
 import { getRestaurant } from "@/lib/api/hooks/getRestaurant";
 import { validateRequiredFields } from "@/lib/api/helpers/validator";
 import { getCache, setCache } from "@/services/backend/redis/cache.service";
 import { getTablesCacheKey, invalidateTableCache } from "@/lib/api/helpers/cacheKeys";
-import { captureServerEvent } from "@/lib/posthog-server";
-import { 
-  withErrorHandler, 
-  successResponse, 
-  BadRequestError, 
-  ConflictError 
-} from "@/lib/api/response-handler";
+import { withErrorHandler, successResponse, BadRequestError, ConflictError } from "@/lib/api/response-handler";
 
 const TABLE_POST_REQUIRED_FIELDS = ["tableNumber", "capacity"];
 
@@ -55,6 +51,11 @@ export const POST = withErrorHandler(async (req, { params }) => {
   const data = await req.json();
   const { isValid, message } = validateRequiredFields(data, TABLE_POST_REQUIRED_FIELDS);
   if (!isValid) throw new BadRequestError(message);
+
+  const websiteConfig = await WebsiteConfig.findOne({ restaurant: id }).lean();
+  if (!websiteConfig?.ordering?.acceptedTypes?.includes("DINE_IN")) {
+      throw new BadRequestError("Table creation is disabled because Dine-in orders are not enabled.");
+  }
 
   const { tableNumber, label, capacity, zone } = data;
   const resolvedZone = zone?.trim() || "General";
