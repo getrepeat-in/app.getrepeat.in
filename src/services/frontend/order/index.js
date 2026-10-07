@@ -6,6 +6,10 @@ export const OrderService = {
         const response = await axios.get(API_ENDPOINTS.ORDER.GET_ALL(resId), { params });
         return response.data;
     },
+    getBulk: async (params = {}) => {
+        const response = await axios.get(API_ENDPOINTS.ORDER.BULK_GET_ALL, { params });
+        return response.data;
+    },
     getById: async (resId, orderId) => {
         const response = await axios.get(API_ENDPOINTS.ORDER.GET_ONE(resId, orderId));
         return response.data;

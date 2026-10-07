@@ -55,6 +55,7 @@ export const API_ENDPOINTS = {
     ORDER: {
         CREATE: (resId) => `/api/restaurant/${resId}/orders`,
         GET_ALL: (resId) => `/api/restaurant/${resId}/orders`,
+        BULK_GET_ALL: "/api/restaurant/bulk-orders",
         GET_ONE: (resId, orderId) => `/api/restaurant/${resId}/orders/${orderId}`,
         UPDATE: (resId, orderId) => `/api/restaurant/${resId}/orders/${orderId}`,
         DELETE: (resId, orderId) => `/api/restaurant/${resId}/orders/${orderId}`,

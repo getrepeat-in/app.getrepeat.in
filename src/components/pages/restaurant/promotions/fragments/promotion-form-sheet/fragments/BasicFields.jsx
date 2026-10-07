@@ -185,7 +185,7 @@ export const BasicFields = ({ formData, handleChange, handleSelectChange }) => {
                     </div>
                     <div className="relative flex items-center border border-gray-300 dark:border-gray-700 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-primary transition-all bg-white dark:bg-zinc-900/50">
                         <Popover>
-                            <PopoverTrigger asChild>
+                            <PopoverTrigger render={
                                 <button
                                     type="button"
                                     className={cn(
@@ -198,7 +198,7 @@ export const BasicFields = ({ formData, handleChange, handleSelectChange }) => {
                                     </div>
                                     <span className="truncate block w-full">{formData.starts_at ? format(parseISO(formData.starts_at), "PPP") : "Pick a date"}</span>
                                 </button>
-                            </PopoverTrigger>
+                            } />
                             <PopoverContent className="w-auto p-0" align="start">
                                 <CalendarComponent
                                     mode="single"
@@ -228,7 +228,7 @@ export const BasicFields = ({ formData, handleChange, handleSelectChange }) => {
                     </div>
                     <div className="relative flex items-center border border-gray-300 dark:border-gray-700 rounded-md focus-within:border-orange-500 focus-within:ring-1 focus-within:ring-primary transition-all bg-white dark:bg-zinc-900/50">
                         <Popover>
-                            <PopoverTrigger asChild>
+                            <PopoverTrigger render={
                                 <button
                                     type="button"
                                     className={cn(
@@ -241,7 +241,7 @@ export const BasicFields = ({ formData, handleChange, handleSelectChange }) => {
                                     </div>
                                     <span className="truncate block w-full">{formData.ends_at ? format(parseISO(formData.ends_at), "PPP") : "Pick a date"}</span>
                                 </button>
-                            </PopoverTrigger>
+                            } />
                             <PopoverContent className="w-auto p-0" align="start">
                                 <CalendarComponent
                                     mode="single"

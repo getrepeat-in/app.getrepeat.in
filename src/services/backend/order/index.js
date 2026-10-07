@@ -289,6 +289,7 @@ export const OrderService = {
 
   listOrders: async ({
     restaurantId,
+    restaurantIds,
     customerId,
     status,
     orderType,
@@ -301,13 +302,13 @@ export const OrderService = {
   }) => {
     await dbConnect();
 
-    const cacheKey = `restaurant:${restaurantId}:orders:page:${page}:limit:${limit}:status:${status || "all"}:type:${orderType || "all"}:search:${search || "none"}:start:${startDate || "all"}:end:${endDate || "all"}:summary:${summary}:customer:${customerId || "all"}`;
-
-    const { data: cachedOrFetchedData, isCached } = await getOrSetCache(
-      cacheKey,
-      async () => {
+    const fetchOrders = async () => {
         const query = {};
-        if (restaurantId) query.restaurant = restaurantId;
+        if (restaurantIds) {
+          query.restaurant = { $in: Array.isArray(restaurantIds) ? restaurantIds : restaurantIds.split(",").map(id => id.trim()) };
+        } else if (restaurantId) {
+          query.restaurant = restaurantId;
+        }
         if (customerId) query.customer = customerId;
 
         if (status) {
@@ -320,56 +321,41 @@ export const OrderService = {
 
         if (orderType) query.orderType = orderType;
 
+        if (search) {
+          const searchRegex = new RegExp(search, "i");
+          query.$or = [
+            { orderNumber: searchRegex },
+            { "customerInfo.name": searchRegex },
+            { "customerInfo.phone": searchRegex },
+          ];
+        }
+
         if (startDate || endDate) {
           query.createdAt = {};
           if (startDate) query.createdAt.$gte = new Date(startDate);
           if (endDate) query.createdAt.$lte = new Date(endDate);
         }
 
-        if (summary && restaurantId) {
-          const counts = await Order.aggregate([
-            {
-              $match: {
-                restaurant: mongoose.Types.ObjectId.isValid(restaurantId)
-                  ? new mongoose.Types.ObjectId(restaurantId)
-                  : restaurantId,
-                orderStatus: {
-                  $in: [
-                    "PLACED",
-                    "ACCEPTED",
-                    "PREPARING",
-                    "READY",
-                    "COMPLETED",
-                  ],
-                },
-              },
-            },
-            { $group: { _id: "$orderStatus", count: { $sum: 1 } } },
-          ]);
-
-          return counts.reduce((acc, curr) => {
-            acc[curr._id] = curr.count;
-            return acc;
-          }, {});
+        if (summary) {
+          const orders = await Order.find(query)
+            .sort({ createdAt: -1 })
+            .select("orderNumber orderStatus totalAmount createdAt paymentStatus paymentMethod orderType");
+          return {
+            orders: orders.map((o) => ({
+              id: o._id,
+              orderNumber: o.orderNumber,
+              status: o.orderStatus,
+              total: o.totalAmount,
+              date: o.createdAt,
+              paymentStatus: o.paymentStatus,
+              paymentMethod: o.paymentMethod,
+              type: o.orderType,
+            })),
+            total: orders.length,
+          };
         }
 
-        if (search) {
-          const matchingCustomers = await User.find({
-            $or: [
-              { name: { $regex: search, $options: "i" } },
-              { phone: { $regex: search, $options: "i" } },
-            ],
-          }).select("_id");
-
-          const customerIds = matchingCustomers.map((c) => c._id);
-
-          query.$or = [
-            { orderNumber: { $regex: search, $options: "i" } },
-            { customer: { $in: customerIds } },
-          ];
-        }
-
-        const skip = (Math.max(1, page) - 1) * limit;
+        const skip = (page - 1) * limit;
 
         const [orders, total] = await Promise.all([
           Order.find(query)
@@ -396,7 +382,18 @@ export const OrderService = {
           limit: Number(limit),
           totalPages: Math.ceil(total / limit),
         };
-      },
+    };
+
+    if (restaurantIds) {
+      const data = await fetchOrders();
+      return { ...data, isCached: false };
+    }
+
+    const cacheKey = `restaurant:${restaurantId}:orders:page:${page}:limit:${limit}:status:${status || "all"}:type:${orderType || "all"}:search:${search || "none"}:start:${startDate || "all"}:end:${endDate || "all"}:summary:${summary}:customer:${customerId || "all"}`;
+
+    const { data: cachedOrFetchedData, isCached } = await getOrSetCache(
+      cacheKey,
+      fetchOrders,
       120 
     );
 

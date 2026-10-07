@@ -13,7 +13,7 @@ import { useRealtimeOrders } from "@/hooks/useRealtimeOrders";
 import { LIVE_ORDER_TABS } from "./fragments/helpers/constants";
 
 export default function LiveOrders() {
-    const { restaurantId } = useRestaurant();
+    const { restaurantId: activeRestaurantId, restaurants } = useRestaurant();
     const notify = useNotification();
     const [filter, setFilter] = useState("all");
     const [page, setPage] = useState(1);
@@ -22,7 +22,7 @@ export default function LiveOrders() {
     const [selectedOrder, setSelectedOrder] = useState(null);
 
     const { isConnected: isRealtimeConnected } = useRealtimeOrders({
-        restaurantId,
+        restaurantId: activeRestaurantId,
         playChimeOnNewOrder: false,
         showNotificationOnNewOrder: false,
     });
@@ -30,11 +30,11 @@ export default function LiveOrders() {
     const PAGE_SIZE = 24; 
 
     const { data, isLoading, isFetching, refetch } = useQuery({
-        queryKey: ["live-orders", restaurantId, filter, page, appliedSearch],
+        queryKey: ["live-orders", "all", filter, page, appliedSearch, restaurants?.map(r => r._id).join(",")],
         queryFn: async () => {
-            if (!restaurantId) return { orders: [], total: 0 };
+            if (!restaurants || restaurants.length === 0) return { data: { orders: [], total: 0 } };
             
-            const params = { page, limit: PAGE_SIZE };
+            const params = { page, limit: PAGE_SIZE }; 
             
             const activeTab = LIVE_ORDER_TABS.find((t) => t.key === filter);
             if (activeTab && activeTab.statuses.length > 0) {
@@ -47,9 +47,12 @@ export default function LiveOrders() {
                 params.search = appliedSearch;
             }
 
-            return OrderService.getAll(restaurantId, params);
+            params.restaurantIds = restaurants.map(r => r._id).join(",");
+            const response = await OrderService.getBulk(params).catch(() => null);
+            
+            return response || { data: { orders: [], total: 0 } };
         },
-        enabled: !!restaurantId,
+        enabled: !!restaurants && restaurants.length > 0,
         refetchInterval: 10000,
     });
 
@@ -64,7 +67,9 @@ export default function LiveOrders() {
 
     const advanceOrderStatus = async (orderId) => {
         try {
-            const res = await OrderService.update(restaurantId, orderId, { action: "advance" });
+            const order = data?.data?.orders?.find(o => o._id === orderId);
+            const rId = order?.restaurantId || order?.restaurant?._id || order?.restaurant || activeRestaurantId;
+            const res = await OrderService.update(rId, orderId, { action: "advance" });
             await refetch();
             const updated = res?.data || res;
             const rawStatus = updated?.orderStatus || "";
@@ -81,7 +86,9 @@ export default function LiveOrders() {
 
     const rejectOrderStatus = async (orderId, reason) => {
         try {
-            const res = await OrderService.update(restaurantId, orderId, { action: "reject", reason });
+            const order = data?.data?.orders?.find(o => o._id === orderId);
+            const rId = order?.restaurantId || order?.restaurant?._id || order?.restaurant || activeRestaurantId;
+            const res = await OrderService.update(rId, orderId, { action: "reject", reason });
             await refetch();
             notify.success(res?.message || res?.data?.message || "Order updated successfully: REJECTED");
         } catch (err) {

@@ -7,14 +7,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { OrderService } from "@/services/frontend/order";
 import useNotification from "@/store/hooks/useNotification";
 import { useRestaurant } from "@/store/hooks/useRestaurant";
+import { DietaryBadge } from "@/components/global/dietary-badge";
 import { startOrderRinger, stopOrderRinger } from "@/lib/sound/orderChime";
 import { getPusherClient, getRestaurantChannelName, PUSHER_EVENTS } from "@/lib/pusher/client";
-import { Bell, Volume2, VolumeX, CheckCircle2, XCircle, MapPin, Phone, User, Clock, AlertTriangle, Receipt, FileText, ChevronLeft, ChevronRight, CheckCheck, Utensils } from "lucide-react";
-import { DietaryBadge } from "@/components/global/dietary-badge";
+import { Bell, Volume2, VolumeX, CheckCircle2, XCircle, MapPin, Phone, User, Clock, AlertTriangle, Receipt, FileText, ChevronLeft, ChevronRight, CheckCheck, Utensils, Store } from "lucide-react";
 
 
 export function NewOrderAlertModal() {
-  const { restaurantId } = useRestaurant();
+  const { restaurantId: activeRestaurantId, restaurants } = useRestaurant();
   const queryClient = useQueryClient();
   const notification = useNotification();
 
@@ -28,17 +28,23 @@ export function NewOrderAlertModal() {
   const currentOrder = orderQueue[currentIndex] || orderQueue[0] || null;
 
   useEffect(() => {
-    if (!restaurantId) return;
+    if (!restaurants || restaurants.length === 0) return;
 
     const fetchPendingOrders = async () => {
       try {
-        const response = await OrderService.getAll(restaurantId, { status: "PLACED" });
-        const orders = response?.data?.orders || response?.data || response?.orders || response || [];
-        const pendingOrders = Array.isArray(orders) ? orders.filter(o => o.orderStatus === "PLACED") : [];
+        const restaurantIds = restaurants.map(r => r._id).join(",");
+        const response = await OrderService.getBulk({ status: "PLACED", restaurantIds, limit: 100 }).catch(() => null);
         
-        if (pendingOrders.length > 0) {
+        let allPending = [];
+        if (response) {
+          const orders = response?.data?.orders || response?.data || response?.orders || response || [];
+          const pendingOrders = Array.isArray(orders) ? orders.filter(o => o.orderStatus === "PLACED") : [];
+          allPending.push(...pendingOrders);
+        }
+
+        if (allPending.length > 0) {
           setOrderQueue(prev => {
-            const newOrders = pendingOrders.filter(po => !prev.some(o => o._id === po._id));
+            const newOrders = allPending.filter(po => !prev.some(o => o._id === po._id));
             return [...prev, ...newOrders];
           });
         }
@@ -48,7 +54,7 @@ export function NewOrderAlertModal() {
     };
 
     fetchPendingOrders();
-  }, [restaurantId]);
+  }, [restaurants]);
 
   useEffect(() => {
     if (orderQueue.length > 0 && !isMuted) {
@@ -89,24 +95,31 @@ export function NewOrderAlertModal() {
   }, [orderQueue.length]);
 
   useEffect(() => {
-    if (!restaurantId) return;
+    if (!restaurants || restaurants.length === 0) return;
 
     const pusher = getPusherClient();
     if (!pusher) return;
 
-    const channelName = getRestaurantChannelName(restaurantId);
-    let channel = pusher.channel(channelName);
-    if (!channel) {
-      channel = pusher.subscribe(channelName);
-    }
+    const channels = restaurants.map(r => {
+      const channelName = getRestaurantChannelName(r._id);
+      let channel = pusher.channel(channelName);
+      if (!channel) {
+        channel = pusher.subscribe(channelName);
+      }
+      return { channel, restaurantId: r._id };
+    });
 
-    const handleNewOrder = (data) => {
+    const handleNewOrder = (data, rId) => {
       const order = data?.order || data;
       if (!order || !order._id) return;
 
-      const orderNum = order?.orderNumber || "New Order";
+      if (!order.restaurantId) {
+        order.restaurantId = rId;
+      }
 
-      const amount = order
+      const orderNum = order?.orderNumber || "New Order";
+      const amount = order?.totalAmount ? ` ₹${order.totalAmount}` : "";
+
       notification.success(`🔔 Order #${orderNum} received!${amount}`, {
         duration: 5000,
       });
@@ -125,8 +138,8 @@ export function NewOrderAlertModal() {
         }
       }
 
-      queryClient.invalidateQueries({ queryKey: ["live-orders", restaurantId] });
-      queryClient.invalidateQueries({ queryKey: ["orders", restaurantId] });
+      queryClient.invalidateQueries({ queryKey: ["live-orders", rId] });
+      queryClient.invalidateQueries({ queryKey: ["orders", rId] });
 
       setOrderQueue((prev) => {
         if (prev.some((o) => o._id === order._id)) return prev;
@@ -134,12 +147,18 @@ export function NewOrderAlertModal() {
       });
     };
 
-    channel.bind(PUSHER_EVENTS.ORDER_CREATED, handleNewOrder);
+    const listeners = channels.map(({ channel, restaurantId }) => {
+      const listener = (data) => handleNewOrder(data, restaurantId);
+      channel.bind(PUSHER_EVENTS.ORDER_CREATED, listener);
+      return { channel, listener };
+    });
 
     return () => {
-      channel.unbind(PUSHER_EVENTS.ORDER_CREATED, handleNewOrder);
+      listeners.forEach(({ channel, listener }) => {
+        channel.unbind(PUSHER_EVENTS.ORDER_CREATED, listener);
+      });
     };
-  }, [restaurantId, queryClient, notification]);
+  }, [restaurants, queryClient, notification]);
 
   const handleMuteToggle = () => {
     setIsMuted((prev) => !prev);
@@ -173,14 +192,16 @@ export function NewOrderAlertModal() {
     setCurrentIndex((prev) => (prev < orderQueue.length - 1 ? prev + 1 : 0));
   };
 
-  // Accept current order
   const handleAcceptCurrent = async () => {
-    if (!currentOrder || !restaurantId) return;
+    if (!currentOrder) return;
+    const orderRestaurantId = currentOrder.restaurantId || currentOrder.restaurant?._id || currentOrder.restaurant || activeRestaurantId;
+    if (!orderRestaurantId) return;
+
     try {
       setIsProcessing(true);
       const targetOrder = currentOrder;
 
-      await OrderService.update(restaurantId, targetOrder._id, {
+      await OrderService.update(orderRestaurantId, targetOrder._id, {
         action: "advance",
       });
 
@@ -192,13 +213,12 @@ export function NewOrderAlertModal() {
         { duration: 4000 }
       );
 
-      queryClient.invalidateQueries({ queryKey: ["live-orders", restaurantId] });
-      queryClient.invalidateQueries({ queryKey: ["orders", restaurantId] });
+      queryClient.invalidateQueries({ queryKey: ["live-orders", orderRestaurantId] });
+      queryClient.invalidateQueries({ queryKey: ["orders", orderRestaurantId] });
 
       setShowRejectReason(false);
       setRejectReason("");
 
-      // Remove accepted order from queue; ringer keeps ringing if more remain
       setOrderQueue((prev) => {
         const next = prev.filter((o) => o._id !== targetOrder._id);
         setCurrentIndex((curr) => Math.min(curr, Math.max(0, next.length - 1)));
@@ -214,15 +234,17 @@ export function NewOrderAlertModal() {
     }
   };
 
-  // Reject current order
   const handleRejectCurrent = async (reason) => {
-    if (!currentOrder || !restaurantId) return;
+    if (!currentOrder) return;
+    const orderRestaurantId = currentOrder.restaurantId || currentOrder.restaurant?._id || currentOrder.restaurant || activeRestaurantId;
+    if (!orderRestaurantId) return;
+
     try {
       setIsProcessing(true);
       const targetOrder = currentOrder;
       const finalReason = reason || rejectReason || "Restaurant unable to accept order at this time";
 
-      await OrderService.update(restaurantId, targetOrder._id, {
+      await OrderService.update(orderRestaurantId, targetOrder._id, {
         action: "reject",
         reason: finalReason,
       });
@@ -232,8 +254,8 @@ export function NewOrderAlertModal() {
         { duration: 4000 }
       );
 
-      queryClient.invalidateQueries({ queryKey: ["live-orders", restaurantId] });
-      queryClient.invalidateQueries({ queryKey: ["orders", restaurantId] });
+      queryClient.invalidateQueries({ queryKey: ["live-orders", orderRestaurantId] });
+      queryClient.invalidateQueries({ queryKey: ["orders", orderRestaurantId] });
 
       setShowRejectReason(false);
       setRejectReason("");
@@ -253,26 +275,28 @@ export function NewOrderAlertModal() {
     }
   };
 
-  // Accept all pending orders in queue
   const handleAcceptAll = async () => {
-    if (orderQueue.length === 0 || !restaurantId) return;
+    if (orderQueue.length === 0) return;
+    
     try {
       setIsProcessing(true);
       const ordersToProcess = [...orderQueue];
 
       await Promise.all(
-        ordersToProcess.map((ord) =>
-          OrderService.update(restaurantId, ord._id, { action: "advance" })
-        )
+        ordersToProcess.map((ord) => {
+          const orderRestaurantId = ord.restaurantId || ord.restaurant?._id || ord.restaurant || activeRestaurantId;
+          return OrderService.update(orderRestaurantId, ord._id, { action: "advance" })
+            .then(() => {
+              queryClient.invalidateQueries({ queryKey: ["live-orders", orderRestaurantId] });
+              queryClient.invalidateQueries({ queryKey: ["orders", orderRestaurantId] });
+            });
+        })
       );
 
       notification.success(
         `All ${ordersToProcess.length} orders updated successfully: PREPARING`,
         { duration: 4500 }
       );
-
-      queryClient.invalidateQueries({ queryKey: ["live-orders", restaurantId] });
-      queryClient.invalidateQueries({ queryKey: ["orders", restaurantId] });
 
       handleDismissAll();
     } catch (err) {
@@ -289,6 +313,9 @@ export function NewOrderAlertModal() {
   const items = currentOrder?.items || [];
   const orderType = currentOrder?.orderType || "DINE_IN";
   const table = currentOrder?.table;
+  
+  const currentRestaurantId = currentOrder?.restaurantId || currentOrder?.restaurant?._id || currentOrder?.restaurant || activeRestaurantId;
+  const currentRestaurant = restaurants?.find(r => r._id === currentRestaurantId);
 
   return (
     <AnimatePresence>
@@ -300,42 +327,63 @@ export function NewOrderAlertModal() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.94, y: 16 }}
             transition={{ type: "spring", damping: 26, stiffness: 360 }}
-            className="relative w-full max-w-xl bg-card text-card-foreground border border-border/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] ring-1 ring-black/5"
+            className="relative w-full m ax-w-xl bg-card text-card-foreground border border-border/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] ring-1 ring-black/5"
           >
-          {/* Top Ringing Alert Banner - Solid Primary Color */}
-          <div className="bg-primary px-5 py-4 text-primary-foreground flex items-center justify-between shrink-0 shadow-xs">
-            <div className="flex items-center gap-3.5">
-              <motion.div
-                animate={{
-                  rotate: isMuted ? 0 : [-12, 12, -12, 12, 0],
-                  scale: isMuted ? 1 : [1, 1.08, 1],
-                }}
-                transition={{
-                  repeat: Infinity,
-                  duration: 1.4,
-                  ease: "easeInOut",
-                }}
-                className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0 border border-white/25 shadow-xs"
-              >
-                <Bell className="w-5 h-5 text-white fill-white/25" />
-              </motion.div>
+          <div className="bg-white dark:bg-zinc-950 px-5 py-4 flex items-center justify-between shrink-0 border-b border-border shadow-sm">
+            <div className="flex items-center gap-4">
+              {currentRestaurant?.imageUrl || currentRestaurant?.logo || currentRestaurant?.image ? (
+                <div className="w-12 h-12 rounded-lg bg-gray-50 dark:bg-zinc-900 border border-border shadow-sm overflow-hidden shrink-0 flex items-center justify-center">
+                  <img 
+                    src={currentRestaurant.imageUrl || currentRestaurant.logo || currentRestaurant.image} 
+                    alt={currentRestaurant.name || "Restaurant"} 
+                    className="w-full h-full object-cover" 
+                  />
+                </div>
+              ) : (
+                <div className="w-12 h-12 rounded-lg bg-primary/10 border border-primary/20 shadow-sm flex items-center justify-center shrink-0 text-primary">
+                  <Store className="w-6 h-6" />
+                </div>
+              )}
 
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="font-bold text-base sm:text-lg leading-tight tracking-tight text-white">
+                  <motion.div
+                    animate={{
+                      rotate: isMuted ? 0 : [-12, 12, -12, 12, 0],
+                      scale: isMuted ? 1 : [1, 1.05, 1],
+                    }}
+                    transition={{
+                      repeat: Infinity,
+                      duration: 1.4,
+                      ease: "easeInOut",
+                    }}
+                    className="flex items-center text-primary"
+                  >
+                    <Bell className="w-4.5 h-4.5 fill-primary/20" />
+                  </motion.div>
+                  <h3 className="font-extrabold text-base sm:text-lg leading-tight tracking-tight text-foreground">
                     {orderQueue.length > 1
                       ? `${orderQueue.length} New Orders Waiting!`
                       : "New Order Received!"}
                   </h3>
                   {orderQueue.length > 1 && (
-                    <span className="bg-white text-primary text-[11px] font-black px-2 py-0.5 rounded-full shadow-xs">
+                    <span className="bg-primary/10 text-primary text-[11px] font-black px-2 py-0.5 rounded-full shadow-xs border border-primary/20">
                       {currentIndex + 1} of {orderQueue.length}
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-white/85 font-medium tracking-wide mt-0.5">
-                  Order #{currentOrder.orderNumber}
-                </p>
+                
+                <div className="text-xs text-muted-foreground font-medium tracking-wide mt-1.5 flex flex-wrap items-center gap-1.5">
+                  <span className="font-semibold text-foreground bg-muted px-1.5 py-0.5 rounded-md border border-border">Order #{currentOrder.orderNumber}</span>
+                  {currentRestaurant && (
+                    <>
+                      <span className="w-1 h-1 rounded-full bg-border" />
+                      <span className="font-bold flex items-center gap-1 text-foreground">
+                        {currentRestaurant.name} {currentRestaurant.location ? `(${currentRestaurant.location})` : ""}
+                      </span>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -344,13 +392,13 @@ export function NewOrderAlertModal() {
                 variant="ghost"
                 size="icon"
                 onClick={handleMuteToggle}
-                className="h-8.5 w-8.5 text-white/90 hover:text-white hover:bg-white/20 rounded-lg transition-colors cursor-pointer"
+                className="h-8.5 w-8.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer border border-transparent hover:border-border shadow-xs"
                 title={isMuted ? "Unmute Ring" : "Mute Ring"}
               >
                 {isMuted ? (
-                  <VolumeX className="w-4.5 h-4.5 text-white/70" />
+                  <VolumeX className="w-4.5 h-4.5" />
                 ) : (
-                  <Volume2 className="w-4.5 h-4.5 text-white" />
+                  <Volume2 className="w-4.5 h-4.5" />
                 )}
               </Button>
             </div>
