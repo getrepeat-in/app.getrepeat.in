@@ -1,6 +1,7 @@
 import { useState } from "react";
 import api from "@/lib/api/axiosInstance";
 import { Button } from "@/components/ui/button";
+import CustomDomainCard from "./CustomDomainCard";
 import { Link2, Unlink, Loader2 } from "lucide-react";
 import useNotification from "@/store/hooks/useNotification";
 import { useRestaurant } from "@/store/hooks/useRestaurant";
@@ -24,7 +25,7 @@ const InstagramIcon = ({ className }) => (
   </svg>
 );
 
-const IntegrationsTab = ({ integrationsData }) => {
+const IntegrationsTab = ({ integrationsData, generalData }) => {
   const { restaurantId } = useRestaurant();
   const notification = useNotification();
   const [isConnecting, setIsConnecting] = useState(false);
@@ -33,18 +34,21 @@ const IntegrationsTab = ({ integrationsData }) => {
   const instagram = integrationsData?.instagram || {};
   const isConnected = !!instagram.accessToken;
 
+  const data = generalData || integrationsData || {};
+  const currentDomain = data?.domain || "";
+
   const handleConnect = async () => {
     try {
       setIsConnecting(true);
       const res = await api.get(`/api/restaurant/${restaurantId}/instagram/auth`);
-      const data = res.data;
+      const authData = res.data;
       
-      if (!data.success) {
-        throw new Error(data.message || "Failed to initialize Instagram connection");
+      if (!authData.success) {
+        throw new Error(authData.message || "Failed to initialize Instagram connection");
       }
       
-      if (data.data && data.data.url) {
-        window.location.href = data.data.url;
+      if (authData.data && authData.data.url) {
+        window.location.href = authData.data.url;
       }
     } catch (error) {
       notification.error(error?.response?.data?.message || error.message);
@@ -56,14 +60,13 @@ const IntegrationsTab = ({ integrationsData }) => {
     try {
       setIsDisconnecting(true);
       const res = await api.delete(`/api/restaurant/${restaurantId}/instagram/disconnect`);
-      const data = res.data;
+      const authData = res.data;
       
-      if (!data.success) {
-        throw new Error(data.message || "Failed to disconnect");
+      if (!authData.success) {
+        throw new Error(authData.message || "Failed to disconnect");
       }
       
-      notification.success(data.message);
-      // Reload page to reflect changes
+      notification.success(authData.message);
       window.location.reload();
     } catch (error) {
       notification.error(error?.response?.data?.message || error.message);
@@ -73,9 +76,9 @@ const IntegrationsTab = ({ integrationsData }) => {
 
   return (
     <div className="flex flex-col gap-6">
+      <CustomDomainCard domain={currentDomain} />
       <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm">
         <div className="p-5 sm:p-6 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-          
           <div className="flex gap-4">
             <div className="flex-shrink-0 h-12 w-12 rounded-xl bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 flex items-center justify-center shadow-md">
               <InstagramIcon className="text-white h-6 w-6" />
@@ -117,11 +120,7 @@ const IntegrationsTab = ({ integrationsData }) => {
                 disabled={isConnecting}
                 className="w-full sm:w-auto flex items-center gap-2 font-medium"
               >
-                {isConnecting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Link2 className="h-4 w-4" />
-                )}
+                {isConnecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}
                 Connect Account
               </Button>
             ) : (
@@ -131,16 +130,11 @@ const IntegrationsTab = ({ integrationsData }) => {
                 disabled={isDisconnecting}
                 className="w-full sm:w-auto flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
               >
-                {isDisconnecting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Unlink className="h-4 w-4" />
-                )}
+                {isDisconnecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Unlink className="h-4 w-4" />}
                 Disconnect
               </Button>
             )}
           </div>
-          
         </div>
       </div>
     </div>

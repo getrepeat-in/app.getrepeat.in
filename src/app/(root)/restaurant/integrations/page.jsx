@@ -1,13 +1,16 @@
 "use client";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import Loader from "@/components/global/loader";
+import { useQuery } from "@tanstack/react-query";
 import { Puzzle, Plus, Loader2, Trash2 } from "lucide-react";
 import { useRestaurant } from "@/store/hooks/useRestaurant";
+import { RestaurantService } from "@/services/frontend/restaurant";
 import { integrationService } from "@/services/frontend/integration";
+import CustomDomainCard from "@/components/pages/restaurant/profile/fragments/CustomDomainCard";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 
 export default function IntegrationsPage() {
@@ -22,6 +25,14 @@ export default function IntegrationsPage() {
   const [disconnectingMetaPixel, setDisconnectingMetaPixel] = useState(false);
   const [pixelIdInput, setPixelIdInput] = useState("");
   const [showMetaPixelForm, setShowMetaPixelForm] = useState(false);
+
+  const { data: restaurantData, isLoading: isRestaurantDetailsLoading } = useQuery({
+    queryKey: ["restaurant-details", restaurantId],
+    queryFn: () => RestaurantService.getRestaurantById(restaurantId),
+    enabled: !!restaurantId,
+  });
+
+  const domain = restaurantData?.data?.domain || restaurantData?.domain || restaurantData?.data?.restaurant?.domain || "";
 
   const fetchIntegrations = async () => {
     if (!restaurantId) return;
@@ -138,7 +149,10 @@ export default function IntegrationsPage() {
         </p>
       </div>
 
-{loading || isRestaurantLoading ? <Loader /> : <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+{loading || isRestaurantLoading || isRestaurantDetailsLoading ? <Loader /> : <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      
+        <CustomDomainCard domain={domain} />
+
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">

@@ -263,6 +263,30 @@ export class RestaurantService {
             await this.ensureSlugAvailable(newSlug, restaurantId);
         }
 
+        const oldDomain = existingRestaurant.domain;
+        const newDomain = updateData.domain;
+        const domainChanged = newDomain !== undefined && newDomain !== oldDomain;
+
+        if (domainChanged) {
+            const { DomainService } = await import("@/services/backend/domain");
+            const cleanDomain = newDomain ? newDomain.replace(/^(https?:\/\/)?(www\.)?/, "").replace(/\/$/, "") : "";
+            
+            if (oldDomain) {
+                try {
+                    await DomainService.removeDomainFromVercel(oldDomain);
+                } catch (err) {
+                    console.error("Failed to remove old domain from Vercel", err);
+                }
+            }
+            
+            if (cleanDomain) {
+                await DomainService.addDomainToVercel(cleanDomain);
+                updateData.domain = cleanDomain;
+            } else {
+                updateData.domain = "";
+            }
+        }
+
         try {
             Object.assign(existingRestaurant, updateData);
             await existingRestaurant.save();
