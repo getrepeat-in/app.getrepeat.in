@@ -10,14 +10,22 @@ import { useRestaurant } from "@/store/hooks/useRestaurant";
 
 export default function MenuItemList({ activeCategoryId, activeSubCategoryId }) {
     const { restaurantId } = useRestaurant();
-    const { items = [], isLoading, addItem, updateItem, deleteItem } = useItem(restaurantId, activeSubCategoryId ? { subCategoryId: activeSubCategoryId } : {});
+    const { items: allItems = [], isLoading, addItem, updateItem, deleteItem } = useItem(restaurantId, {});
     const [tempItems, setTempItems] = React.useState([]);
+
+    const items = useMemo(() => {
+        if (!activeSubCategoryId) return allItems;
+        return allItems.filter(item => {
+            const subId = item.subCategory?._id || item.subCategory?.id || item.subCategory;
+            return String(subId) === String(activeSubCategoryId);
+        });
+    }, [allItems, activeSubCategoryId]);
 
     React.useEffect(() => {
         setTempItems([]);
     }, [activeSubCategoryId]);
     
-    const handleAddItem = () => {
+    const handleAddItem = React.useCallback(() => {
         if (!activeSubCategoryId || !activeCategoryId) return;
 
         setTempItems(prev => [
@@ -35,7 +43,12 @@ export default function MenuItemList({ activeCategoryId, activeSubCategoryId }) 
             },
             ...prev
         ]);
-    };
+    }, [activeSubCategoryId, activeCategoryId]);
+
+    React.useEffect(() => {
+        document.addEventListener('ADD_MENU_ITEM', handleAddItem);
+        return () => document.removeEventListener('ADD_MENU_ITEM', handleAddItem);
+    }, [handleAddItem]);
 
     const combinedItems = useMemo(() => [...tempItems, ...items], [tempItems, items]);
 
@@ -67,7 +80,7 @@ export default function MenuItemList({ activeCategoryId, activeSubCategoryId }) 
     }
 
     return (
-        <div className="flex-1 bg-white flex flex-col min-w-0 overflow-y-auto p-3 sm:p-4 space-y-3 pb-16">
+        <div className="flex-1 bg-white flex flex-col min-w-0 overflow-y-auto px-2 py-3 sm:p-4 space-y-2 sm:space-y-3 pb-24 sm:pb-16">
             {combinedItems.map((item) => (
                 <MenuItemRow
                     key={item.id}

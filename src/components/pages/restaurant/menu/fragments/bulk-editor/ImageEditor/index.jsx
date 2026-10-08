@@ -18,7 +18,7 @@ export function ImageEditor() {
     const notification = useNotification();
 
     const { rawCategories: categories = [], isLoading: isLoadingCats } = useCategory(restaurantId);
-    const { items = [], updateItem, isLoading: isLoadingItems } = useItem(restaurantId, { fetchAll: true });
+    const { items = [], updateItem, isLoading: isLoadingItems } = useItem(restaurantId, {});
     
     const [selectedItemForSidebar, setSelectedItemForSidebar] = useState(null);
     const [activeFilterTab, setActiveFilterTab] = useState("all");

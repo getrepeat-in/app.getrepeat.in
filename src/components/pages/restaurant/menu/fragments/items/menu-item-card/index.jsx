@@ -1,13 +1,17 @@
+import dynamic from "next/dynamic";
 import { getImageUrl } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import ItemDetails from "./fragments/ItemDetails";
-import ItemVariants from "./fragments/ItemVariants";
+import Loader from "@/components/global/loader";
 import { useItemVariants } from "./hooks/useItemVariants";
+
+const ItemDetails = dynamic(() => import("./fragments/ItemDetails"), { loading: () => <div className="p-4 flex justify-center"><Loader /></div> });
+const ItemVariants = dynamic(() => import("./fragments/ItemVariants"), { loading: () => <div className="p-4 flex justify-center"><Loader /></div> });
+
 import { ItemImage } from "@/components/global/item-image";
 import useNotification from "@/store/hooks/useNotification";
-import { CheckCircle2, Loader2, Edit2, Image as ImageIcon, Trash2 } from "lucide-react";
+import { CheckCircle2, Loader2, Edit2, Image as ImageIcon, Trash2, X } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from "@/components/ui/sheet";
 
 export default function MenuItemRow({
@@ -17,7 +21,7 @@ export default function MenuItemRow({
 }) {
     const [item, setItem] = useState(initialItem);
     const notification = useNotification();
-    const [isSheetOpen, setIsSheetOpen] = useState(false);
+    const [isSheetOpen, setIsSheetOpen] = useState(initialItem?.isTemp || false);
 
     useEffect(() => {
         setItem(initialItem);
@@ -56,6 +60,14 @@ export default function MenuItemRow({
         }
     };
 
+    const handleOpenChange = (open) => {
+        setIsSheetOpen(open);
+        if (!open && initialItem?.isTemp) {
+            // If they cancel without saving a temp item, delete it
+            onDelete?.();
+        }
+    };
+
     const handleDelete = async (e) => {
         if (e) e.stopPropagation();
         setIsDeleting(true);
@@ -66,36 +78,31 @@ export default function MenuItemRow({
         }
     };
 
-    const toggleAvailable = (val) => {
+    const toggleAvailable = async (val) => {
         updateField("isAvailable", val);
+        try {
+            await onChange?.({ ...item, isAvailable: val });
+        } catch (error) {
+            // Revert will happen automatically when query refetches if it failed
+        }
     };
 
     return (
-        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+        <Sheet open={isSheetOpen} onOpenChange={handleOpenChange}>
             <div
-                className={`group flex items-center justify-between border rounded-xl p-3 sm:p-4 transition-all duration-300 relative ${
+                className={`group flex items-center justify-between border rounded-md p-3 sm:p-4 transition-all duration-300 relative ${
                     item?.status === 'delete' ? "bg-red-50 border-red-300 pointer-events-none opacity-60" :
-                    item?.id?.toString().startsWith("temp-") 
-                        ? "bg-emerald-50/40 border-emerald-200 hover:border-emerald-400 shadow-sm"
-                        : "bg-white hover:border-orange-300 hover:shadow-md"
+                    initialItem?.isTemp 
+                        ? "hidden"
+                        : "bg-white hover:border-orange-300"
                 }`}
             >
-                {isEdited && (
-                    <button
-                        onClick={handleSave}
-                        disabled={isSaving}
-                        className="absolute -top-3 -right-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white h-8 px-4 rounded-full shadow-lg shadow-orange-500/30 z-10 text-[11px] font-bold flex items-center gap-1.5 hover:from-orange-600 hover:to-orange-700 transition-all hover:scale-105 active:scale-95 disabled:opacity-70 disabled:pointer-events-none ring-2 ring-white"
-                    >
-                        {isSaving ? (
-                            <Loader2 size={14} strokeWidth={3} className="animate-spin" />
-                        ) : (
-                            <CheckCircle2 size={14} strokeWidth={3} />
-                        )}
-                        {isSaving ? "SAVING..." : "SAVE"}
-                    </button>
-                )}
 
-                <div className="flex items-center gap-4 flex-1 min-w-0 pr-2 sm:pr-4">
+
+                <div 
+                    className="flex items-center gap-4 flex-1 min-w-0 pr-2 sm:pr-4 cursor-pointer transition-opacity hover:opacity-80"
+                    onClick={() => handleOpenChange(true)}
+                >
                     <div className="relative h-16 w-16 sm:h-20 sm:w-20 shrink-0 rounded-lg overflow-hidden bg-muted border border-border/50">
                         {item?.image ? (
                             <ItemImage 
@@ -109,7 +116,7 @@ export default function MenuItemRow({
                             </div>
                         )}
                         {item?.dietaryType && (
-                            <div className="absolute top-1 left-1 bg-white/90 backdrop-blur-sm rounded-sm p-0.5 shadow-xs">
+                            <div className="absolute top-1 left-1 bg-white/90 backdrop-blur-sm rounded-sm p-0.5">
                                 <div className={`w-3 h-3 rounded-sm border border-current flex items-center justify-center ${
                                     item.dietaryType === "veg" ? "text-green-600" :
                                     item.dietaryType === "non-veg" ? "text-red-600" :
@@ -156,32 +163,17 @@ export default function MenuItemRow({
                         />
                     </div>
                     
-                    <div className="flex flex-col gap-1 sm:gap-1.5">
-                        <SheetTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 text-muted-foreground hover:text-foreground bg-muted/30 hover:bg-muted">
-                                <Edit2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                            </Button>
-                        </SheetTrigger>
-                        <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-7 w-7 sm:h-8 sm:w-8 text-red-400 hover:text-red-600 bg-red-50/50 hover:bg-red-100"
-                            onClick={handleDelete}
-                            disabled={isDeleting}
-                        >
-                            {isDeleting ? <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" /> : <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
-                        </Button>
-                    </div>
+
                 </div>
             </div>
 
-            <SheetContent className="w-full sm:max-w-xl md:max-w-2xl overflow-y-auto pb-24 border-l bg-gray-50 dark:bg-zinc-950">
-                <SheetHeader className="mb-6">
+            <SheetContent className="w-full sm:max-w-xl md:max-w-2xl p-0 flex flex-col bg-gray-50 dark:bg-zinc-950 border-l gap-0">
+                <SheetHeader className="p-4 sm:p-6 bg-white dark:bg-zinc-900 border-b shrink-0">
                     <SheetTitle>Edit Menu Item</SheetTitle>
                     <SheetDescription>Update details, pricing, and variants for this item.</SheetDescription>
                 </SheetHeader>
                 
-                <div className="p-4 sm:p-5 bg-white dark:bg-zinc-900/40 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
+                <div className="flex-1 overflow-y-auto p-5 sm:p-7 space-y-10 bg-white dark:bg-zinc-950">
                     <ItemDetails 
                         item={item}
                         updateField={updateField}
@@ -199,20 +191,21 @@ export default function MenuItemRow({
                     />
                 </div>
                 
-                <div className="sticky bottom-0 left-0 right-0 p-4 -mx-6 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md border-t border-gray-200 dark:border-gray-800 z-10 flex items-center justify-between sm:justify-end gap-3 mt-8">
+                <div className="shrink-0 p-4 bg-white dark:bg-zinc-900 border-t flex items-center gap-3 w-full">
                     <Button 
                         variant="secondary" 
-                        onClick={() => setIsSheetOpen(false)}
-                        className="w-full sm:w-auto bg-gray-100 hover:bg-gray-200 text-gray-700 border-0"
+                        onClick={() => handleOpenChange(false)}
+                        className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 border-0 h-11 text-[15px] font-bold"
                     >
+                        <X className="h-4 w-4 mr-2" />
                         Cancel
                     </Button>
                     <Button 
                         onClick={handleSave} 
                         disabled={isSaving || !isEdited} 
-                        className="w-full sm:w-auto shadow-md bg-orange-600 hover:bg-orange-700 text-white"
+                        className="flex-1 bg-orange-600 hover:bg-orange-700 text-white h-11 text-[15px] font-bold"
                     >
-                        {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                        {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
                         {isSaving ? "Saving..." : "Save Changes"}
                     </Button>
                 </div>

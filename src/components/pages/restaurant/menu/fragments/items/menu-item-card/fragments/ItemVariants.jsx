@@ -17,10 +17,10 @@ export default function ItemVariants({
             {variants.length > 0 ? (
                 <div className="space-y-6">
                     {variants.map((group, gIdx) => (
-                        <div key={gIdx} className="bg-white dark:bg-zinc-900/40 border border-gray-200 dark:border-gray-800 rounded-xl p-4 sm:p-5 shadow-sm relative group/variant">
+                        <div key={gIdx} className="bg-white dark:bg-zinc-900/40 border border-gray-200 dark:border-gray-800 rounded-xl p-4 sm:p-5 relative group/variant">
                             <button
                                 onClick={() => deleteVariantGroup(gIdx)}
-                                className="absolute -top-3 -right-3 bg-white dark:bg-zinc-900 border border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 rounded-full p-1.5 shadow-sm opacity-0 group-hover/variant:opacity-100 transition-all focus:opacity-100"
+                                className="absolute -top-3 -right-3 bg-white dark:bg-zinc-900 border border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 rounded-full p-1.5 transition-all shadow-sm z-10"
                                 title="Delete Variant Group"
                             >
                                 <Trash2 size={14} />
@@ -114,7 +114,7 @@ export default function ItemVariants({
                     </div>
                     <button
                         onClick={addVariantGroup}
-                        className="text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 px-4 py-2 rounded-md shadow-sm transition-colors whitespace-nowrap"
+                        className="text-xs font-bold text-white bg-orange-600 hover:bg-orange-700 px-4 py-2 rounded-md transition-colors whitespace-nowrap"
                     >
                         Add Variants
                     </button>
@@ -122,16 +122,16 @@ export default function ItemVariants({
             )}
             
             {variants.length === 0 && (
-                <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
-                    <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Quick Add:</span>
+                <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800 relative">
+                    <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar flex-nowrap w-full">
+                        <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider shrink-0 mr-1">Quick Add:</span>
                         {SUGGESTED_VARIANTS.map(sug => (
                             <button
                                 key={sug.property_name}
                                 onClick={() => addSuggestedVariant(sug)}
-                                className="text-[11px] font-bold bg-white dark:bg-zinc-900 border border-gray-200 dark:border-gray-800 hover:border-orange-300 hover:bg-orange-50 text-gray-600 dark:text-gray-300 px-3 py-1.5 rounded-full transition-all flex items-center gap-1 shadow-sm"
+                                className="shrink-0 text-[12px] font-bold bg-white dark:bg-zinc-900 border border-gray-200 dark:border-gray-800 hover:border-orange-300 hover:bg-orange-50 text-gray-600 dark:text-gray-300 px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5"
                             >
-                                <Plus size={12} strokeWidth={2.5} className="text-orange-500" /> {sug.property_name}
+                                <Plus size={14} strokeWidth={2.5} className="text-orange-500" /> {sug.property_name}
                             </button>
                         ))}
                     </div>

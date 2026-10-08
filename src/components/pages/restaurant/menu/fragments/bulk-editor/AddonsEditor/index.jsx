@@ -15,7 +15,7 @@ import { useAddonGroup } from "@/store/hooks/useAddonGroup";
 export function AddonsEditor() {
     const { restaurantId } = useRestaurant();
     const { rawCategories: categories = [], isLoading: isLoadingCats } = useCategory(restaurantId);
-    const { items = [], isLoading: isLoadingItems } = useItem(restaurantId, { fetchAll: true });
+    const { items = [], isLoading: isLoadingItems } = useItem(restaurantId, {});
     const { addonGroups, addGroup, updateGroup, deleteGroup, isLoading: isLoadingAddons } = useAddonGroup(restaurantId);
     
     const [selectedGroups, setSelectedGroups] = useState([]);

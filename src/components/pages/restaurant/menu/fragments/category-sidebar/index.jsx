@@ -33,14 +33,14 @@ export default function CategorySidebar({
             </button>
 
             <aside className={`flex h-full w-full flex-col border-r border-border/60 bg-card/80 dark:bg-zinc-950/80 backdrop-blur-md shadow-xs overflow-hidden transition-all duration-300`}>
-                <div className="p-3 border-b border-border/40">
-                    <div className={cn("flex p-1 bg-gray-100/80 dark:bg-zinc-900/80 border border-gray-200/60 dark:border-zinc-800 rounded-lg w-full transition-all duration-300", isCollapsed ? "flex-col gap-1 items-center" : "items-center")}>
+                <div className="hidden sm:block p-3 border-b border-border/40 bg-gray-50/30 dark:bg-zinc-950/30">
+                    <div className={cn("flex p-1 bg-gray-200/50 dark:bg-zinc-900 border border-border/50 rounded-xl w-full transition-all duration-300 shadow-inner", isCollapsed ? "flex-col gap-1 items-center" : "items-center")}>
                         <button 
                             onClick={() => setActiveView("MENU")}
                             className={cn(
-                                "rounded-md text-sm font-semibold transition-all flex justify-center items-center gap-2",
+                                "rounded-lg text-sm font-semibold transition-all duration-300 flex justify-center items-center gap-2",
                                 isCollapsed ? "w-10 h-10" : "flex-1 py-1.5 truncate",
-                                activeView === "MENU" ? "bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 shadow-2xs border border-orange-200 text-orange-600" : "text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-zinc-200"
+                                activeView === "MENU" ? "bg-white dark:bg-zinc-800 text-orange-600 shadow-sm border border-black/5 dark:border-white/5 scale-[1.02]" : "text-gray-500 dark:text-zinc-400 hover:text-gray-800 dark:hover:text-zinc-200"
                             )}
                             title="Menu"
                         >
@@ -52,9 +52,9 @@ export default function CategorySidebar({
                                 if (!activeBulkMode) setActiveBulkMode("PRICE");
                             }}
                             className={cn(
-                                "rounded-md text-sm font-semibold transition-all flex justify-center items-center gap-2",
+                                "rounded-lg text-sm font-semibold transition-all duration-300 flex justify-center items-center gap-2",
                                 isCollapsed ? "w-10 h-10" : "flex-1 py-1.5 truncate",
-                                activeView === "BULK" ? "bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 shadow-2xs border border-orange-200 text-orange-600" : "text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-zinc-200"
+                                activeView === "BULK" ? "bg-white dark:bg-zinc-800 text-orange-600 shadow-sm border border-black/5 dark:border-white/5 scale-[1.02]" : "text-gray-500 dark:text-zinc-400 hover:text-gray-800 dark:hover:text-zinc-200"
                             )}
                             title="Bulk Editor"
                         >

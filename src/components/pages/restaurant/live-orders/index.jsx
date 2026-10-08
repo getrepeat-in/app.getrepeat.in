@@ -97,9 +97,12 @@ export default function LiveOrders() {
         }
     };
 
+    const hasData = data?.data?.orders?.length > 0 || (Array.isArray(data?.data) && data.data.length > 0);
+
     return (
-        <div className="flex flex-col bg-white dark:bg-zinc-900 sm:m-4 px-3 py-3 pb-24 sm:p-4 md:p-5 space-y-3 sm:space-y-6 sm:rounded-md sm:border sm:border-border/40 sm:shadow-xs min-w-0 h-full">
+        <div className="flex flex-col bg-white dark:bg-zinc-900 sm:m-4 px-3 py-3 sm:p-4 md:p-5 space-y-3 sm:space-y-6 sm:rounded-md sm:border sm:border-border/40 sm:shadow-xs min-w-0 h-full">
             <DataTable
+                containerClassName={!hasData && !isLoading ? "" : "border-0 shadow-none bg-transparent sm:border sm:shadow-xs sm:bg-white dark:sm:bg-zinc-950"}
                 title={
                     <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 border border-primary/20 shadow-xs">
@@ -153,7 +156,7 @@ export default function LiveOrders() {
                     title: "No live orders",
                     description: "There are no live orders matching your criteria.",
                 }}
-                
+                gridClassName="px-0 py-2 sm:p-0"
                 renderGrid={(rows) => (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pb-4">
                         {rows.map((order) => (

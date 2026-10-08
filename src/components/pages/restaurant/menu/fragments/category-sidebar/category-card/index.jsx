@@ -81,8 +81,10 @@ export default function CategoryCard({
     return (
         <div
             className={cn(
-                "group flex flex-col rounded-md border transition-all duration-300 overflow-hidden",
-                isExpanded ? "border-border/50 bg-muted/30 shadow-sm" : "border-transparent bg-transparent hover:border-border hover:bg-muted/50"
+                "group flex flex-col rounded-xl border transition-all duration-300 overflow-hidden mb-2",
+                isCategoryActive 
+                    ? "border-orange-200 dark:border-orange-900/50 bg-gradient-to-r from-orange-50/80 to-white dark:from-orange-950/20 dark:to-zinc-900 shadow-sm ring-1 ring-orange-500/10" 
+                    : "border-border/40 bg-white/50 dark:bg-zinc-900/50 hover:border-border/80 hover:bg-white hover:shadow-sm"
             )}
             style={{
                 animationDelay: `${index * 30}ms`,
@@ -90,8 +92,8 @@ export default function CategoryCard({
             }}
         >
             <div className={cn(
-                "relative flex min-w-0 flex-1 items-center gap-3 py-2 pl-3 pr-2 transition-colors",
-                isCategoryActive ? "bg-primary/10" : "group-hover:bg-muted/50"
+                "relative flex min-w-0 flex-1 items-center gap-3 py-3 pl-3 pr-2 transition-colors cursor-pointer",
+                isCategoryActive ? "" : ""
             )}>
                 <Button
                     type="button"
@@ -130,14 +132,16 @@ export default function CategoryCard({
                             className="flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden text-left"
                         >
                             <div className={cn(
-                                "flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors",
-                                isCategoryActive ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground group-hover:bg-background group-hover:text-foreground"
+                                "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-all duration-300",
+                                isCategoryActive 
+                                    ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-md shadow-orange-500/30 scale-105" 
+                                    : "bg-gray-100/80 dark:bg-zinc-800 text-gray-500 group-hover:bg-gray-200 dark:group-hover:bg-zinc-700"
                             )}>
-                                <FolderKanban className="h-4 w-4" />
+                                <FolderKanban className={cn("transition-transform", isCategoryActive ? "h-4.5 w-4.5" : "h-4 w-4")} />
                             </div>
 
                             <div className="min-w-0 flex-1">
-                                <p className={cn("truncate text-sm font-semibold flex items-center gap-2", isCategoryActive ? "text-primary" : "text-foreground")}>
+                                <p className={cn("truncate text-sm font-bold flex items-center gap-2 transition-colors", isCategoryActive ? "text-orange-700 dark:text-orange-400" : "text-gray-700 dark:text-gray-200 group-hover:text-gray-900")}>
                                     <span className="truncate">{category.name}</span>
                                 </p>
                                 <p className="text-[10px] text-muted-foreground">
@@ -158,7 +162,10 @@ export default function CategoryCard({
 
             <div className={cn("grid transition-all duration-300 ease-in-out", isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0")}>
                 <div className="overflow-hidden">
-                    <div className="border-t border-border/50 bg-white/40 px-2.5 py-2.5">
+                    <div className={cn(
+                        "border-t px-2.5 py-3 transition-colors",
+                        isCategoryActive ? "border-orange-100 dark:border-orange-900/30 bg-orange-50/30 dark:bg-orange-950/10" : "border-border/50 bg-gray-50/50 dark:bg-zinc-900/30"
+                    )}>
                         <SubCategoryList
                             categoryId={category.id}
                             subcategories={category.subcategories}
@@ -202,9 +209,14 @@ export default function CategoryCard({
                         ) : (
                             <Button
                                 type="button"
-                                variant="ghost"
+                                variant="outline"
                                 size="sm"
-                                className="mt-2 w-full justify-start rounded-md text-muted-foreground hover:text-foreground"
+                                className={cn(
+                                    "mt-2 w-full justify-start rounded-lg border-dashed transition-all",
+                                    isCategoryActive 
+                                        ? "border-orange-200 text-orange-600 hover:bg-orange-100/50 hover:text-orange-700 dark:border-orange-900/50" 
+                                        : "border-border/60 text-muted-foreground hover:border-border hover:text-foreground hover:bg-white/50"
+                                )}
                                 onClick={() => setAddingSubCategory(true)}
                             >
                                 <Plus className="mr-2 h-3.5 w-3.5" />

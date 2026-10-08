@@ -7,7 +7,6 @@ export default function ItemDetails({ item, updateField }) {
         { label: "VEG", value: "veg" },
         { label: "NON-VEG", value: "non-veg" },
         { label: "EGG", value: "egg" },
-        { label: "VEGAN", value: "vegan" },
     ];
 
     return (

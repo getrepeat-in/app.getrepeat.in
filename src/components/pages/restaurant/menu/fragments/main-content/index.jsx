@@ -1,16 +1,18 @@
 import React from "react";
+import dynamic from "next/dynamic";
 import Loader from "@/components/global/loader";
 import { Button } from "@/components/ui/button";
 import MenuItemList from "../items/menu-item-list";
 import EmptyState from "@/components/global/empty-state";
-import { ImageEditor } from "../bulk-editor/ImageEditor";
-import { PriceEditor } from "../bulk-editor/PriceEditor";
-import { ImportEditor } from "../bulk-editor/ImportEditor";
-import { AddonsEditor } from "../bulk-editor/AddonsEditor";
-import { DescriptionEditor } from "../bulk-editor/DescriptionEditor";
-import { StructureOrganizer } from "../bulk-editor/StructureOrganizer";
-import { UtensilsCrossed, Plus, FolderTree, ArrowLeft } from "lucide-react";
+import { UtensilsCrossed, Plus, FolderTree } from "lucide-react";
 import { CategoryFormPopover } from "../category-sidebar/fragments/category-form-popover";
+
+const ImageEditor = dynamic(() => import("../bulk-editor/ImageEditor").then(m => m.ImageEditor), { loading: () => <div className="flex-1 flex items-center justify-center p-6"><Loader /></div> });
+const PriceEditor = dynamic(() => import("../bulk-editor/PriceEditor").then(m => m.PriceEditor), { loading: () => <div className="flex-1 flex items-center justify-center p-6"><Loader /></div> });
+const ImportEditor = dynamic(() => import("../bulk-editor/ImportEditor").then(m => m.ImportEditor), { loading: () => <div className="flex-1 flex items-center justify-center p-6"><Loader /></div> });
+const AddonsEditor = dynamic(() => import("../bulk-editor/AddonsEditor").then(m => m.AddonsEditor), { loading: () => <div className="flex-1 flex items-center justify-center p-6"><Loader /></div> });
+const DescriptionEditor = dynamic(() => import("../bulk-editor/DescriptionEditor").then(m => m.DescriptionEditor), { loading: () => <div className="flex-1 flex items-center justify-center p-6"><Loader /></div> });
+const StructureOrganizer = dynamic(() => import("../bulk-editor/StructureOrganizer").then(m => m.StructureOrganizer), { loading: () => <div className="flex-1 flex items-center justify-center p-6"><Loader /></div> });
 
 export function MainContent({
     activeView,
@@ -37,15 +39,6 @@ export function MainContent({
         }
 
         if (activeView === "MENU") {
-            if (activeSubCategory) {
-                return (
-                    <MenuItemList 
-                        activeCategoryId={activeCategory}
-                        activeSubCategoryId={activeSubCategory}
-                    />
-                );
-            }
-
             if (!isCategoriesLoading && (!categories || categories.length === 0)) {
                 return (
                     <div className="flex-1 flex items-center justify-center w-full p-1 h-full dark:bg-zinc-950">
@@ -68,14 +61,10 @@ export function MainContent({
             }
 
             return (
-                <div className="flex-1 flex items-center justify-center p-2 bg-white dark:bg-zinc-950">
-                    <EmptyState
-                        icon={FolderTree}
-                        className={"h-full w-full"}
-                        title="No Subcategory Selected"
-                        description="Select a subcategory from the sidebar to view its menu items."
-                    />
-                </div>
+                <MenuItemList 
+                    activeCategoryId={activeCategory}
+                    activeSubCategoryId={activeSubCategory}
+                />
             );
         }
 
@@ -107,13 +96,6 @@ export function MainContent({
 
     return (
         <div className="flex flex-col h-full w-full relative">
-            <div className="sm:hidden flex items-center p-2 border-b border-border/60 bg-muted/30">
-                <Button variant="ghost" size="sm" onClick={onBack} className="gap-2 text-muted-foreground hover:text-foreground h-8">
-                    <ArrowLeft className="w-4 h-4" />
-                    Back to menu
-                </Button>
-            </div>
-            
             <div className="flex-1 overflow-hidden flex flex-col min-h-0 relative">
                 {renderContent()}
             </div>

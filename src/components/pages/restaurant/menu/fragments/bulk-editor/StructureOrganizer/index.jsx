@@ -15,7 +15,7 @@ import { SelectDestination } from "./fragments/SelectDestination";
 export function StructureOrganizer() {
     const { restaurantId } = useRestaurant();
     const { rawCategories: categories = [], isLoading: isLoadingCats, addCategory, updateCategory, deleteCategory } = useCategory(restaurantId);
-    const { items = [], isLoading: isLoadingItems, deleteItem } = useItem(restaurantId, { fetchAll: true });
+    const { items = [], isLoading: isLoadingItems, deleteItem } = useItem(restaurantId, {});
     
     const [selectedSources, setSelectedSources] = useState({ categories: [], subcategories: [], items: [] });
     const [targetDestination, setTargetDestination] = useState(null); // { id, type: 'category' | 'subcategory' | 'main' }
