@@ -91,9 +91,9 @@ const BannerSection = ({ formik }) => {
           </h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Add banners that will appear on the top of your digital storefront.</p>
         </div>
-        <div>
-          <label htmlFor="new-banner-upload" className={`inline-flex cursor-pointer h-10 items-center justify-center rounded-md border border-primary bg-primary/10 px-4 py-2 text-sm font-medium text-primary shadow-sm hover:bg-primary/20 transition-all ${uploadingNew ? 'opacity-70 pointer-events-none' : ''}`}>
-            {uploadingNew ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
+        <div className="w-full md:w-auto mt-2 md:mt-0">
+          <label htmlFor="new-banner-upload" className={`flex md:inline-flex w-full md:w-auto cursor-pointer h-11 items-center justify-center rounded-md border border-orange-200 bg-orange-50 px-6 py-2 text-[15px] font-bold text-orange-600 shadow-sm hover:bg-orange-100 hover:border-orange-300 transition-all active:scale-[0.98] ${uploadingNew ? 'opacity-70 pointer-events-none' : ''}`}>
+            {uploadingNew ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-5 w-5" />}
             {uploadingNew ? "Uploading..." : "Add Banner"}
           </label>
           <input 

@@ -803,15 +803,15 @@ export function NewOrderAlertModal() {
           <div className="p-4 bg-muted/30 border-t border-border/60 flex flex-col gap-2 shrink-0">
             {!showRejectReason ? (
               <>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 w-full">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setShowRejectReason(true)}
                     disabled={isProcessing}
-                    className="flex-1 h-12 rounded-xl text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/30 font-bold gap-2 transition-all cursor-pointer text-sm"
+                    className="flex-1 h-12 rounded-md text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200 hover:border-red-300 font-bold gap-2 transition-all cursor-pointer text-[15px]"
                   >
-                    <XCircle className="w-4.5 h-4.5" />
+                    <XCircle className="w-5 h-5" />
                     <span>Reject</span>
                   </Button>
 
@@ -819,16 +819,16 @@ export function NewOrderAlertModal() {
                     type="button"
                     onClick={handleAcceptCurrent}
                     disabled={isProcessing}
-                    className="flex-2 h-12 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-lg shadow-primary/20 hover:shadow-primary/30 gap-2 transition-all cursor-pointer text-sm"
+                    className="flex-1 h-12 rounded-md bg-orange-600 hover:bg-orange-700 text-white font-bold shadow-md gap-2 transition-all cursor-pointer text-[15px]"
                   >
                     {isProcessing ? (
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
                         <span>Accepting...</span>
-                      </div>
+                      </>
                     ) : (
                       <>
-                        <CheckCircle2 className="w-4.5 h-4.5" />
+                        <CheckCircle2 className="w-5 h-5" />
                         <span>Accept & Prepare</span>
                       </>
                     )}

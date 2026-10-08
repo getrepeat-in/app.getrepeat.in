@@ -116,24 +116,16 @@ const WebsiteConfigPage = () => {
     },
   });
 
-  if (!isMounted || isLoading) {
-    return (
-      <div className="flex-1 w-full max-w-[1400px] mx-auto bg-gray-50/50 dark:bg-zinc-950 min-h-screen">
-        <div className="p-3 md:p-4 space-y-8">
-          <div className="bg-white dark:bg-zinc-900 rounded-xl border border-border/40 shadow-sm overflow-hidden min-h-[400px] flex items-center justify-center">
-            <Loader />
-          </div>
-        </div>
-      </div>
-    );
+  if (!isMounted) {
+    return null;
   }
 
   return (
-    <div className="flex-1 bg-white m-4 dark:bg-zinc-950 min-h-screen">
-      <div className="p-3 md:p-4 space-y-4">
+    <div className="flex-1 bg-white dark:bg-zinc-950 min-h-screen">
+      <div className="p-2 md:p-4 space-y-4">
         
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
+          <div className="hidden md:block">
             <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Website Configuration</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage your storefront banners and social links.</p>
           </div>
@@ -141,18 +133,26 @@ const WebsiteConfigPage = () => {
           <Button 
             onClick={formik.handleSubmit}
             disabled={isPending || !formik.dirty} 
-            className="h-11 px-8 rounded-md font-medium shadow-md hover:shadow-lg transition-all active:scale-[0.98] bg-primary hover:bg-primary/90 text-white"
+            className="w-full md:w-auto h-11 px-8 rounded-md font-medium shadow-md hover:shadow-lg transition-all active:scale-[0.98] bg-primary hover:bg-primary/90 text-white"
           >
             {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
             {isPending ? "Saving..." : "Save Configuration"}
           </Button>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-border/40 shadow-sm p-5 md:p-8 space-y-12">
-          <BannerSection formik={formik} />
-          <ThemeSection formik={formik} />
-          <OrderingSection formik={formik} isRazorpayConnected={isRazorpayConnected} restaurantId={restaurantId} />
-          <SocialLinksSection formik={formik} />
+        <div className="bg-white dark:bg-zinc-900 rounded-xl border-0 md:border border-border/40 shadow-none md:shadow-sm p-1 md:p-8 space-y-10 md:space-y-12">
+          {isLoading ? (
+            <div className="min-h-[400px] flex items-center justify-center">
+              <Loader />
+            </div>
+          ) : (
+            <>
+              <BannerSection formik={formik} />  
+              <ThemeSection formik={formik} />
+              <OrderingSection formik={formik} isRazorpayConnected={isRazorpayConnected} restaurantId={restaurantId} />
+              <SocialLinksSection formik={formik} />
+            </>
+          )}
         </div>
       </div>
     </div>

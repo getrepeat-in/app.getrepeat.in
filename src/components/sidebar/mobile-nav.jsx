@@ -15,7 +15,7 @@ export function MobileNav() {
   const navItems = [
     items.find(i => i.title === "Live Orders"),
     items.find(i => i.title === "Menu"),
-    items.find(i => i.title === "Orders"),
+    items.find(i => i.title === "Website"),
     items.find(i => i.title === "Settings"),
   ].filter(Boolean);
 
