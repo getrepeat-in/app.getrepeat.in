@@ -1,8 +1,10 @@
 "use client";
 import { store } from "@/store";
-import { useState } from "react";
 import { Provider } from "react-redux";
 import { AppClerkProvider } from "./clerk";
+import { useState, useEffect } from "react";
+import { Capacitor } from "@capacitor/core";
+import { SplashScreen } from "@capacitor/splash-screen";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import NotificationBanner from "@/components/global/notification-banner";
@@ -19,6 +21,12 @@ export function Providers({ children }) {
         },
       }),
   );
+
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      SplashScreen.hide().catch(console.error);
+    }
+  }, []);
 
   return (
     <Provider store={store}>

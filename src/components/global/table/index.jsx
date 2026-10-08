@@ -30,8 +30,10 @@ export default function DataTable({
   title,
   subtitle,
   actions,
+  searchActions,
   toolbar,
   hideToolbar = false,
+  hideTitleOnMobile = false,
   searchable = false,
   searchPlaceholder = "Search records...",
   searchQuery: controlledSearchQuery,
@@ -191,10 +193,12 @@ export default function DataTable({
         <TableToolbar
           title={title}
           subtitle={subtitle}
+          hideTitleOnMobile={hideTitleOnMobile}
           totalCount={activeTotalCount !== undefined ? activeTotalCount : sourceData.length > 0 ? sourceData.length : undefined}
           searchable={searchable}
           searchPlaceholder={searchPlaceholder}
           searchQuery={activeSearchQuery}
+          searchActions={searchActions}
           onSearchChange={(val) => {
             if (controlledOnSearchChange) {
               controlledOnSearchChange(val);

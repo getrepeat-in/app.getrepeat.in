@@ -327,7 +327,7 @@ export function NewOrderAlertModal() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.94, y: 16 }}
             transition={{ type: "spring", damping: 26, stiffness: 360 }}
-            className="relative w-full m ax-w-xl bg-card text-card-foreground border border-border/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] ring-1 ring-black/5"
+            className="relative w-full max-w-xl bg-card text-card-foreground border border-border/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] ring-1 ring-black/5"
           >
           <div className="bg-white dark:bg-zinc-950 px-5 py-4 flex items-center justify-between shrink-0 border-b border-border shadow-sm">
             <div className="flex items-center gap-4">

@@ -98,7 +98,7 @@ export default function LiveOrders() {
     };
 
     return (
-        <div className="flex flex-col bg-white dark:bg-zinc-900 m-2 sm:m-4 p-3 sm:p-4 md:p-5 space-y-4 sm:space-y-6 rounded-md border border-border/40 shadow-xs min-w-0">
+        <div className="flex flex-col bg-white dark:bg-zinc-900 sm:m-4 px-3 py-3 pb-24 sm:p-4 md:p-5 space-y-3 sm:space-y-6 sm:rounded-md sm:border sm:border-border/40 sm:shadow-xs min-w-0 h-full">
             <DataTable
                 title={
                     <div className="flex items-center gap-2">
@@ -109,6 +109,7 @@ export default function LiveOrders() {
                     </div>
                 }
                 subtitle="Track and manage live customer orders in real-time"
+                hideTitleOnMobile={true}
                 columns={[]} 
                 rows={data?.data?.orders || []}
                 isLoading={isLoading}
@@ -129,32 +130,18 @@ export default function LiveOrders() {
                     setPage(1);
                 }}
 
-                actions={
-                    <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto">
-                        <div
-                            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 select-none shadow-2xs"
-                            title="Real-time live sync active"
-                        >
-                            <span className="relative flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                            </span>
-                            <span className="text-[11px] font-semibold tracking-wide uppercase">
-                                Live
-                            </span>
-                        </div>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => refetch()}
-                            disabled={isFetching}
-                            className="h-8.5 rounded-md border-gray-200 dark:border-zinc-800 shadow-2xs gap-1.5 shrink-0"
-                            title="Refresh orders"
-                        >
-                            <RefreshCw className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`} />
-                            <span className="hidden sm:inline text-xs">Refresh</span>
-                        </Button>
-                    </div>
+                searchActions={
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => refetch()}
+                        disabled={isFetching}
+                        className="h-8.5 rounded-md border-gray-200 dark:border-zinc-800 shadow-2xs gap-1.5 shrink-0 px-3"
+                        title="Refresh orders"
+                    >
+                        <RefreshCw className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`} />
+                        <span className="hidden sm:inline text-xs">Refresh</span>
+                    </Button>
                 }
 
                 pagination
