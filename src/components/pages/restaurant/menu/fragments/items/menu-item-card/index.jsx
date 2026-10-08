@@ -1,13 +1,11 @@
-import dynamic from "next/dynamic";
 import { getImageUrl } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import Loader from "@/components/global/loader";
 import { useItemVariants } from "./hooks/useItemVariants";
 
-const ItemDetails = dynamic(() => import("./fragments/ItemDetails"), { loading: () => <div className="p-4 flex justify-center"><Loader /></div> });
-const ItemVariants = dynamic(() => import("./fragments/ItemVariants"), { loading: () => <div className="p-4 flex justify-center"><Loader /></div> });
+import ItemDetails from "./fragments/ItemDetails";
+import ItemVariants from "./fragments/ItemVariants";
 
 import { ItemImage } from "@/components/global/item-image";
 import useNotification from "@/store/hooks/useNotification";

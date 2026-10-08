@@ -11,6 +11,7 @@ import { DietaryBadge } from "@/components/global/dietary-badge";
 import { startOrderRinger, stopOrderRinger } from "@/lib/sound/orderChime";
 import { getPusherClient, getRestaurantChannelName, PUSHER_EVENTS } from "@/lib/pusher/client";
 import { Bell, Volume2, VolumeX, CheckCircle2, XCircle, MapPin, Phone, User, Clock, AlertTriangle, Receipt, FileText, ChevronLeft, ChevronRight, CheckCheck, Utensils, Store } from "lucide-react";
+import { getImageUrl } from "@/lib/utils";
 
 
 export function NewOrderAlertModal() {
@@ -334,9 +335,13 @@ export function NewOrderAlertModal() {
               {currentRestaurant?.imageUrl || currentRestaurant?.logo || currentRestaurant?.image ? (
                 <div className="w-12 h-12 rounded-lg bg-gray-50 dark:bg-zinc-900 border border-border shadow-sm overflow-hidden shrink-0 flex items-center justify-center">
                   <img 
-                    src={currentRestaurant.imageUrl || currentRestaurant.logo || currentRestaurant.image} 
+                    src={getImageUrl(currentRestaurant.imageUrl || currentRestaurant.logo || currentRestaurant.image, true)} 
                     alt={currentRestaurant.name || "Restaurant"} 
-                    className="w-full h-full object-cover" 
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = "https://ui-avatars.com/api/?name=" + encodeURIComponent(currentRestaurant.name || "R");
+                    }} 
                   />
                 </div>
               ) : (
