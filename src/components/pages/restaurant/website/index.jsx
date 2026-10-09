@@ -124,7 +124,7 @@ const WebsiteConfigPage = () => {
     <div className="flex-1 bg-white dark:bg-zinc-950 min-h-screen">
       <div className="p-2 md:p-4 space-y-4">
         
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sticky top-0 z-40 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-md py-3 -mx-2 px-2 md:mx-0 md:px-0 md:py-0 border-b border-border/30 md:border-0">
           <div className="hidden md:block">
             <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Website Configuration</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage your storefront banners and social links.</p>

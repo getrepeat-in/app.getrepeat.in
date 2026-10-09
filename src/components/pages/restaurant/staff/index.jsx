@@ -64,11 +64,11 @@ export default function StaffManagement() {
         activeFilterTab={statusFilter}
         onFilterTabChange={setStatusFilter}
         actions={
-          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <Button
               onClick={handleAddStaff}
               size="sm"
-              className="h-8.5 rounded-md bg-green-600 hover:bg-green-700 text-white shadow-2xs gap-1.5 font-semibold text-xs shrink-0 cursor-pointer"
+              className="flex-1 sm:flex-none w-full sm:w-auto h-9 sm:h-8.5 rounded-md bg-green-600 hover:bg-green-700 text-white shadow-2xs gap-1.5 font-semibold text-xs shrink-0 cursor-pointer"
             >
               <Plus size={14} strokeWidth={2.5} />
               <span>Add Staff</span>
@@ -79,11 +79,11 @@ export default function StaffManagement() {
                 variant="outline"
                 size="sm"
                 onClick={() => refetch()}
-                className="h-8.5 rounded-md border-gray-200 dark:border-zinc-800 shadow-2xs gap-1.5 shrink-0 cursor-pointer"
+                className="h-9 w-9 sm:h-8.5 sm:w-auto px-0 sm:px-3 rounded-md border-gray-200 dark:border-zinc-800 shadow-2xs shrink-0 cursor-pointer flex items-center justify-center"
                 title="Refresh staff list"
               >
-                <RefreshCw className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline text-xs">Refresh</span>
+                <RefreshCw className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                <span className="hidden sm:inline text-xs ml-1.5">Refresh</span>
               </Button>
             )}
           </div>

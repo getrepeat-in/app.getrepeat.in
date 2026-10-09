@@ -7,7 +7,7 @@ import DataTable from "@/components/global/table";
 import { format, startOfDay, endOfDay } from "date-fns";
 import { OrderService } from "@/services/frontend/order";
 import { useRestaurant } from "@/store/hooks/useRestaurant";
-import { Receipt, Hash, Eye, RefreshCw, Filter } from "lucide-react";
+import { Receipt, Hash, Eye, RefreshCw, Filter, Search, X } from "lucide-react";
 import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {  ORDER_TAB_FILTERS,  ORDER_TYPE_OPTIONS,  DEFAULT_PAGE_SIZE, OrderTypeBadge,  StatusBadge,  PaymentBadge } from "./helpers";
@@ -172,9 +172,6 @@ export default function OrdersManagement() {
                 title="Orders Management"
                 subtitle="Track and manage live customer orders in real-time"
                 columns={columns}
-                rows={data?.data?.orders || []}
-                isLoading={isLoading}
-                
                 searchable
                 searchPlaceholder="Search by ID, name, or phone..."
                 searchQuery={searchQuery}
@@ -183,6 +180,19 @@ export default function OrdersManagement() {
                     setAppliedSearch(q);
                     setPage(1);
                 }}
+                searchActions={
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => refetch()}
+                        disabled={isFetching}
+                        className="h-9 w-9 sm:h-8.5 sm:w-auto px-0 sm:px-3 rounded-md border-gray-200 dark:border-zinc-800 shadow-2xs shrink-0 flex items-center justify-center"
+                        title="Refresh orders"
+                    >
+                        <RefreshCw className={`h-4 w-4 sm:h-3.5 sm:w-3.5 ${isFetching ? "animate-spin" : ""}`} />
+                        <span className="hidden sm:inline text-xs ml-1.5">Refresh</span>
+                    </Button>
+                }
 
                 filterTabs={filterTabs}
                 activeFilterTab={filter}
@@ -192,60 +202,40 @@ export default function OrdersManagement() {
                 }}
 
                 actions={
-                    <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto">
-                        <Select
-                            value={orderTypeFilter}
-                            onValueChange={(val) => {
-                                setOrderTypeFilter(val);
-                                setPage(1);
-                            }}
-                        >
-                            <SelectTrigger className="h-8.5 w-auto shrink-0 px-2.5 gap-1.5 text-xs font-medium rounded-md border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-gray-800 dark:text-zinc-200 shadow-2xs hover:bg-gray-50 dark:hover:bg-zinc-800/60">
-                                <div className="flex items-center gap-1.5">
-                                    <Filter size={13} className="text-gray-400 shrink-0" />
-                                    <SelectValue placeholder="All" />
-                                </div>
-                            </SelectTrigger>
-                            <SelectContent align="end" className="rounded-md min-w-[120px] border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-md">
-                                {ORDER_TYPE_OPTIONS.map((opt) => (
-                                    <SelectItem key={opt.value} value={opt.value} className="text-xs cursor-pointer">
-                                        {opt.iconEmoji ? `${opt.iconEmoji} ${opt.label}` : opt.label}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                    <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                            <Select
+                                value={orderTypeFilter}
+                                onValueChange={(val) => {
+                                    setOrderTypeFilter(val);
+                                    setPage(1);
+                                }}
+                            >
+                                <SelectTrigger className="h-9 sm:h-8.5 w-auto shrink-0 px-2.5 gap-1.5 text-xs font-medium rounded-md border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-gray-800 dark:text-zinc-200 shadow-2xs hover:bg-gray-50 dark:hover:bg-zinc-800/60">
+                                    <div className="flex items-center gap-1.5">
+                                        <Filter size={13} className="text-gray-400 shrink-0" />
+                                        <SelectValue placeholder="All" />
+                                    </div>
+                                </SelectTrigger>
+                                <SelectContent align="end" className="rounded-md min-w-[120px] border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-md">
+                                    {ORDER_TYPE_OPTIONS.map((opt) => (
+                                        <SelectItem key={opt.value} value={opt.value} className="text-xs cursor-pointer">
+                                            {opt.iconEmoji ? `${opt.iconEmoji} ${opt.label}` : opt.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
 
-                        <DatePickerWithRange 
-                            date={dateRange} 
-                            setDate={(range) => {
-                                setDateRange(range);
-                                setPage(1);
-                            }} 
-                        />
-
-                        <div
-                            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 select-none shadow-2xs"
-                            title="Real-time live sync active"
-                        >
-                            <span className="relative flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                            </span>
-                            <span className="text-[11px] font-semibold tracking-wide uppercase">
-                                Live
-                            </span>
+                            <div className="flex-1 sm:flex-none min-w-0">
+                                <DatePickerWithRange 
+                                    date={dateRange} 
+                                    setDate={(range) => {
+                                        setDateRange(range);
+                                        setPage(1);
+                                    }} 
+                                />
+                            </div>
                         </div>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => refetch()}
-                            disabled={isFetching}
-                            className="h-8.5 rounded-md border-gray-200 dark:border-zinc-800 shadow-2xs gap-1.5 shrink-0"
-                            title="Refresh orders"
-                        >
-                            <RefreshCw className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`} />
-                            <span className="hidden sm:inline text-xs">Refresh</span>
-                        </Button>
                     </div>
                 }
 

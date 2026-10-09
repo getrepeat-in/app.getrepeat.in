@@ -129,6 +129,8 @@ export default function SocialPage({ restaurantId: propRestaurantId }) {
       <DataTable
         title="Social Media & Instagram Feed"
         subtitle="Tag your Instagram reels and posts with menu items to make them shoppable"
+        hideTitleOnMobile={true}
+        hideToolbar={!isConnected}
         data={filteredPosts}
         isLoading={isLoading}
         error={queryError}

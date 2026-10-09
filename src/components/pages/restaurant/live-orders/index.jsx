@@ -139,11 +139,11 @@ export default function LiveOrders() {
                         size="sm"
                         onClick={() => refetch()}
                         disabled={isFetching}
-                        className="h-8.5 rounded-md border-gray-200 dark:border-zinc-800 shadow-2xs gap-1.5 shrink-0 px-3"
+                        className="h-9 w-9 sm:h-8.5 sm:w-auto px-0 sm:px-3 rounded-md border-gray-200 dark:border-zinc-800 shadow-2xs shrink-0 flex items-center justify-center"
                         title="Refresh orders"
                     >
-                        <RefreshCw className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`} />
-                        <span className="hidden sm:inline text-xs">Refresh</span>
+                        <RefreshCw className={`h-4 w-4 sm:h-3.5 sm:w-3.5 ${isFetching ? "animate-spin" : ""}`} />
+                        <span className="hidden sm:inline text-xs ml-1.5">Refresh</span>
                     </Button>
                 }
 

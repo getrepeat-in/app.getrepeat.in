@@ -139,12 +139,14 @@ export default function IntegrationsPage() {
 
   return (
     <div className="flex flex-col bg-white m-2 sm:m-4 p-3 sm:p-5 md:p-6 space-y-6 rounded-xl min-w-0">
-      <div className="border-b border-border/40 pb-4">
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900 dark:text-zinc-50 flex items-center gap-2">
-          <Puzzle className="w-6 h-6" />
+      <div className="border-b border-border/40 pb-5 mb-2 px-1">
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-zinc-50 flex items-center gap-3">
+          <div className="flex shrink-0 items-center justify-center h-10 w-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/50 text-indigo-600 dark:text-indigo-400 shadow-sm">
+            <Puzzle className="w-5 h-5" strokeWidth={2.5} />
+          </div>
           Integrations
         </h1>
-        <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+        <p className="text-[13px] sm:text-sm text-gray-500 dark:text-gray-400 mt-2.5 sm:mt-2 max-w-xl leading-relaxed">
           Manage your connected apps and services. Enable or disable them as needed.
         </p>
       </div>

@@ -59,7 +59,7 @@ export default function ReportsManagement() {
       return ReportService.getAnalytics(restaurantId, params);
     },
     enabled: !!restaurantId,
-    refetchInterval: 30000, // Background poll every 30 seconds
+    refetchInterval: 30000, 
   });
 
   const reportData = responseData?.data || {};
@@ -135,24 +135,16 @@ export default function ReportsManagement() {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Live Sync Status Indicator */}
-          <div
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 select-none shadow-2xs"
-            title={isFetching ? "Syncing latest data..." : "Auto-refreshing active"}
+        <div className="flex items-center gap-2 w-full lg:w-auto">
+          {/* Day Close / Print Report */}
+          <Button
+            size="sm"
+            onClick={() => setIsDayCloseOpen(true)}
+            className="flex-1 sm:w-auto h-9 px-3.5 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs gap-1.5 cursor-pointer shadow-sm shadow-primary/20 shrink-0"
           >
-            {isFetching ? (
-              <Loader2 className="w-2.5 h-2.5 animate-spin text-emerald-600 dark:text-emerald-400" />
-            ) : (
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
-            )}
-            <span className="text-[11px] uppercase tracking-wide">
-              {isFetching ? "Syncing" : "Live"}
-            </span>
-          </div>
+            <Printer className="w-3.5 h-3.5" />
+            <span>Day-End Report</span>
+          </Button>
 
           {/* Refresh Button */}
           <Button
@@ -160,13 +152,13 @@ export default function ReportsManagement() {
             size="sm"
             onClick={() => refetch()}
             disabled={isFetching}
-            className="h-9 px-3 rounded-lg border-border cursor-pointer shadow-xs gap-1.5"
+            className="h-9 w-9 sm:w-auto px-0 sm:px-3 rounded-lg border-border cursor-pointer shadow-xs shrink-0 flex items-center justify-center"
             title="Refresh analytics data"
           >
             <RefreshCw
               className={`w-3.5 h-3.5 ${isFetching ? "animate-spin text-primary" : ""}`}
             />
-            <span className="text-xs hidden sm:inline">
+            <span className="text-xs hidden sm:inline ml-1.5">
               {isFetching ? "Refreshing..." : "Refresh"}
             </span>
           </Button>
@@ -177,7 +169,7 @@ export default function ReportsManagement() {
             size="sm"
             onClick={handleExportCsv}
             disabled={isExporting || isLoading}
-            className="h-9 px-3 rounded-lg border-border cursor-pointer shadow-xs gap-1.5"
+            className="h-9 w-9 sm:w-auto px-0 sm:px-3 rounded-lg border-border cursor-pointer shadow-xs shrink-0 flex items-center justify-center"
             title="Download CSV report"
           >
             {isExporting ? (
@@ -185,19 +177,9 @@ export default function ReportsManagement() {
             ) : (
               <Download className="w-3.5 h-3.5" />
             )}
-            <span className="text-xs hidden sm:inline">
-              {isExporting ? "Exporting..." : "Export CSV"}
+            <span className="text-xs hidden sm:inline ml-1.5">
+              {isExporting ? "Exporting..." : "Export"}
             </span>
-          </Button>
-
-          {/* Day Close / Print Report */}
-          <Button
-            size="sm"
-            onClick={() => setIsDayCloseOpen(true)}
-            className="h-9 px-3.5 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs gap-1.5 cursor-pointer shadow-sm shadow-primary/20"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            <span>Day-End Report</span>
           </Button>
         </div>
       </div>

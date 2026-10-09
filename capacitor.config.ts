@@ -2,7 +2,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.getrepeat.app',
-  appName: 'getrepeat.in',
+  appName: 'GetRepeat',
   webDir: 'public',
   server: {
     url: 'https://app.getrepeat.in',
