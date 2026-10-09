@@ -1,5 +1,6 @@
 "use client";
 import { format } from "date-fns";
+import { getImageUrl } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useQueryClient } from "@tanstack/react-query";
@@ -10,8 +11,7 @@ import { useRestaurant } from "@/store/hooks/useRestaurant";
 import { DietaryBadge } from "@/components/global/dietary-badge";
 import { startOrderRinger, stopOrderRinger } from "@/lib/sound/orderChime";
 import { getPusherClient, getRestaurantChannelName, PUSHER_EVENTS } from "@/lib/pusher/client";
-import { Bell, Volume2, VolumeX, CheckCircle2, XCircle, MapPin, Phone, User, Clock, AlertTriangle, Receipt, FileText, ChevronLeft, ChevronRight, CheckCheck, Utensils, Store } from "lucide-react";
-import { getImageUrl } from "@/lib/utils";
+import { Bell, Volume2, VolumeX, CheckCircle2, XCircle, MapPin, Phone, User, Clock, AlertTriangle, Receipt, FileText, ChevronLeft, ChevronRight, CheckCheck, Utensils, Store, Loader2 } from "lucide-react";
 
 
 export function NewOrderAlertModal() {
