@@ -17,6 +17,7 @@ export default function CategorySidebar({
     setActiveView,
     activeBulkMode,
     setActiveBulkMode,
+    isMobile = false,
 }) {
     const { restaurantId } = useRestaurant();
     const { addCategory } = useCategory(restaurantId);
@@ -33,7 +34,7 @@ export default function CategorySidebar({
             </button>
 
             <aside className={`flex h-full w-full flex-col border-r border-border/60 bg-card/80 dark:bg-zinc-950/80 backdrop-blur-md shadow-xs overflow-hidden transition-all duration-300`}>
-                <div className="hidden sm:block p-3 border-b border-border/40 bg-gray-50/30 dark:bg-zinc-950/30">
+                <div className="block p-3 border-b border-border/40 bg-gray-50/30 dark:bg-zinc-950/30">
                     <div className={cn("flex p-1 bg-gray-200/50 dark:bg-zinc-900 border border-border/50 rounded-xl w-full transition-all duration-300 shadow-inner", isCollapsed ? "flex-col gap-1 items-center" : "items-center")}>
                         <button 
                             onClick={() => setActiveView("MENU")}
@@ -75,7 +76,7 @@ export default function CategorySidebar({
                     ) : (
                         <TooltipProvider delayDuration={200}>
                             <div className="flex flex-col gap-1 w-full">
-                                {BULK_EDIT_MODES.map((mode) => {
+                                {(isMobile ? BULK_EDIT_MODES.filter(mode => mode.id === 'IMAGE') : BULK_EDIT_MODES).map((mode) => {
                                     const Icon = mode.icon;
                                     const isActive = activeBulkMode === mode.id;
                                     

@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { useItem } from "@/store/hooks/useItem";
 import DataTable from "@/components/global/table";
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { MenuService } from "@/services/frontend/menu";
 import { useQueryClient } from "@tanstack/react-query";
 import { ImageSidebar } from "./fragments/ImageSidebar";
@@ -27,6 +28,31 @@ export function ImageEditor() {
     const [processingItemId, setProcessingItemId] = useState(null);
     const [bulkProgress, setBulkProgress] = useState({ current: 0, total: 0 });
     const cancelRef = useRef(false);
+
+    const [portalTarget, setPortalTarget] = useState(() => {
+        if (typeof document !== "undefined") {
+            return document.getElementById("image-editor-header-action");
+        }
+        return null;
+    });
+
+    useEffect(() => {
+        if (!portalTarget) {
+            const findTarget = () => {
+                const el = document.getElementById("image-editor-header-action");
+                if (el) {
+                    setPortalTarget(el);
+                    return true;
+                }
+                return false;
+            };
+
+            if (!findTarget()) {
+                const timer = setTimeout(findTarget, 100);
+                return () => clearTimeout(timer);
+            }
+        }
+    }, [portalTarget]);
 
     const categoryNameMap = useMemo(() => {
         return categories.reduce((acc, cat) => {
@@ -138,51 +164,55 @@ export function ImageEditor() {
         notification.info("Auto-apply stopped.");
     };
 
+    const autoApplyAction = isBulkProcessing ? (
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <Button
+                size="sm"
+                disabled
+                className="gap-1.5 sm:gap-2 bg-primary/90 text-primary-foreground font-semibold text-xs h-9 px-2.5 sm:px-3 rounded-md shadow-xs shrink-0"
+            >
+                <Loader2 className="size-3.5 animate-spin" />
+                <span className="hidden sm:inline">Applying ({bulkProgress.current}/{bulkProgress.total})...</span>
+                <span className="sm:hidden">({bulkProgress.current}/{bulkProgress.total})</span>
+            </Button>
+            <Button
+                size="sm"
+                variant="destructive"
+                onClick={handleStopBulk}
+                className="gap-1 sm:gap-1.5 text-xs h-9 px-2 sm:px-3 rounded-md shadow-xs cursor-pointer shrink-0"
+            >
+                <StopCircle className="size-3.5" />
+                <span className="hidden sm:inline">Stop</span>
+            </Button>
+        </div>
+    ) : (
+        <Button
+            size="sm"
+            onClick={handleBulkAutoApply}
+            disabled={itemsWithoutImage.length === 0}
+            className="h-9 rounded-md bg-primary hover:bg-primary/90 text-white shadow-xs gap-1.5 font-bold text-xs shrink-0 transition-all hover:scale-[1.02] cursor-pointer"
+        >
+            <Sparkles className="size-3.5" />
+            <span className="hidden sm:inline">Auto-Apply All Missing ({itemsWithoutImage.length})</span>
+            <span className="sm:hidden">Auto-Apply ({itemsWithoutImage.length})</span>
+        </Button>
+    );
+
     return (
         <div className="flex-1 flex flex-col bg-white h-full overflow-y-auto p-4 md:p-5">
+            {portalTarget && createPortal(autoApplyAction, portalTarget)}
             <DataTable
                 containerClassName="flex-1 flex flex-col min-h-0"
                 title="Dish Image Manager"
                 subtitle="Easily manage, upload, and auto-match photos for all menu dishes"
+                hideTitleOnMobile={true}
                 data={displayItems}
                 searchable={true}
                 searchKeys={["name"]}
                 filterTabs={filterTabs}
                 activeFilterTab={activeFilterTab}
                 onFilterTabChange={setActiveFilterTab}
-                actions={
-                    isBulkProcessing ? (
-                        <div className="flex items-center gap-2">
-                            <Button
-                                size="sm"
-                                disabled
-                                className="gap-2 bg-primary/90 text-primary-foreground font-semibold text-xs h-9 rounded-lg shadow-xs"
-                            >
-                                <Loader2 className="size-3.5 animate-spin" />
-                                Applying ({bulkProgress.current}/{bulkProgress.total})...
-                            </Button>
-                            <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={handleStopBulk}
-                                className="gap-1.5 text-xs h-9 rounded-lg shadow-xs cursor-pointer"
-                            >
-                                <StopCircle className="size-3.5" />
-                                Stop
-                            </Button>
-                        </div>
-                    ) : (
-                        <Button
-                            size="sm"
-                            onClick={handleBulkAutoApply}
-                            disabled={itemsWithoutImage.length === 0}
-                            className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs h-9 rounded-lg shadow-xs cursor-pointer"
-                        >
-                            <Sparkles className="size-3.5" />
-                            Auto-Apply All Missing ({itemsWithoutImage.length})
-                        </Button>
-                    )
-                }
+                actions={portalTarget ? null : autoApplyAction}
                 isLoading={isLoadingCats || isLoadingItems}
                 renderGrid={(paginatedItems) => (
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">

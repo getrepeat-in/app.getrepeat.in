@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import MenuHeader from "./fragments/header";
 import { UtensilsCrossed } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,20 @@ const Menu = () => {
     const [activeBulkMode, setActiveBulkMode] = useState("PRICE");
     const [showMobileSidebar, setShowMobileSidebar] = useState(false);
     const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 640);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
+    useEffect(() => {
+        if (isMobile && activeBulkMode !== "IMAGE") {
+            setActiveBulkMode("IMAGE");
+        }
+    }, [isMobile, activeBulkMode]);
 
     return (
         <div className="flex flex-col bg-white dark:bg-zinc-900 sm:m-4 p-0 sm:p-4 space-y-0 sm:space-y-3 sm:rounded-md sm:border border-border/40 sm:shadow-xs min-w-0 h-[calc(100vh-68px)] sm:h-[calc(100vh-60px)]">
@@ -68,19 +82,22 @@ const Menu = () => {
                             isCategoriesLoading={isCategoriesLoading}
                             addCategory={addCategory}
                             onBack={() => setShowMobileSidebar(true)}
+                            isMobile={isMobile}
                         />
                     </div>
                 </div>
                 
                 <div className="sm:hidden fixed bottom-24 right-6 z-40">
                     <Sheet open={isMobileDrawerOpen} onOpenChange={setIsMobileDrawerOpen}>
-                        <SheetTrigger asChild>
-                            <Button 
-                                className="rounded-md shadow-[0_8px_16px_rgba(0,0,0,0.15)] bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-6 flex items-center gap-2 border border-primary/20"
-                            >
-                                <UtensilsCrossed size={16} />
-                                <span className="font-bold text-[13px] tracking-wide uppercase">Menu</span>
-                            </Button>
+                        <SheetTrigger
+                            render={
+                                <Button 
+                                    className="rounded-md shadow-[0_8px_16px_rgba(0,0,0,0.15)] bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-6 flex items-center gap-2 border border-primary/20"
+                                />
+                            }
+                        >
+                            <UtensilsCrossed size={16} />
+                            <span className="font-bold text-[13px] tracking-wide uppercase">Menu</span>
                         </SheetTrigger>
                         <SheetContent 
                             side="bottom" 
@@ -105,6 +122,7 @@ const Menu = () => {
                                         setActiveBulkMode(id);
                                         if (id) setIsMobileDrawerOpen(false);
                                     }}
+                                    isMobile={true}
                                 />
                             </div>
                         </SheetContent>

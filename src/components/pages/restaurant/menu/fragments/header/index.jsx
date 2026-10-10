@@ -6,9 +6,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useCategory } from "@/store/hooks/useCategory";
 import { useRestaurant } from "@/store/hooks/useRestaurant";
 import useNotification from "@/store/hooks/useNotification";
-import { Plus, RefreshCw, UtensilsCrossed, ArrowLeft, MoreVertical, Download } from "lucide-react";
 import { TableToolbar } from "@/components/global/table/fragments/table-toolbar";
 import { CategoryFormPopover } from "../category-sidebar/fragments/category-form-popover";
+import { Plus, RefreshCw, UtensilsCrossed, ArrowLeft, MoreVertical, Download, ImageIcon } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuGroup } from "@/components/ui/dropdown-menu";
 
 export default function MenuHeader({
@@ -19,6 +19,8 @@ export default function MenuHeader({
     onAddItem,
     onRefresh,
     className,
+    activeView,
+    activeBulkMode,
     activeCategoryId,
     activeSubCategoryId,
     onClearCategory,
@@ -62,6 +64,8 @@ export default function MenuHeader({
         }).length;
     }
 
+    const isImageEditor = activeView === "BULK" && activeBulkMode === "IMAGE";
+
     const defaultActions = (
         <div className="flex items-center gap-2 flex-nowrap w-full sm:w-auto overflow-hidden justify-between sm:justify-start">
             {activeCategoryId ? (
@@ -72,7 +76,7 @@ export default function MenuHeader({
             ) : (
                 <div className="flex sm:hidden flex-1 min-w-0 mr-2 items-center gap-2">
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-50 dark:bg-orange-950/30 text-orange-600 border border-orange-100 dark:border-orange-900/50 shrink-0">
-                        <UtensilsCrossed className="h-4 w-4" />
+                        {isImageEditor ? <ImageIcon className="h-4 w-4" /> : <UtensilsCrossed className="h-4 w-4" />}
                     </div>
                     <div className="flex flex-col min-w-0 flex-1 justify-center">
                         <span className="text-[15px] font-bold truncate text-gray-900 dark:text-gray-100 leading-tight">
@@ -85,7 +89,9 @@ export default function MenuHeader({
                 </div>
             )}
             <div className="flex items-center gap-2 flex-nowrap">
-                {onAddItem ? (
+                {isImageEditor ? (
+                    <div id="image-editor-header-action" className="flex items-center gap-2 shrink-0" />
+                ) : onAddItem ? (
                     <Button
                         onClick={onAddItem}
                         size="sm"
@@ -146,8 +152,8 @@ export default function MenuHeader({
 
     return (
         <TableToolbar
-            title={title}
-            subtitle={subtitle}
+            title={isImageEditor ? "Image Editor" : title}
+            subtitle={isImageEditor ? "Manage and auto-match dish photos across your menu" : subtitle}
             totalCount={totalCount}
             actions={actions !== undefined ? actions : defaultActions}
             searchable={false}

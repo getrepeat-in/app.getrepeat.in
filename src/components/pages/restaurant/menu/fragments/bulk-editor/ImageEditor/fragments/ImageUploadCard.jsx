@@ -3,18 +3,22 @@ import { cn, getImageUrl } from "@/lib/utils";
 import { ItemImage } from "@/components/global/item-image";
 import { UploadService } from "@/services/frontend/upload";
 import useNotification from "@/store/hooks/useNotification";
-import { FoodsnapService } from "@/services/frontend/foodsnap";
-import { Camera, Image as ImageIcon, Loader2, Upload, Trash2, Sparkles } from "lucide-react";
+import { Camera, Image as ImageIcon, Loader2, Upload, Trash2 } from "lucide-react";
 
 export function ImageUploadCard({ item, categoryPath, updateItem, restaurantId, onCardClick, isProcessing = false }) {
     const [isDragging, setIsDragging] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
-    const [isAutoApplying, setIsAutoApplying] = useState(false);
     const fileInputRef = useRef(null);
     const notification = useNotification();
 
     const hasImage = Boolean(item.image);
     const dietary = item?.dietaryType || "veg";
+
+    const handleCardClick = (e) => {
+        if (isUploading || isProcessing) return;
+        if (e?.target?.closest("button") || e?.target?.closest("input")) return;
+        if (onCardClick) onCardClick();
+    };
 
     const handleDragOver = (e) => {
         e.preventDefault();
@@ -55,26 +59,6 @@ export function ImageUploadCard({ item, categoryPath, updateItem, restaurantId, 
         }
     };
 
-    const handleAutoApply = async (e) => {
-        e.stopPropagation();
-        if (isAutoApplying || isUploading) return;
-
-        setIsAutoApplying(true);
-        try {
-            const res = await FoodsnapService.autoApplyImage({
-                item,
-                restaurantId
-            });
-            await updateItem({ itemId: item._id, data: { image: res.imageId } });
-            notification.success(`Auto-applied: ${res.imageName}`);
-        } catch (error) {
-            console.error("Auto-apply error:", error);
-            notification.error(error?.message || "Failed to auto-apply image");
-        } finally {
-            setIsAutoApplying(false);
-        }
-    };
-
     const handleRemoveImage = async (e) => {
         e.stopPropagation();
         try {
@@ -108,8 +92,9 @@ export function ImageUploadCard({ item, categoryPath, updateItem, restaurantId, 
 
     return (
         <div 
+            onClick={handleCardClick}
             className={cn(
-                "group relative flex flex-col bg-card border rounded-md overflow-hidden shadow-2xs hover:shadow-md transition-all duration-200",
+                "group relative flex flex-col bg-card border rounded-md overflow-hidden shadow-2xs hover:shadow-md transition-all duration-200 cursor-pointer select-none",
                 isProcessing 
                     ? "border-primary ring-2 ring-primary/40 shadow-md" 
                     : "border-border/80 hover:border-primary/40"
@@ -123,6 +108,7 @@ export function ImageUploadCard({ item, categoryPath, updateItem, restaurantId, 
                 accept="image/*" 
                 ref={fileInputRef} 
                 className="hidden" 
+                onClick={(e) => e.stopPropagation()}
                 onChange={handleFileInput} 
             />
 
@@ -158,6 +144,39 @@ export function ImageUploadCard({ item, categoryPath, updateItem, restaurantId, 
                     </div>
                 </div>
 
+                {/* Floating Action Buttons */}
+                <div className="absolute top-2 right-2 flex items-center gap-1.5 z-10 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            fileInputRef.current?.click();
+                        }}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        className="flex size-7 sm:size-7.5 items-center justify-center rounded-lg bg-black/60 hover:bg-black/80 text-white backdrop-blur-md transition-transform active:scale-90 shadow-sm cursor-pointer"
+                        title="Upload from device"
+                    >
+                        <Upload className="size-3.5 sm:size-4" />
+                    </button>
+
+                    {hasImage && (
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleRemoveImage(e);
+                            }}
+                            onPointerDown={(e) => e.stopPropagation()}
+                            className="flex size-7 sm:size-7.5 items-center justify-center rounded-lg bg-rose-500/85 hover:bg-rose-600 text-white backdrop-blur-md transition-transform active:scale-90 shadow-sm cursor-pointer"
+                            title="Remove photo"
+                        >
+                            <Trash2 className="size-3.5 sm:size-4" />
+                        </button>
+                    )}
+                </div>
+
                 <div className={cn(
                     "absolute inset-0 bg-primary/90 text-primary-foreground backdrop-blur-xs flex flex-col items-center justify-center transition-all duration-150 z-20",
                     isDragging ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
@@ -166,59 +185,17 @@ export function ImageUploadCard({ item, categoryPath, updateItem, restaurantId, 
                     <span className="font-semibold text-xs">Drop to upload</span>
                 </div>
 
-                <div 
-                    onClick={onCardClick}
-                    className="absolute inset-0 bg-slate-950/50 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center justify-center gap-2 z-10 p-2 cursor-pointer"
-                >
-                    <button
-                        type="button"
-                        onClick={handleAutoApply}
-                        disabled={isAutoApplying || isUploading}
-                        className="flex size-8 items-center justify-center rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground backdrop-blur-md transition-transform active:scale-95 shadow-xs disabled:opacity-50"
-                        title="Auto-apply matched photo"
-                    >
-                        {isAutoApplying ? (
-                            <Loader2 className="size-4 animate-spin" />
-                        ) : (
-                            <Sparkles className="size-4" />
-                        )}
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            fileInputRef.current?.click();
-                        }}
-                        className="flex size-8 items-center justify-center rounded-lg bg-white/20 hover:bg-white/30 text-white backdrop-blur-md transition-transform active:scale-95 shadow-xs"
-                        title="Upload from device"
-                    >
-                        <Upload className="size-4" />
-                    </button>
-
-                    {hasImage && (
-                        <button
-                            type="button"
-                            onClick={handleRemoveImage}
-                            className="flex size-8 items-center justify-center rounded-lg bg-rose-500/80 hover:bg-rose-500 text-white backdrop-blur-md transition-transform active:scale-95 shadow-xs"
-                            title="Remove photo"
-                        >
-                            <Trash2 className="size-4" />
-                        </button>
-                    )}
-                </div>
-
-                {(isUploading || isAutoApplying || isProcessing) && (
+                {(isUploading || isProcessing) && (
                     <div className="absolute inset-0 bg-background/85 backdrop-blur-xs flex flex-col items-center justify-center text-primary z-30">
                         <Loader2 className="size-7 animate-spin mb-1.5" />
                         <span className="text-[11px] font-semibold uppercase tracking-wider">
-                            {isProcessing || isAutoApplying ? "Matching Photo..." : "Uploading..."}
+                            {isProcessing ? "Matching Photo..." : "Uploading..."}
                         </span>
                     </div>
                 )}
             </div>
 
-            <div className="px-3.5 py-2.5 flex flex-col justify-center bg-card cursor-pointer" onClick={onCardClick}>
+            <div className="px-3.5 py-2.5 flex flex-col justify-center bg-card">
                 <h3 className="text-[13px] font-semibold text-foreground truncate group-hover:text-primary transition-colors leading-tight" title={item.name}>
                     {item.name}
                 </h3>
