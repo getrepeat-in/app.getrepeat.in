@@ -255,7 +255,7 @@ export function ImageEditor() {
                 isOpen={!!selectedItemForSidebar}
                 onClose={() => setSelectedItemForSidebar(null)}
                 restaurantId={restaurantId}
-                onUploadComplete={(imageId) => handleUploadComplete(selectedItemForSidebar._id, imageId)}
+                onUploadComplete={handleUploadComplete}
             />
         </div>
     );

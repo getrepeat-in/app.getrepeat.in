@@ -72,12 +72,19 @@ export function ImageSidebar({ item, isOpen, onClose, onUploadComplete, restaura
         if (node) observer.current.observe(node);
     }, [isFetchingNextPage, hasNextPage, fetchNextPage]);
 
+    const currentItemRef = useRef(item);
+    useEffect(() => {
+        currentItemRef.current = item;
+    }, [item]);
+
     const handleSelectImage = async (image) => {
         if (uploadingId) return;
+        const targetItem = item;
+        if (!targetItem?._id) return;
         
         try {
             setUploadingId(image._id);
-            const file = await FoodsnapService.downloadImageAsFile(image.image_url, `${item.name}-image.jpeg`);
+            const file = await FoodsnapService.downloadImageAsFile(image.image_url, `${targetItem.name}-image.jpeg`);
             
             const formData = new FormData();
             formData.append("file", file);
@@ -87,10 +94,13 @@ export function ImageSidebar({ item, isOpen, onClose, onUploadComplete, restaura
             const imageId = res?.imageId || res?.data?.imageId;
             
             if (!imageId) throw new Error("Failed to get image ID from upload response");
-            await onUploadComplete(imageId);
+            await onUploadComplete(targetItem._id, imageId);
             
-            notification.success("Image successfully applied!");
-            onClose();
+            notification.success(`Image applied to ${targetItem.name}!`);
+
+            if (currentItemRef.current?._id === targetItem._id) {
+                onClose();
+            }
         } catch (error) {
             notification.error("Failed to apply image. Please try again.");
             console.error(error);
@@ -98,6 +108,8 @@ export function ImageSidebar({ item, isOpen, onClose, onUploadComplete, restaura
             setUploadingId(null);
         }
     };
+
+    if (!item && !isOpen) return null;
 
     return (
         <>
@@ -112,12 +124,14 @@ export function ImageSidebar({ item, isOpen, onClose, onUploadComplete, restaura
             
             <div 
                 className={cn(
-                    "fixed z-[110] flex flex-col bg-white dark:bg-zinc-900 shadow-2xl transition-transform duration-300 ease-out",
-                    "bottom-0 inset-x-0 w-full h-[88vh] max-h-[92vh] rounded-t-[28px] border-t border-border/40",
-                    "sm:top-0 sm:right-0 sm:bottom-0 sm:inset-x-auto sm:h-full sm:max-h-none sm:w-[560px] md:w-[620px] lg:w-[680px] sm:rounded-none sm:rounded-l-2xl sm:border-t-0 sm:border-l sm:border-border/60",
+                    "fixed z-[110] flex flex-col bg-white dark:bg-zinc-900 shadow-2xl transition-all duration-300 ease-out",
+                    // Mobile: Bottom sheet drawer
+                    "max-sm:bottom-0 max-sm:left-0 max-sm:right-0 max-sm:w-full max-sm:h-[88vh] max-sm:max-h-[92vh] max-sm:rounded-t-[24px] max-sm:border-t max-sm:border-border/60",
+                    // Desktop: True right sidebar pinned to top, right, bottom
+                    "sm:top-0 sm:bottom-0 sm:right-0 sm:left-auto sm:h-screen sm:w-[520px] md:w-[580px] lg:w-[640px] sm:border-l sm:border-border/60 sm:rounded-none",
                     isOpen 
-                        ? "translate-y-0 sm:translate-x-0 sm:translate-y-0" 
-                        : "translate-y-full sm:translate-x-full sm:translate-y-0"
+                        ? "max-sm:translate-y-0 sm:translate-x-0 opacity-100 visible" 
+                        : "max-sm:translate-y-full sm:translate-x-full opacity-0 invisible pointer-events-none"
                 )}
             >
                 <div 
